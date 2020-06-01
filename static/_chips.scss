@@ -1,0 +1,36 @@
+%battlechip {
+    background: transparent;
+    text-align: Center; 
+    padding-left: 0px; 
+    padding-right: 0px; 
+    font-family: "Lucida Console";
+    font-weight: bold; 
+    font-size: 15px;
+    margin-bottom: 0px;
+    text-shadow:1px 1px grey;
+}
+
+.Chip {
+    @extend %battlechip;
+    color: white;
+}
+
+.Mega {
+    @extend %battlechip;
+    color: #90f8f8;
+}
+
+.Giga {
+    @extend %battlechip;
+    color: #f8c8d8;
+}
+
+.SupportChip {
+    @extend %battlechip;
+    color: #53f04d;
+}
+
+.UsedChip {
+    @extend %battlechip;
+    color: grey;
+}
