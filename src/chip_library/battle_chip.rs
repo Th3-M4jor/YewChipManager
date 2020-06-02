@@ -34,3 +34,12 @@ impl PartialEq for BattleChip {
 }
 
 impl Eq for BattleChip {}
+
+impl BattleChip {
+    pub fn skill(&self) -> Skills {
+        if self.skills.len() > 1 {
+            return Skills::Varies;
+        }
+        self.skills[0]
+    }
+}

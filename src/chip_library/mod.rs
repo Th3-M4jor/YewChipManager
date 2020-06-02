@@ -4,13 +4,15 @@ pub mod skills;
 pub mod chip_type;
 pub mod ranges;
 
+use dashmap::DashMap;
 use std::collections::hash_map::HashMap;
 use std::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use once_cell::sync::OnceCell;
 use battle_chip::BattleChip;
 
-#[derive(Serialize, Deserialize)]
+
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct PackChip {
     owned: u32,
     used: u32,
@@ -23,16 +25,16 @@ pub struct FolderChip {
 }
 
 pub struct ChipLibrary {
-    pub library: HashMap<String, BattleChip>,
-    pub pack: HashMap<String, PackChip>,
-    pub folder: Vec<FolderChip>,
+    pub library: DashMap<String, BattleChip>,
+    pub pack: DashMap<String, PackChip>,
+    pub folder: RwLock<Vec<FolderChip>>,
     pub chip_limit: u32,
 }
 
 impl ChipLibrary {
     pub fn import_local(data: &str) -> ChipLibrary {
         let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(&data).expect("Failed to deserialize library");
-        let mut library: HashMap<String, BattleChip> = HashMap::with_capacity(chip_list.len());
+        let library: DashMap<String, BattleChip> = DashMap::with_capacity(chip_list.len());
         while !chip_list.is_empty() {
             let chip = chip_list.pop().unwrap();
             library.insert(chip.name.clone(), chip);
@@ -44,15 +46,15 @@ impl ChipLibrary {
                 let _ = window.alert_with_message("Local storage is not available, it is used to backup your folder and pack periodically");
                 return ChipLibrary {
                     library,
-                    pack: HashMap::new(),
-                    folder: Vec::new(),
+                    pack: DashMap::new(),
+                    folder: RwLock::new(Vec::new()),
                     chip_limit: 12,
                 };
             }
         };
 
         let pack = ChipLibrary::load_pack(&storage).unwrap_or_default();
-        let folder = ChipLibrary::load_folder(&storage).unwrap_or_default();
+        let folder = RwLock::new(ChipLibrary::load_folder(&storage).unwrap_or_default());
         let chip_limit = ChipLibrary::load_chip_limit(&storage).unwrap_or(12);
 
 
@@ -71,9 +73,18 @@ impl ChipLibrary {
     }
 
     /// load the pack from local storage
-    fn load_pack(storage: &web_sys::Storage) -> Option<HashMap<String, PackChip>> {
+    fn load_pack(storage: &web_sys::Storage) -> Option<DashMap<String, PackChip>> {
         let pack_str: String = storage.get_item("pack").ok().flatten()?;
-        serde_json::from_str::<HashMap<String, PackChip>>(&pack_str).ok()
+        let mut map = serde_json::from_str::<HashMap<String, PackChip>>(&pack_str).ok()?;
+
+        let to_ret = DashMap::new();
+
+        for obj in map.drain() {
+            to_ret.insert(obj.0, obj.1);
+        }
+
+        Some(to_ret)
+
     }
 
     /// load the folder from local storage
@@ -92,7 +103,8 @@ impl ChipLibrary {
     fn check_missing_pack(&mut self) {
         let mut to_remove_from_pack = Vec::new();
         let window = web_sys::window().expect("Could not get window");
-        for chip in self.pack.iter() {
+        for chip_guard in self.pack.iter() {
+            let chip = chip_guard.pair();
             if !self.library.contains_key(chip.0) {
                 let _ = window.alert_with_message(&format!(
                     "Your pack had a chip named \"{}\", this no longer exists in the library, you owned {} (of which {} were used)",
@@ -116,7 +128,7 @@ impl ChipLibrary {
     fn check_missing_folder(&mut self) {
         let window = web_sys::window().expect("Could not get window");
         let mut new_folder = Vec::new();
-        for chip in self.folder.iter() {
+        for chip in self.folder.write().unwrap().drain(..) {
             if self.library.contains_key(&chip.name) {
                 let used_unused = if chip.used {"used"} else {"unused"};
                 let _ = window.alert_with_message(&format!(
@@ -125,29 +137,47 @@ impl ChipLibrary {
                     used_unused
                 ));
             } else {
-                new_folder.push(chip.clone());
+                new_folder.push(chip);
             }
         }
         
-        self.folder = new_folder;
+        self.folder = RwLock::new(new_folder);
     }
 
-    pub fn get_battlechip(&self, name: &str) -> Option<&BattleChip> {
-        self.library.get(name)
+    /// add a copy of a chip to the pack
+    pub fn add_copy_to_pack(&self, name: &str) -> Option<u32> {
+        
+        //Return None if the chip is not in the pack
+        if !self.library.contains_key(name) {
+            return None;
+        }
+
+        return if self.pack.contains_key(name) {
+            Some(self.pack.update_get(name, |_, v| {
+                let mut val = v.clone(); 
+                val.owned += 1;
+                val
+            })?.value().owned)
+        } else {
+            self.pack.insert(name.to_owned(), PackChip{used: 0, owned: 1});
+            Some(1)
+        }
+
     }
+
 }
 
-static INSTANCE: OnceCell<RwLock<ChipLibrary>> = OnceCell::new();
+static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
 
 pub fn init_library(data: String) {
     
     //initialize library
     INSTANCE.get_or_init(|| {
-        RwLock::new(ChipLibrary::import_local(&data))
+        ChipLibrary::import_local(&data)
     });
 
 }
 
-pub fn get_instance() -> &'static OnceCell<RwLock<ChipLibrary>> {
+pub fn get_instance() -> &'static OnceCell<ChipLibrary> {
     &INSTANCE
 }

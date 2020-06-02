@@ -1,10 +1,8 @@
 use yew::prelude::*;
-use yew_router::switch::Permissive;
-use yew_router::{prelude::*, route::Route};
-use std::sync::RwLockReadGuard;
 
 use crate::chip_library::{ChipLibrary, get_instance};
 use crate::util::timeout::{set_timeout, TimeoutHandle};
+use crate::components::library::LibraryComponent as Library;
 
 
 
@@ -15,7 +13,6 @@ pub enum Tabs {
     Folder,
     GroupFolder(String),
 }
-
 
 impl std::fmt::Display for Tabs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -70,7 +67,6 @@ impl App {
 
     fn set_message_clear_timeout(&mut self) {
 
-
         //ensure that previous timeout is cancelled
         let old_timeout = self.message_clear_timeout_handle.take();
         drop(old_timeout);
@@ -78,6 +74,46 @@ impl App {
         let callback = self.link.callback_once(|_: ()| TopLevelMsg::SetMsg("".to_owned()));
         
         self.message_clear_timeout_handle = Some(set_timeout(15000, move || callback.emit(())).unwrap());
+        
+    }
+
+    fn gen_nav_tabs(&self) -> Html {
+
+        return match self.active_tab {
+
+            Tabs::Library => {
+                html! {
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
+                        <button class="btn activeNavTab">{"Library"}</button>
+                    </div>
+                }
+            }
+            Tabs::Pack => {
+                html! {
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
+                        <button class="btn activeNavTab">{"Pack"}</button>
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
+                    </div>
+                }
+            }
+            Tabs::Folder => {
+                html! {
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                        <button class="btn activeNavTab">{"Folder"}</button>
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
+                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
+                    </div>
+                }
+            }
+            _ => { 
+                html! {
+                    <div/>
+                }
+            }
+        };
         
     }
 
@@ -90,7 +126,7 @@ impl Component for App {
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         App {
             active_tab: Tabs::Library,
-            message_txt: "test msg".to_owned(),
+            message_txt: "".to_owned(),
             message_clear_timeout_handle: None,
             link,
         }
@@ -108,12 +144,18 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
+
+        let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
         
 
         html! {
             <div class="container-fluid" style="background-color: #00637b; padding: 5px; max-width: 720px">
                 <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
-                    <span style="padding-left: 5px">{self.active_tab.to_string()}</span><span style="float: right; color: red">{self.message_txt.to_string()}</span>
+                    <span style="padding-left: 5px">{&self.active_tab}</span><span style="float: right; color: red">{&self.message_txt}</span>
+                </div>
+                <div style="background-color: #4abdb5; padding: 10px">
+                    {self.gen_nav_tabs()}
+                    <Library active=true set_msg_callback={set_msg_callback}/>
                 </div>
             </div>
         }

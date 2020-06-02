@@ -34,3 +34,7 @@
     @extend %battlechip;
     color: grey;
 }
+
+.chipHover:hover {
+    background-color: rgb(132, 180, 36);
+}

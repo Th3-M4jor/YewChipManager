@@ -1,5 +1,7 @@
 @use 'padding';
 @use 'chips';
+@use 'layout';
+@use 'buttons';
 
 div.Folder {
   border-radius: 8px;
@@ -27,6 +29,10 @@ body {
 
 .activefolder {
   will-change: scroll-position;
+}
+
+.debug {
+  border: 1px solid transparent;
 }
 
 .centercontent {
