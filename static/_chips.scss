@@ -35,6 +35,11 @@
     color: grey;
 }
 
+.unknownChip {
+    @extend %battlechip;
+    color: purple;
+}
+
 .chipHover:hover {
     background-color: rgb(132, 180, 36);
 }

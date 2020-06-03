@@ -1,6 +1,5 @@
 use yew::prelude::*;
 
-use crate::chip_library::{ChipLibrary, get_instance};
 use crate::util::timeout::{set_timeout, TimeoutHandle};
 use crate::components::library::LibraryComponent as Library;
 
@@ -83,7 +82,7 @@ impl App {
 
             Tabs::Library => {
                 html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,6px)">
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
                         <button class="btn activeNavTab">{"Library"}</button>
@@ -92,7 +91,7 @@ impl App {
             }
             Tabs::Pack => {
                 html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,6px)">
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
                         <button class="btn activeNavTab">{"Pack"}</button>
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
@@ -101,7 +100,7 @@ impl App {
             }
             Tabs::Folder => {
                 html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,8px)">
+                    <div class="btn-group" role="tabs" style="padding-left: 20px; transform: translate(0px,6px)">
                         <button class="btn activeNavTab">{"Folder"}</button>
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
                         <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
@@ -155,7 +154,7 @@ impl Component for App {
                 </div>
                 <div style="background-color: #4abdb5; padding: 10px">
                     {self.gen_nav_tabs()}
-                    <Library active=true set_msg_callback={set_msg_callback}/>
+                    <Library active={self.active_tab == Tabs::Library} set_msg_callback={set_msg_callback}/>
                 </div>
             </div>
         }

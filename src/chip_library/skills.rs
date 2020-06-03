@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Eq, PartialEq, Clone, Copy)]
+#[derive(Deserialize, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 pub enum Skills {
     Sense,
     Info,

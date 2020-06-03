@@ -2,11 +2,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
 pub enum Ranges {
+    Far,
+    Near,
+    Close,
     #[serde(rename(deserialize = "Self"))]
     Itself,
-    Close,
-    Near,
-    Far,
 }
 
 impl std::fmt::Display for Ranges {

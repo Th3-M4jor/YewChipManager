@@ -27,6 +27,10 @@ body {
   background-color: #4abdb5;
 }
 
+.inactiveTab {
+  display: none !important;
+}
+
 .activefolder {
   will-change: scroll-position;
 }

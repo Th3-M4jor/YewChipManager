@@ -2,6 +2,8 @@ use yew::prelude::*;
 use crate::chip_library::*;
 use crate::util::generate_element_images;
 
+use std::borrow::Cow;
+
 #[derive(Properties, Clone)]
 pub struct LibraryChipProps {
     pub name: String,
@@ -54,22 +56,24 @@ impl Component for LibraryChip {
     
     fn view(&self) -> Html {
         
-        let chip_guard = get_instance().get().unwrap().library.get(&self.props.name).unwrap();
-        let chip = chip_guard.value();
+        let chip = match get_instance().get().unwrap().library.get(&self.props.name) {
+            Some(chip) => Cow::Borrowed(chip),
+            None => Cow::Owned(battle_chip::BattleChip::unknown_chip(&self.props.name)),
+        };
 
 
         let chip_display_css = match chip.kind {
-            chip_type::ChipType::Standard 
-            | chip_type::ChipType::Dark => "row justify-content-center Chip noselect chipHover",
+            chip_type::ChipType::Standard => "row justify-content-center Chip noselect chipHover",
             chip_type::ChipType::Mega => "row justify-content-center Mega noselect chipHover",
             chip_type::ChipType::Giga => "row justify-content-center Giga noselect chipHover",
             chip_type::ChipType::Support => "row justify-content-center SupportChip noselect chipHover",
+            chip_type::ChipType::Dark => "row justify-content-center unknownChip noselect chipHover",
         };
 
         
         
         html! {
-            <div class={chip_display_css} ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)}>
+            <div class={chip_display_css} ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} id={format!("{}_L", self.props.name)}>
                 <div class="col-3 nopadding debug" style="white-space: nowrap">
                     {&chip.name}
                 </div>

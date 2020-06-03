@@ -25,7 +25,7 @@ pub struct FolderChip {
 }
 
 pub struct ChipLibrary {
-    pub library: DashMap<String, BattleChip>,
+    pub library: HashMap<String, BattleChip>,
     pub pack: DashMap<String, PackChip>,
     pub folder: RwLock<Vec<FolderChip>>,
     pub chip_limit: u32,
@@ -34,7 +34,7 @@ pub struct ChipLibrary {
 impl ChipLibrary {
     pub fn import_local(data: &str) -> ChipLibrary {
         let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(&data).expect("Failed to deserialize library");
-        let library: DashMap<String, BattleChip> = DashMap::with_capacity(chip_list.len());
+        let mut library: HashMap<String, BattleChip> = HashMap::with_capacity(chip_list.len());
         while !chip_list.is_empty() {
             let chip = chip_list.pop().unwrap();
             library.insert(chip.name.clone(), chip);
