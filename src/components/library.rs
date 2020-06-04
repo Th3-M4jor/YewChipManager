@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use yew::html::ChangeData;
+use yew::html::{ChangeData, InputData};
 
 use crate::components::library_chip::LibraryChip;
 
@@ -51,6 +51,7 @@ impl From<&str> for LibrarySortOptions {
 
 pub enum LibraryMessage {
     ChangeSort(LibrarySortOptions),
+    ChangeFilter(String),
     DoNothing,
 }
 
@@ -58,6 +59,7 @@ pub struct LibraryComponent{
     props: LibraryProps,
     link: ComponentLink<Self>,
     sort_by: LibrarySortOptions,
+    filter_by: String,
 }
 
 impl Component for LibraryComponent {
@@ -69,16 +71,25 @@ impl Component for LibraryComponent {
             props,
             link,
             sort_by: LibrarySortOptions::Name,
+            filter_by: String::default(),
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             LibraryMessage::ChangeSort(opt) => {
+                
+                if self.sort_by == opt {
+                    return false;
+                }
                 self.sort_by = opt;
                 true
             }
-            LibraryMessage::DoNothing => false
+            LibraryMessage::DoNothing => false,
+            LibraryMessage::ChangeFilter(val) => {
+                self.filter_by = val.trim().to_ascii_lowercase();
+                true
+            }
         }
     }
 
@@ -95,13 +106,7 @@ impl Component for LibraryComponent {
     fn view(&self) -> Html {
 
         let (library_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
-        let select_changed = self.link.callback(|e: ChangeData| {
-            if let ChangeData::Select(val) = e {
-                LibraryMessage::ChangeSort(LibrarySortOptions::from(val.value().as_ref()))
-            } else {
-                LibraryMessage::DoNothing
-            }
-        });
+        
         html! {
             <div class={outer_container_class}>
                 <div class="row nopadding">
@@ -112,15 +117,8 @@ impl Component for LibraryComponent {
                         </div>
                     </div>
                     <div class="col-2 nopadding">
-                        <span unselectable="on" class="Chip">{"Sort By"}</span>
-                        <select value={&self.sort_by} style="width: 100%" class="custom-select" onchange={select_changed}>
-                            <option value="Name">{"Name"}</option>
-                            <option value="Element">{"Element"}</option>
-                            <option value="MaxDamage">{"MaxDamage"}</option>
-                            <option value="AverageDamage">{"AverageDamage"}</option>
-                            <option value="Skill">{"Skill"}</option>
-                            <option value="Range">{"Range"}</option>
-                        </select>
+                        {self.build_sort_box()}
+                        {self.build_search_box()}
                     </div>
                 </div>
             </div>
@@ -153,6 +151,47 @@ impl LibraryComponent {
         }
     }
 
+    fn build_sort_box(&self) -> Html {
+        let select_changed = self.link.callback(|e: ChangeData| {
+            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
+            if let ChangeData::Select(val) = e {
+                LibraryMessage::ChangeSort(LibrarySortOptions::from(val.value().as_ref()))
+            } else {
+                LibraryMessage::DoNothing
+            }
+        });
+
+        html!{
+            <>
+            <span unselectable="on" class="Chip">{"Sort By"}</span>
+            <select value={&self.sort_by} style="width: 100%" class="custom-select" onchange={select_changed}>
+                <option value="Name">{"Name"}</option>
+                <option value="Element">{"Element"}</option>
+                <option value="MaxDamage">{"MaxDamage"}</option>
+                <option value="AverageDamage">{"AverageDamage"}</option>
+                <option value="Skill">{"Skill"}</option>
+                <option value="Range">{"Range"}</option>
+            </select>
+            </>
+        }
+    }
+
+    fn build_search_box(&self) -> Html {
+        let text_changed = self.link.callback(|e: InputData| {
+            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
+            LibraryMessage::ChangeFilter(e.value)
+        });
+
+        html! {
+            <>
+            <br/>
+            <br/>
+            <span unselectable="on" class="Chip">{"Search"}</span>
+            <input type="text" class="form-control form-control-sm" value={&self.filter_by} oninput={text_changed}/>
+            </>
+        }
+    }
+
     fn build_library_chips(&self) -> Html {
         let chip_lib = self.fetch_chips();
 
@@ -170,7 +209,14 @@ impl LibraryComponent {
     }
 
     fn fetch_chips(&self) -> Vec<&BattleChip> {
-        let mut chip_lib = get_instance().get().unwrap().library.values().collect::<Vec<&BattleChip>>();
+        let mut chip_lib = if self.filter_by.is_empty() {
+            get_instance().get().unwrap().library.values().collect::<Vec<&BattleChip>>()
+        } else {
+            get_instance().get().unwrap().library.values().filter(|chip| {
+                chip.name.to_ascii_lowercase().starts_with(&self.filter_by)
+            }).collect::<Vec<&BattleChip>>()
+        };
+
         match self.sort_by {
             LibrarySortOptions::Name => {
                 chip_lib.sort_unstable_by(|a, b| {

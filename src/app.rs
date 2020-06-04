@@ -24,6 +24,32 @@ impl std::fmt::Display for Tabs {
     }
 }
 
+impl Tabs {
+    pub fn shorten_string(&self) -> String {
+        match self {
+            Tabs::Library => { "Lib".to_string()}
+            Tabs::Pack => {"Pck".to_string()}
+            Tabs::Folder => {"Fldr".to_string()}
+            Tabs::GroupFolder(grp_fldr) => {
+                format!("{}...", &grp_fldr[..=4])
+            }
+        }
+    }
+}
+
+impl PartialEq<str> for Tabs {
+    fn eq(&self, other: &str) -> bool {
+        match self {
+            Tabs::Library => {"Library" == other}
+            Tabs::Pack => {"Pack" == other}
+            Tabs::Folder => {"Folder" == other}
+            Tabs::GroupFolder(grp_fldr) => {
+                grp_fldr == other
+            }
+        }
+    }
+}
+
 pub enum TopLevelMsg {
     ChangeTab(Tabs),
     SetMsg(String),
@@ -52,7 +78,7 @@ impl App {
 
     /// change the current message, returns true for consistency with change_tab
     fn set_message(&mut self, message: String) -> bool {
-        
+
         if message == "" {
             let handle = self.message_clear_timeout_handle.take();
             drop(handle);
