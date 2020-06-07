@@ -548,6 +548,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "unchecked_unwrap"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83fda957624830e67236d867cc74782a2d873aa4878383bb1c95635e4f1c7200"
+
+[[package]]
 name = "unicode-xid"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -716,11 +722,13 @@ name = "yew-app"
 version = "0.1.0"
 dependencies = [
  "dashmap",
+ "js-sys",
  "log",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
+ "unchecked_unwrap",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-logger",

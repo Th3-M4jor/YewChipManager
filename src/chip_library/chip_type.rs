@@ -36,6 +36,17 @@ impl ChipType {
             ChipType::Dark => 3,
         }
     }
+
+    pub fn to_css_class(&self) -> &'static str {
+        match self {
+            ChipType::Standard => {"Chip"}
+            ChipType::Mega => {"Mega"}
+            ChipType::Giga => {"Giga"}
+            ChipType::Dark => {"unknownChip"}
+            ChipType::Support => {"SupportChip"}
+        }
+    }
+
 }
 
 impl PartialOrd for ChipType {

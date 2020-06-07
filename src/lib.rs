@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
-
+use chip_library::ChipLibrary;
 use app::App;
 
 // Use `wee_alloc` as the global allocator.
@@ -32,7 +32,20 @@ pub async fn run() -> Result<(), JsValue> {
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
     let resp: Response = resp_value.dyn_into().unwrap();
     let data = JsFuture::from(resp.text()?).await.unwrap().as_string().unwrap();
-    chip_library::init_library(data);
-    yew::start_app::<App>();
+    let res = std::panic::catch_unwind(move || {
+        ChipLibrary::init(data);
+        yew::start_app::<App>();
+    });
+    
+    if res.is_err() {
+        let _ = window.alert_with_message("An unknown error occurred, please inform major, deleting data as precaution");
+        if let Some(storage) = window.local_storage().ok().flatten() {
+            let _ = storage.remove_item("pack");
+            let _ = storage.remove_item("folder");
+            let _ = storage.remove_item("chip_limit");
+        }
+        return Err(js_sys::Error::new("Rust panicked somewhere").into());
+    }
+
     Ok(())
 }

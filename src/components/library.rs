@@ -1,10 +1,12 @@
 use yew::prelude::*;
 use yew::html::{ChangeData, InputData};
+use std::sync::Arc;
 
 use crate::components::library_chip::LibraryChip;
-
-use crate::chip_library::get_instance;
+use super::ChipSortOptions;
+use crate::chip_library::ChipLibrary;
 use crate::chip_library::battle_chip::BattleChip;
+
 
 #[derive(Properties, Clone)]
 pub struct LibraryProps {
@@ -12,45 +14,9 @@ pub struct LibraryProps {
     pub set_msg_callback: Callback<String>,
 }
 
-#[derive(Eq, PartialEq)]
-pub enum LibrarySortOptions {
-    Name,
-    Element,
-    MaxDamage,
-    AverageDamage,
-    Skill,
-    Range,
-}
-
-impl std::fmt::Display for LibrarySortOptions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        return match self {
-            LibrarySortOptions::Name => write!(f,"Name"),
-            LibrarySortOptions::Element => write!(f, "Element"),
-            LibrarySortOptions::MaxDamage => write!(f, "MaxDamage"),
-            LibrarySortOptions::AverageDamage => write!(f, "AverageDamage"),
-            LibrarySortOptions::Skill => write!(f, "Skill"),
-            LibrarySortOptions::Range => write!(f, "Range"),
-        }
-    }   
-}
-
-impl From<&str> for LibrarySortOptions {
-    fn from(val: &str) -> Self {
-        match val {
-            "Name" => LibrarySortOptions::Name,
-            "Element" => LibrarySortOptions::Element,
-            "MaxDamage" => LibrarySortOptions::MaxDamage,
-            "AverageDamage" => LibrarySortOptions::AverageDamage,
-            "Skill" => LibrarySortOptions::Skill,
-            "Range" => LibrarySortOptions::Range,
-            _ => unreachable!(),
-        }
-    }
-}
 
 pub enum LibraryMessage {
-    ChangeSort(LibrarySortOptions),
+    ChangeSort(ChipSortOptions),
     ChangeFilter(String),
     DoNothing,
 }
@@ -58,7 +24,7 @@ pub enum LibraryMessage {
 pub struct LibraryComponent{
     props: LibraryProps,
     link: ComponentLink<Self>,
-    sort_by: LibrarySortOptions,
+    sort_by: ChipSortOptions,
     filter_by: String,
 }
 
@@ -70,7 +36,7 @@ impl Component for LibraryComponent {
         Self {
             props,
             link,
-            sort_by: LibrarySortOptions::Name,
+            sort_by: ChipSortOptions::Name,
             filter_by: String::default(),
         }
     }
@@ -153,9 +119,9 @@ impl LibraryComponent {
 
     fn build_sort_box(&self) -> Html {
         let select_changed = self.link.callback(|e: ChangeData| {
-            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
             if let ChangeData::Select(val) = e {
-                LibraryMessage::ChangeSort(LibrarySortOptions::from(val.value().as_ref()))
+                LibraryMessage::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
             } else {
                 LibraryMessage::DoNothing
             }
@@ -178,7 +144,7 @@ impl LibraryComponent {
 
     fn build_search_box(&self) -> Html {
         let text_changed = self.link.callback(|e: InputData| {
-            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
             LibraryMessage::ChangeFilter(e.value)
         });
 
@@ -194,60 +160,68 @@ impl LibraryComponent {
 
     fn build_library_chips(&self) -> Html {
         let chip_lib = self.fetch_chips();
-
-        html!{
-            <>
-            {chip_lib.iter().map(|chip| {
-                html!{
-                    <>
-                    <LibraryChip name={&chip.name} set_msg_callback={self.props.set_msg_callback.clone()}/>
-                    </>
-                }
-            }).collect::<Html>()}
-            </>
+        return if chip_lib.is_empty() {
+            html!{
+                <>
+                {"Nothing matched your search"}
+                </>
+            }
+        } else {
+            html!{
+                <>
+                {chip_lib.iter().map(|chip| {
+                    html!{
+                        <>
+                        <LibraryChip name={&chip.name} set_msg_callback={self.props.set_msg_callback.clone()}/>
+                        </>
+                    }
+                }).collect::<Html>()}
+                </>
+            }
         }
     }
 
-    fn fetch_chips(&self) -> Vec<&BattleChip> {
+    fn fetch_chips(&self) -> Vec<&Arc<BattleChip>> {
         let mut chip_lib = if self.filter_by.is_empty() {
-            get_instance().get().unwrap().library.values().collect::<Vec<&BattleChip>>()
+            ChipLibrary::get_instance().library.values().collect::<Vec<&Arc<BattleChip>>>()
         } else {
-            get_instance().get().unwrap().library.values().filter(|chip| {
+            ChipLibrary::get_instance().library.values().filter(|chip| {
                 chip.name.to_ascii_lowercase().starts_with(&self.filter_by)
-            }).collect::<Vec<&BattleChip>>()
+            }).collect::<Vec<&Arc<BattleChip>>>()
         };
 
         match self.sort_by {
-            LibrarySortOptions::Name => {
+            ChipSortOptions::Name => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.kind.cmp(&b.kind).then_with(||a.name.cmp(&b.name))
                 });
             }
-            LibrarySortOptions::Element => {
+            ChipSortOptions::Element => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.element.cmp(&b.element).then_with(||a.name.cmp(&b.name))
                 });
             }
-            LibrarySortOptions::MaxDamage => {
+            ChipSortOptions::MaxDamage => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.max_dmg().partial_cmp(&b.max_dmg()).unwrap().reverse().then_with(||a.name.cmp(&b.name))
                 });
             }
-            LibrarySortOptions::AverageDamage => {
+            ChipSortOptions::AverageDamage => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.avg_dmg().partial_cmp(&b.avg_dmg()).unwrap().reverse().then_with(||a.name.cmp(&b.name))
                 });
             }
-            LibrarySortOptions::Skill => {
+            ChipSortOptions::Skill => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.skill().cmp(&b.skill()).then_with(||a.name.cmp(&b.name))
                 });
             }
-            LibrarySortOptions::Range => {
+            ChipSortOptions::Range => {
                 chip_lib.sort_unstable_by(|a, b| {
                     a.range.cmp(&b.range).then_with(||a.name.cmp(&b.name))
                 });
             }
+            ChipSortOptions::Owned => unreachable!(),
         }
         chip_lib
     }

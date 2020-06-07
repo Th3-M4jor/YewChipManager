@@ -1,9 +1,9 @@
 use yew::prelude::*;
-use crate::chip_library::*;
+use crate::chip_library::{ChipLibrary, battle_chip::BattleChip};
 use crate::util::generate_element_images;
 
 use std::borrow::Cow;
-
+use std::sync::Arc;
 #[derive(Properties, Clone)]
 pub struct LibraryChipProps {
     pub name: String,
@@ -35,7 +35,7 @@ impl Component for LibraryChip {
         if msg != LibraryChipMsg::DoubleClick {
             return false;
         }
-        let library = get_instance().get().unwrap();
+        let library = ChipLibrary::get_instance();
         match library.add_copy_to_pack(&self.props.name) {
             Some(num) => self.props.set_msg_callback.emit(format!("You now own {} coppies of {}", num, self.props.name)),
             None => {},
@@ -56,24 +56,16 @@ impl Component for LibraryChip {
     
     fn view(&self) -> Html {
         
-        let chip = match get_instance().get().unwrap().library.get(&self.props.name) {
+        let chip = match ChipLibrary::get_instance().library.get(&self.props.name) {
             Some(chip) => Cow::Borrowed(chip),
-            None => Cow::Owned(battle_chip::BattleChip::unknown_chip(&self.props.name)),
+            None => Cow::Owned(Arc::new(BattleChip::unknown_chip(&self.props.name))),
         };
 
 
-        let chip_display_css = match chip.kind {
-            chip_type::ChipType::Standard => "row justify-content-center Chip noselect chipHover",
-            chip_type::ChipType::Mega => "row justify-content-center Mega noselect chipHover",
-            chip_type::ChipType::Giga => "row justify-content-center Giga noselect chipHover",
-            chip_type::ChipType::Support => "row justify-content-center SupportChip noselect chipHover",
-            chip_type::ChipType::Dark => "row justify-content-center unknownChip noselect chipHover",
-        };
-
-        
+        let chip_css = chip.kind.to_css_class();
         
         html! {
-            <div class={chip_display_css} ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} id={format!("{}_L", self.props.name)}>
+            <div class=("row justify-content-center Chip noselect chipHover", chip_css) ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} id={format!("{}_L", self.props.name)}>
                 <div class="col-3 nopadding debug" style="white-space: nowrap">
                     {&chip.name}
                 </div>

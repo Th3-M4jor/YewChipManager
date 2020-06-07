@@ -27,6 +27,8 @@ serde_json = "*"
 once_cell = "*"
 dashmap = {version = "^4.0.0-rc5"}
 regex = "*"
+unchecked_unwrap = "*"
+js-sys = "*"
 
 [dependencies.web-sys]
 version = "0.3"
@@ -38,7 +40,8 @@ features = [
   "Storage",
   "Event",
   "EventTarget",
-  "HtmlSelectElement"
+  "HtmlSelectElement",
+  "MouseEvent",
 ]
 
 [profile.release]
