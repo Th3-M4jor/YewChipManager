@@ -1,8 +1,12 @@
 use crate::chip_library::{ChipLibrary, PackChip};
 use crate::components::{ChipSortOptions, pack_chip::PackChip as PackChipComponent};
 use yew::prelude::*;
+use yew::agent::{Dispatcher, Dispatched};
+use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
+use yew::events::MouseEvent;
 
 use std::collections::HashMap;
+use unchecked_unwrap::UncheckedUnwrap;
 
 #[derive(Properties, Clone)]
 pub struct PackProps {
@@ -12,6 +16,7 @@ pub struct PackProps {
 
 pub enum PackMsg {
     ChangeSort(ChipSortOptions),
+    ForceRedrawMsg(String),
     JackOut,
     ExportJson,
     ExportTxt,
@@ -24,6 +29,7 @@ pub struct PackComponent {
     props: PackProps,
     sort_by: ChipSortOptions,
     link: ComponentLink<Self>,
+    event_bus: Dispatcher<GlobalMsgBus>,
 }
 
 impl Component for PackComponent {
@@ -31,10 +37,12 @@ impl Component for PackComponent {
     type Properties = PackProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let event_bus = GlobalMsgBus::dispatcher();
         Self {
             props,
             link,
             sort_by: ChipSortOptions::Name,
+            event_bus,
         }
     }
 
@@ -57,6 +65,10 @@ impl Component for PackComponent {
             PackMsg::EraseData => {todo!()}
             PackMsg::ImportJson => {todo!()},
             PackMsg::DoNothing => false,
+            PackMsg::ForceRedrawMsg(msg) => {
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
+                true
+            }
         }
     }
 
@@ -84,6 +96,10 @@ impl Component for PackComponent {
                     </div>
                     <div class="col-2 nopadding">
                         {self.build_sort_box()}
+                        <br/>
+                        <br/>
+                        <br/>
+                        {self.generate_buttons()}
                     </div>
                 </div>
             </div>
@@ -133,13 +149,14 @@ impl PackComponent {
         }
 
         let pack_list = self.fetch_and_sort_pack(&pack);
+        let force_redraw_callback = self.link.callback(|msg: String| PackMsg::ForceRedrawMsg(msg));
 
         html!{
             <>
             {
                 pack_list.iter().map(|chip| {
                     html!{
-                        <PackChipComponent name={&chip.chip.name} set_msg_callback={self.props.set_msg_callback.clone()}/>
+                        <PackChipComponent name={&chip.chip.name} force_redraw_callback={force_redraw_callback.clone()}/>
                     }
                 }).collect::<Html>()
             }
@@ -163,12 +180,12 @@ impl PackComponent {
             }
             ChipSortOptions::MaxDamage => {
                 pack_list.sort_unstable_by(|a, b| {
-                    a.chip.max_dmg().partial_cmp(&b.chip.max_dmg()).unwrap().reverse().then_with(||a.chip.name.cmp(&b.chip.name))
+                    unsafe{a.chip.max_dmg().partial_cmp(&b.chip.max_dmg()).unchecked_unwrap()}.reverse().then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
             ChipSortOptions::AverageDamage => {
                 pack_list.sort_unstable_by(|a, b| {
-                    a.chip.avg_dmg().partial_cmp(&b.chip.avg_dmg()).unwrap().reverse().then_with(||a.chip.name.cmp(&b.chip.name))
+                    unsafe{a.chip.avg_dmg().partial_cmp(&b.chip.avg_dmg()).unchecked_unwrap()}.reverse().then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
             ChipSortOptions::Skill => {
@@ -214,6 +231,39 @@ impl PackComponent {
             </select>
             </>
         }
+    }
+
+    fn generate_buttons(&self) -> Html {
+        let jack_out_callback = self.link.callback(|_: MouseEvent| PackMsg::JackOut);
+        let export_json_callback = self.link.callback(|_: MouseEvent| PackMsg::ExportJson);
+        let export_txt_callback = self.link.callback(|_: MouseEvent| PackMsg::ExportTxt);
+        let erase_data_callback = self.link.callback(|_: MouseEvent| PackMsg::EraseData);
+        let import_data_callback = self.link.callback(|_: MouseEvent| PackMsg::ImportJson);
+
+        html!{
+            <div class="centercontent">
+                <button class="btn sideButtons ripple" onclick=jack_out_callback>
+                    <span class="Chip">{"Jack Out"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick=export_json_callback>
+                    <span class="Chip">{"Export JSON"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick=export_txt_callback>
+                    <span class="Chip">{"Export Txt"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick=erase_data_callback>
+                    <span class="Chip">{"Erase Data"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick=import_data_callback>
+                    <span class="Chip">{"Import Data"}</span>
+                </button>
+            </div>
+        }
+
     }
 
 }

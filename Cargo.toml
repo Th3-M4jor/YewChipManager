@@ -27,7 +27,7 @@ serde_json = "*"
 once_cell = "*"
 dashmap = {version = "^4.0.0-rc5"}
 regex = "*"
-unchecked_unwrap = "*"
+unchecked_unwrap = {version = "*", features = ["debug_checks"]}
 js-sys = "*"
 
 [dependencies.web-sys]

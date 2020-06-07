@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use yew::html::{ChangeData, InputData};
 use std::sync::Arc;
+use unchecked_unwrap::UncheckedUnwrap;
 
 use crate::components::library_chip::LibraryChip;
 use super::ChipSortOptions;
@@ -11,7 +12,6 @@ use crate::chip_library::battle_chip::BattleChip;
 #[derive(Properties, Clone)]
 pub struct LibraryProps {
     pub active: bool,
-    pub set_msg_callback: Callback<String>,
 }
 
 
@@ -172,7 +172,7 @@ impl LibraryComponent {
                 {chip_lib.iter().map(|chip| {
                     html!{
                         <>
-                        <LibraryChip name={&chip.name} set_msg_callback={self.props.set_msg_callback.clone()}/>
+                        <LibraryChip name={&chip.name}/>
                         </>
                     }
                 }).collect::<Html>()}
@@ -203,12 +203,12 @@ impl LibraryComponent {
             }
             ChipSortOptions::MaxDamage => {
                 chip_lib.sort_unstable_by(|a, b| {
-                    a.max_dmg().partial_cmp(&b.max_dmg()).unwrap().reverse().then_with(||a.name.cmp(&b.name))
+                    unsafe{a.max_dmg().partial_cmp(&b.max_dmg()).unchecked_unwrap()}.reverse().then_with(||a.name.cmp(&b.name))
                 });
             }
             ChipSortOptions::AverageDamage => {
                 chip_lib.sort_unstable_by(|a, b| {
-                    a.avg_dmg().partial_cmp(&b.avg_dmg()).unwrap().reverse().then_with(||a.name.cmp(&b.name))
+                    unsafe{a.avg_dmg().partial_cmp(&b.avg_dmg()).unchecked_unwrap()}.reverse().then_with(||a.name.cmp(&b.name))
                 });
             }
             ChipSortOptions::Skill => {
@@ -221,7 +221,7 @@ impl LibraryComponent {
                     a.range.cmp(&b.range).then_with(||a.name.cmp(&b.name))
                 });
             }
-            ChipSortOptions::Owned => unreachable!(),
+            ChipSortOptions::Owned => unsafe{core::hint::unreachable_unchecked()},
         }
         chip_lib
     }

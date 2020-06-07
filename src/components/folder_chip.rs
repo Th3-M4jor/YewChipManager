@@ -1,16 +1,17 @@
 use yew::prelude::*;
 use crate::util::generate_element_images;
 use crate::chip_library::ChipLibrary;
+use unchecked_unwrap::UncheckedUnwrap;
 use web_sys::MouseEvent;
 
 #[derive(Properties, Clone)]
 pub struct FolderChipProps {
     pub index: usize,
     pub set_msg_callback: Callback<String>,
+    pub return_to_pack_callback: Callback<usize>,
 }
 
 pub enum FldrChipMsg {
-    ReturnToPack,
     ChangeUsed,
     DoNothing,
 }
@@ -34,10 +35,6 @@ impl Component for FolderChip {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            FldrChipMsg::ReturnToPack => {
-                //todo
-                true
-            },
             FldrChipMsg::ChangeUsed => {
                 let mut folder = ChipLibrary::get_instance().folder.write().unwrap();
                 folder[self.props.index].used = !folder[self.props.index].used;
@@ -56,15 +53,19 @@ impl Component for FolderChip {
 
     fn view(&self) -> Html {
         let folder = ChipLibrary::get_instance().folder.read().unwrap();
-        let chip = folder.get(self.props.index).unwrap();
+        let chip = unsafe{folder.get(self.props.index).unchecked_unwrap()};
         let chip_css = if chip.used {
             "UsedChip"
         } else {
             chip.chip.kind.to_css_class()
         };
 
+        let parent_callback = self.props.return_to_pack_callback.clone();
+        let index = self.props.index;
+        let on_dbl_click = Callback::once(move |_: MouseEvent| parent_callback.emit(index));
+
         html! {
-            <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={self.link.callback(|_| FldrChipMsg::ReturnToPack)} id={format!("F1_{}", self.props.index)}>
+            <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={on_dbl_click} id={format!("F1_{}", self.props.index)}>
                 <div class="col-1 nopadding debug">
                     {self.props.index + 1}
                 </div>

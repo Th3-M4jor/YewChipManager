@@ -1,8 +1,9 @@
 use yew::prelude::*;
 
+
 use crate::util::timeout::{set_timeout, TimeoutHandle};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder};
-
+use crate::agents::global_msg::GlobalMsgBus;
 
 
 #[derive(PartialEq, Eq)]
@@ -62,6 +63,8 @@ pub struct App
     link: ComponentLink<Self>,
     message_txt: String,
     message_clear_timeout_handle: Option<TimeoutHandle>,
+    _producer: Box<dyn Bridge<GlobalMsgBus>>,
+
 }
 
 impl App {
@@ -149,11 +152,14 @@ impl Component for App {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let callback = link.callback(TopLevelMsg::SetMsg);
+        let _producer = GlobalMsgBus::bridge(callback);
         App {
             active_tab: Tabs::Library,
             message_txt: "".to_owned(),
             message_clear_timeout_handle: None,
             link,
+            _producer,
         }
     }
 
@@ -180,7 +186,7 @@ impl Component for App {
                 </div>
                 <div style="background-color: #4abdb5; padding: 10px">
                     {self.gen_nav_tabs()}
-                    <Library active={self.active_tab == Tabs::Library} set_msg_callback={set_msg_callback.clone()}/>
+                    <Library active={self.active_tab == Tabs::Library}/>
                     <Pack active={self.active_tab == Tabs::Pack} set_msg_callback={set_msg_callback.clone()}/>
                     <Folder active={self.active_tab == Tabs::Folder} set_msg_callback={set_msg_callback.clone()}/>
                 </div>

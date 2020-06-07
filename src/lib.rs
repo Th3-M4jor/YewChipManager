@@ -3,9 +3,10 @@
 #![allow(clippy::eval_order_dependence)]
 
 pub mod app;
-pub mod components;
-pub mod chip_library;
+mod components;
+mod chip_library;
 mod util;
+mod agents;
 
 use wasm_bindgen::prelude::*;
 

@@ -191,10 +191,11 @@ impl ChipLibrary {
         Some(1)
     }
 
-    pub fn move_to_folder(&self, name: &str) -> Result<(), &'static str> {
+    /// returned bool indicates if it was the last chip of that kind in the pack
+    pub fn move_to_folder(&self, name: &str) -> Result<bool, &'static str> {
         let mut folder = self.folder.write().unwrap();
         let mut pack = self.pack.write().unwrap();
-        if self.chip_limit.load(Ordering::Relaxed) as usize >= folder.len() {
+        if self.chip_limit.load(Ordering::Relaxed) as usize <= folder.len() {
             return Err("Your folder is full");
         }
 
@@ -215,12 +216,36 @@ impl ChipLibrary {
         folder.push(folder_chip);
         drop(folder);
         if pack_chip.owned != 0 {
-            return Ok(());
+            return Ok(false);
         }
         //else it is zero
         drop(pack_chip);
         pack.remove(name);
-        Ok(())
+        Ok(true)
+    }
+
+    /// returned bool indicates if it was used or not
+    pub fn return_fldr_chip_to_pack(&self, index: usize) -> Result<bool, &'static str> {
+        let mut folder = self.folder.write().unwrap();
+        if folder.len() <= index {
+            return Err("Index was out of bounds");
+        }
+        let fldr_chip = folder.remove(index);
+        let mut pack = self.pack.write().unwrap();
+        let used_incr = if fldr_chip.used {1} else {0};
+        if let Some(pack_chip) = pack.get_mut(&fldr_chip.name) {
+            pack_chip.owned += 1;
+            pack_chip.used += used_incr;
+        } else {
+            //else no coppies already in pack
+            let pack_chip = PackChip {
+                owned: 1,
+                used: used_incr,
+                chip: fldr_chip.chip,
+            };
+            pack.insert(fldr_chip.name, pack_chip);
+        }
+        Ok(fldr_chip.used)
     }
 
     pub fn clear_folder(&self) -> usize {

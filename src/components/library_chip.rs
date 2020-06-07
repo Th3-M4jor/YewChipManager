@@ -1,18 +1,18 @@
 use yew::prelude::*;
-use crate::chip_library::{ChipLibrary, battle_chip::BattleChip};
+use yew::agent::{Dispatcher, Dispatched};
+use crate::chip_library::ChipLibrary;
 use crate::util::generate_element_images;
+use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
 
-use std::borrow::Cow;
-use std::sync::Arc;
 #[derive(Properties, Clone)]
 pub struct LibraryChipProps {
     pub name: String,
-    pub set_msg_callback: Callback<String>
 }
 
 pub struct LibraryChip{
     props: LibraryChipProps,
     link: ComponentLink<Self>,
+    event_bus: Dispatcher<GlobalMsgBus>,
 }
 
 #[derive(Eq, PartialEq)]
@@ -25,8 +25,9 @@ impl Component for LibraryChip {
     type Properties = LibraryChipProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let event_bus = GlobalMsgBus::dispatcher();
         Self {
-            props, link
+            props, link, event_bus
         }
     }
 
@@ -37,7 +38,7 @@ impl Component for LibraryChip {
         }
         let library = ChipLibrary::get_instance();
         match library.add_copy_to_pack(&self.props.name) {
-            Some(num) => self.props.set_msg_callback.emit(format!("You now own {} coppies of {}", num, self.props.name)),
+            Some(num) => self.event_bus.send(GlobalMsgReq::SetHeaderMsg(format!("You now own {} coppies of {}", num, self.props.name))),
             None => {},
         }
         
@@ -56,11 +57,7 @@ impl Component for LibraryChip {
     
     fn view(&self) -> Html {
         
-        let chip = match ChipLibrary::get_instance().library.get(&self.props.name) {
-            Some(chip) => Cow::Borrowed(chip),
-            None => Cow::Owned(Arc::new(BattleChip::unknown_chip(&self.props.name))),
-        };
-
+        let chip = ChipLibrary::get_chip_unchecked(&self.props.name);
 
         let chip_css = chip.kind.to_css_class();
         

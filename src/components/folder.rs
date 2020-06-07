@@ -1,6 +1,9 @@
+use unchecked_unwrap::UncheckedUnwrap;
 use yew::prelude::*;
 use crate::components::{ChipSortOptions, folder_chip::FolderChip};
 use crate::chip_library::ChipLibrary;
+use crate::util::alert;
+
 
 #[derive(Properties, Clone)]
 pub struct FolderProps {
@@ -10,9 +13,11 @@ pub struct FolderProps {
 
 pub enum FolderMsg {
     ChangeSort(ChipSortOptions),
+    ReturnToPack(usize),
     JackOut,
     ClearFolder,
     DoNothing,
+    ForceRedraw,
 }
 
 pub struct FolderComponent {
@@ -54,8 +59,18 @@ impl Component for FolderComponent {
                 self.props.set_msg_callback.emit(format!("{} chips have been marked as unused", count));
                 true
             },
-
-            FolderMsg::DoNothing => {false},
+            FolderMsg::ReturnToPack(idx) => {
+                let chip_library = ChipLibrary::get_instance();
+                let folder = chip_library.folder.read().unwrap();
+                self.props.set_msg_callback.emit(format!("A copy of {} has been returned to your pack",folder.get(idx).unwrap().name));
+                drop(folder);
+                if let Err(why) = chip_library.return_fldr_chip_to_pack(idx) {
+                   unsafe{alert(why)};
+                }
+                true
+            },
+            FolderMsg::DoNothing => false,
+            FolderMsg::ForceRedraw => true,
         }
     }
 
@@ -135,12 +150,12 @@ impl FolderComponent {
             }
             ChipSortOptions::MaxDamage => {
                 folder.sort_by(|a, b| {
-                    a.chip.max_dmg().partial_cmp(&b.chip.max_dmg()).unwrap().reverse().then_with(||a.chip.name.cmp(&b.chip.name))
+                    unsafe{a.chip.max_dmg().partial_cmp(&b.chip.max_dmg()).unchecked_unwrap()}.reverse().then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
             ChipSortOptions::AverageDamage => {
                 folder.sort_by(|a, b| {
-                    a.chip.avg_dmg().partial_cmp(&b.chip.avg_dmg()).unwrap().reverse().then_with(||a.chip.name.cmp(&b.chip.name))
+                    unsafe{a.chip.avg_dmg().partial_cmp(&b.chip.avg_dmg()).unchecked_unwrap()}.reverse().then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
             ChipSortOptions::Skill => {
@@ -153,19 +168,19 @@ impl FolderComponent {
                     a.chip.range.cmp(&b.chip.range).then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
-            ChipSortOptions::Owned => {unreachable!()}
+            ChipSortOptions::Owned => unsafe{core::hint::unreachable_unchecked()}
         }
 
         let folder_len = folder.len();
 
         //drop lock, no longer needed
         drop(folder);
-
+        let return_to_pack = self.link.callback(|idx: usize| FolderMsg::ReturnToPack(idx));
         html! {
             <>
             {(0..folder_len).map(|idx|{
                 html!{
-                    <FolderChip index={idx} set_msg_callback={self.props.set_msg_callback.clone()}/>
+                    <FolderChip index={idx} set_msg_callback={self.props.set_msg_callback.clone()} return_to_pack_callback={return_to_pack.clone()}/>
                 }
             }).collect::<Html>()}
             </>

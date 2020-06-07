@@ -9,3 +9,28 @@
     color: blue !important;
     border: 1px solid lightgray;
 }
+
+.sideButtons {
+    background-color: #78909c;
+    margin: .375rem;
+    text-transform: uppercase;
+    word-wrap: break-word;
+    white-space: normal;
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,.16),0 2px 10px 0 rgba(0,0,0,.12);
+}
+
+.ripple {
+    position: relative;
+    overflow: hidden;
+    transition: background 0.8s;
+}
+
+.ripple:hover {
+    background: #78909c radial-gradient(circle, transparent 1%, #78909c 1%) center/15000%;
+}
+
+.ripple:active {
+    background-color: #99abb4;
+    background-size: 100%;
+    transition: background 0s;
+}

@@ -1,35 +1,43 @@
 use crate::chip_library::ChipLibrary;
-use crate::util::generate_element_images;
+use crate::agents::global_msg::{Request as GlobalMsgReq, GlobalMsgBus};
+use crate::util::{generate_element_images, alert};
+use yew::agent::{Dispatcher, Dispatched};
+use unchecked_unwrap::UncheckedUnwrap;
 use yew::prelude::*;
 
 #[derive(Properties, Clone)]
 pub struct PackChipProps {
     pub name: String,
-    pub set_msg_callback: Callback<String>,
+    pub force_redraw_callback: Callback<String>,
 }
 
 pub struct PackChip {
     props: PackChipProps,
     link: ComponentLink<Self>,
+    event_bus: Dispatcher<GlobalMsgBus>,
 }
 
-pub enum PackMsg {
-    DoubleClick,
+pub enum PackChipMsg {
     DoNothing,
+    SetGlobalMsg(String),
 }
 
 impl Component for PackChip {
-    type Message = PackMsg;
+    type Message = PackChipMsg;
     type Properties = PackChipProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Self { props, link }
+        let event_bus = GlobalMsgBus::dispatcher();
+        Self { props, link, event_bus }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            PackMsg::DoubleClick => self.move_to_folder(),
-            PackMsg::DoNothing => false,
+            PackChipMsg::DoNothing => false,
+            PackChipMsg::SetGlobalMsg(msg) => {
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
+                true
+            }
         }
     }
 
@@ -44,15 +52,39 @@ impl Component for PackChip {
     }
 
     fn view(&self) -> Html {
-        let pack = ChipLibrary::get_instance().pack.read().unwrap();
-        let chip = pack.get(&self.props.name).unwrap();
+        let pack = unsafe{ChipLibrary::get_instance().pack.read().unchecked_unwrap()};
+        let chip = unsafe{pack.get(&self.props.name).unchecked_unwrap()};
         let chip_css = if chip.owned <= chip.used {
             "UsedChip"
         } else {
             chip.chip.kind.to_css_class()
         };
+
+        let name = self.props.name.clone();
+        let force_update_callback = self.props.force_redraw_callback.clone();
+        let on_dbl_click = self.link.callback(move |_:MouseEvent|{
+            match ChipLibrary::get_instance().move_to_folder(&name) {
+                Err(why) => {
+                    unsafe{alert(why)};
+                    PackChipMsg::DoNothing
+                },
+                Ok(last_chip) => {
+                    let msg = format!(
+                        "A copy of {} has been added to your folder",
+                        name
+                    );
+
+                    if last_chip {
+                        force_update_callback.emit(msg);
+                        return PackChipMsg::DoNothing;
+                    }
+                    PackChipMsg::SetGlobalMsg(msg)
+                }
+            }
+        });
+
         html! {
-            <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={self.link.callback(|_| PackMsg::DoubleClick)} id={format!("{}_P", self.props.name)}>
+            <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={on_dbl_click} id={format!("{}_P", self.props.name)}>
                 <div class="col-3 nopadding debug" style="white-space: nowrap">
                     {&chip.chip.name}
                 </div>
@@ -79,20 +111,5 @@ impl Component for PackChip {
                 </div>
             </div>
         }
-    }
-}
-
-impl PackChip {
-    fn move_to_folder(&self) -> bool {
-        if let Err(why) = ChipLibrary::get_instance().move_to_folder(&self.props.name) {
-            let window = web_sys::window().unwrap();
-            let _ = window.alert_with_message(why);
-            return false;
-        }
-        self.props.set_msg_callback.emit(format!(
-            "A copy of {} has been added to your folder",
-            self.props.name
-        ));
-        true
     }
 }
