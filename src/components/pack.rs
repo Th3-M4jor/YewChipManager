@@ -1,8 +1,9 @@
 use crate::chip_library::{ChipLibrary, PackChip};
-use crate::components::{ChipSortOptions, pack_chip::PackChip as PackChipComponent};
+use crate::components::ChipSortOptions;
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
+use crate::util::{alert, generate_element_images};
 use yew::events::MouseEvent;
 
 use std::collections::HashMap;
@@ -11,12 +12,11 @@ use unchecked_unwrap::UncheckedUnwrap;
 #[derive(Properties, Clone)]
 pub struct PackProps {
     pub active: bool,
-    pub set_msg_callback: Callback<String>,
 }
 
 pub enum PackMsg {
     ChangeSort(ChipSortOptions),
-    ForceRedrawMsg(String),
+    MoveToFolder(String),
     JackOut,
     ExportJson,
     ExportTxt,
@@ -57,7 +57,7 @@ impl Component for PackComponent {
             },
             PackMsg::JackOut => {
                 let count = ChipLibrary::get_instance().jack_out();
-                self.props.set_msg_callback.emit(format!("{} chips have been marked as unused", count));
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(format!("{} chips have been marked as unused", count)));
                 true
             },
             PackMsg::ExportJson => {todo!()},
@@ -65,9 +65,22 @@ impl Component for PackComponent {
             PackMsg::EraseData => {todo!()}
             PackMsg::ImportJson => {todo!()},
             PackMsg::DoNothing => false,
-            PackMsg::ForceRedrawMsg(msg) => {
-                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
-                true
+            PackMsg::MoveToFolder(name) => {
+               match ChipLibrary::get_instance().move_to_folder(&name) {
+                   Ok(_) => {
+                       self.event_bus.send(
+                        GlobalMsgReq::SetHeaderMsg(
+                            format!(
+                            "A copy of {} has been added to your folder",
+                       name
+                    )));
+                       true
+                   }
+                   Err(msg) => {
+                    unsafe{alert(msg)};
+                    true
+                   }
+               }
             }
         }
     }
@@ -110,7 +123,7 @@ impl Component for PackComponent {
 impl PackComponent {
     fn build_top_row(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center debug" style="background-color: gray">
+            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
                 <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
                     {"NAME"}
                 </div>
@@ -142,26 +155,56 @@ impl PackComponent {
         let pack = lib.pack.read().unwrap();
         if pack.len() == 0 {
            return html!{ 
-                <>
+                <span class="noselect Chip">
                 {"Your pack is empty!"}
-                </>
+                </span>
            }
         }
 
         let pack_list = self.fetch_and_sort_pack(&pack);
-        let force_redraw_callback = self.link.callback(|msg: String| PackMsg::ForceRedrawMsg(msg));
+        //let force_redraw_callback = self.link.callback(|msg: String| PackMsg::ForceRedrawMsg(msg));
 
-        html!{
-            <>
-            {
-                pack_list.iter().map(|chip| {
-                    html!{
-                        <PackChipComponent name={&chip.chip.name} force_redraw_callback={force_redraw_callback.clone()}/>
-                    }
-                }).collect::<Html>()
-            }
-            </>
-        }
+        let move_to_folder = self.link.callback(|name: String| PackMsg::MoveToFolder(name));
+        
+        pack_list.iter().map(|chip| {
+            let name = chip.chip.name.clone();
+            let move_to_folder_clone = move_to_folder.clone();
+            let on_dbl_click = Callback::once(move |_:MouseEvent| move_to_folder_clone.emit(name));
+            let chip_css = if chip.owned <= chip.used {
+                "UsedChip"
+            } else {
+                chip.chip.kind.to_css_class()
+            };
+            html!{
+                <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={on_dbl_click} id={format!("{}_P", chip.chip.name)}>
+                    <div class="col-3 nopadding debug" style="white-space: nowrap">
+                        {&chip.chip.name}
+                    </div>
+                    <div class="col-2 nopadding debug">
+                        {chip.chip.skill()}
+                    </div>
+                    <div class="col-1 nopadding debug">
+                        {&chip.chip.damage}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent">
+                        {&chip.chip.range}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
+                        {&chip.chip.hits}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent">
+                        {generate_element_images(&chip.chip.element)}
+                    </div>
+                    <div class="col-1 nopadding">
+                        {chip.owned}
+                    </div>
+                    <div class="col-1 nopadding">
+                        {chip.used}
+                    </div>
+                </div>
+                //<PackChipComponent name={&chip.chip.name} force_redraw_callback={force_redraw_callback.clone()}/>
+                }
+        }).collect::<Html>()
 
     }
 

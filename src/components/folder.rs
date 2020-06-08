@@ -1,8 +1,8 @@
 use unchecked_unwrap::UncheckedUnwrap;
 use yew::prelude::*;
-use crate::components::{ChipSortOptions, folder_chip::FolderChip};
-use crate::chip_library::ChipLibrary;
-use crate::util::alert;
+use crate::components::ChipSortOptions;
+use crate::chip_library::{ChipLibrary, FolderChip as FldrChp};
+use crate::util::{alert, generate_element_images};
 
 
 #[derive(Properties, Clone)]
@@ -13,6 +13,7 @@ pub struct FolderProps {
 
 pub enum FolderMsg {
     ChangeSort(ChipSortOptions),
+    ChangeUsed(usize),
     ReturnToPack(usize),
     JackOut,
     ClearFolder,
@@ -69,6 +70,12 @@ impl Component for FolderComponent {
                 }
                 true
             },
+            FolderMsg::ChangeUsed(idx) => {
+                let chip_library = ChipLibrary::get_instance();
+                let mut folder = chip_library.folder.write().unwrap();
+                folder[idx].used = !folder[idx].used;
+                true
+            }
             FolderMsg::DoNothing => false,
             FolderMsg::ForceRedraw => true,
         }
@@ -97,6 +104,7 @@ impl Component for FolderComponent {
                         </div>
                     </div>
                     <div class="col-2 nopadding">
+                    {self.build_sort_box()}
                     </div>
                 </div>
             </div>
@@ -171,22 +179,90 @@ impl FolderComponent {
             ChipSortOptions::Owned => unsafe{core::hint::unreachable_unchecked()}
         }
 
+        self.fldr_to_html(&folder)
+
+        /*
         let folder_len = folder.len();
 
         //drop lock, no longer needed
         drop(folder);
         let return_to_pack = self.link.callback(|idx: usize| FolderMsg::ReturnToPack(idx));
-        html! {
-            <>
-            {(0..folder_len).map(|idx|{
-                html!{
-                    <FolderChip index={idx} set_msg_callback={self.props.set_msg_callback.clone()} return_to_pack_callback={return_to_pack.clone()}/>
-                }
-            }).collect::<Html>()}
-            </>
-        }
-
+        
+            
+        (0..folder_len).map(|idx|{
+            html!{
+                <FolderChip index={idx} set_msg_callback={self.props.set_msg_callback.clone()} return_to_pack_callback={return_to_pack.clone()}/>
+            }
+        }).collect::<Html>()
+        */
     }
 
+    fn fldr_to_html(&self, chips: &[FldrChp]) -> Html {
+        let return_to_pack = self.link.callback(|idx: usize| FolderMsg::ReturnToPack(idx));
+
+        chips.iter().zip(0..chips.len()).map(|(chip, idx)| {
+            let chip_css = if chip.used {
+                "UsedChip"
+            } else {
+                chip.chip.kind.to_css_class()
+            };
+            let return_clone = return_to_pack.clone();
+            let index_clone = idx;
+            let on_dbl_click = Callback::once(move |_:MouseEvent| return_clone.emit(idx));
+            html!{
+                <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={on_dbl_click} id={format!("F1_{}", idx)}>
+                    <div class="col-1 nopadding debug">
+                        {idx + 1}
+                    </div>
+                    <div class="col-3 nopadding debug" style="white-space: nowrap">
+                        {&chip.chip.name}
+                    </div>
+                    <div class="col-2 nopadding debug">
+                        {chip.chip.skill()}
+                    </div>
+                    <div class="col-1 nopadding debug">
+                        {&chip.chip.damage}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent">
+                        {&chip.chip.range}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
+                        {&chip.chip.hits}
+                    </div>
+                    <div class="col-1 nopadding debug centercontent">
+                        {generate_element_images(&chip.chip.element)}
+                    </div>
+                    <div class="col-1 nopadding centercontent" ondoubleclick={self.link.callback(|e:MouseEvent| {e.stop_propagation(); FolderMsg::DoNothing})}>
+                        <input name="chipUsed" type="checkbox" checked={chip.used} onchange={self.link.callback(move |_| FolderMsg::ChangeUsed(index_clone))}/>
+                    </div>
+                </div>
+            }
+
+        }).collect::<Html>()
+    }
+
+    fn build_sort_box(&self) -> Html {
+        let sort_change_callback = self.link.callback(|e: ChangeData| {
+            if let ChangeData::Select(val) = e {
+                FolderMsg::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
+            } else {
+                FolderMsg::DoNothing
+            }
+        });
+
+        html!{
+            <>
+            <span unselectable="on" class="Chip">{"Sort By"}</span>
+            <select value={&self.sort_by} style="width: 100%" class="custom-select" onchange={sort_change_callback}>
+                <option value="Name">{"Name"}</option>
+                <option value="Element">{"Element"}</option>
+                <option value="MaxDamage">{"MaxDamage"}</option>
+                <option value="AverageDamage">{"AverageDamage"}</option>
+                <option value="Skill">{"Skill"}</option>
+                <option value="Range">{"Range"}</option>
+            </select>
+            </>
+        }
+    }
 }
 

@@ -3,10 +3,10 @@ use yew::prelude::*;
 
 use crate::util::timeout::{set_timeout, TimeoutHandle};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder};
-use crate::agents::global_msg::GlobalMsgBus;
+use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalReq};
 
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum Tabs {
     Library,
     Pack,
@@ -51,9 +51,22 @@ impl PartialEq<str> for Tabs {
     }
 }
 
+#[derive(Clone)]
 pub enum TopLevelMsg {
     ChangeTab(Tabs),
     SetMsg(String),
+    JoinGroup,
+    EraseData,
+    ImportData,
+    CancelModal,
+    ModalOk,
+}
+
+pub enum ModalStatus {
+    JoinGroup,
+    EraseData,
+    ImportData,
+    Closed,
 }
 
 /// Root component
@@ -64,7 +77,7 @@ pub struct App
     message_txt: String,
     message_clear_timeout_handle: Option<TimeoutHandle>,
     _producer: Box<dyn Bridge<GlobalMsgBus>>,
-
+    modal_status: ModalStatus,
 }
 
 impl App {
@@ -145,6 +158,38 @@ impl App {
         
     }
 
+    fn build_modal(&self) -> Html {
+        match self.modal_status {
+            ModalStatus::JoinGroup => {
+                self.join_group_modal()
+            }
+            ModalStatus::EraseData => {
+                self.erase_data_modal()
+            }
+            ModalStatus::ImportData => {
+                self.import_data_modal()
+            }
+            
+            //closed, display nothing
+            ModalStatus::Closed => {
+                html!{
+                    <></>
+                }
+            }
+        }
+    }
+
+    fn join_group_modal(&self) -> Html {
+        todo!();
+    }
+
+    fn erase_data_modal(&self) -> Html {
+        todo!();
+    }
+
+    fn import_data_modal(&self) -> Html {
+        todo!();
+    }
 }
 
 impl Component for App {
@@ -152,7 +197,22 @@ impl Component for App {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let callback = link.callback(TopLevelMsg::SetMsg);
+        let callback = link.callback(|e| {
+            match e {
+                GlobalReq::SetHeaderMsg(msg) => {
+                    TopLevelMsg::SetMsg(msg)
+                }
+                GlobalReq::JoinGroup => {
+                    TopLevelMsg::JoinGroup
+                }
+                GlobalReq::EraseData => {
+                    TopLevelMsg::EraseData
+                }
+                GlobalReq::ImportData => {
+                    TopLevelMsg::ImportData
+                }
+            }
+        });
         let _producer = GlobalMsgBus::bridge(callback);
         App {
             active_tab: Tabs::Library,
@@ -160,6 +220,7 @@ impl Component for App {
             message_clear_timeout_handle: None,
             link,
             _producer,
+            modal_status: ModalStatus::Closed,
         }
     }
 
@@ -171,6 +232,17 @@ impl Component for App {
         return match msg {
             TopLevelMsg::ChangeTab(tab) => self.change_tab(tab),
             TopLevelMsg::SetMsg(message) => self.set_message(message),
+            TopLevelMsg::JoinGroup => {false}
+            TopLevelMsg::EraseData => {false}
+            TopLevelMsg::ImportData => {false}
+            TopLevelMsg::CancelModal => {
+                self.modal_status = ModalStatus::Closed;
+                true
+            }
+            TopLevelMsg::ModalOk => {
+                self.modal_status = ModalStatus::Closed;
+                true
+            }
         }
     }
 
@@ -180,6 +252,7 @@ impl Component for App {
         
 
         html! {
+            <>
             <div class="container-fluid" style="background-color: #00637b; padding: 5px; max-width: 720px">
                 <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
                     <span style="padding-left: 5px">{&self.active_tab}</span><span style="float: right; color: red">{&self.message_txt}</span>
@@ -187,10 +260,12 @@ impl Component for App {
                 <div style="background-color: #4abdb5; padding: 10px">
                     {self.gen_nav_tabs()}
                     <Library active={self.active_tab == Tabs::Library}/>
-                    <Pack active={self.active_tab == Tabs::Pack} set_msg_callback={set_msg_callback.clone()}/>
+                    <Pack active={self.active_tab == Tabs::Pack} />
                     <Folder active={self.active_tab == Tabs::Folder} set_msg_callback={set_msg_callback.clone()}/>
                 </div>
             </div>
+            {self.build_modal()}
+            </>
         }
 
         //let library: RwLockReadGuard<ChipLibrary> = get_instance().get().unwrap().read().unwrap();
