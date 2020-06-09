@@ -102,7 +102,7 @@ impl Component for LibraryChip {
 impl LibraryChip {
     fn with_tooltip(&self) -> Html {
         let chip_css = self.props.chip.kind.to_css_class();
-        
+        todo!();
     }
 
     fn without_tooltip(&self) -> Html {
