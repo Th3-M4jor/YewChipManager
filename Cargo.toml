@@ -41,6 +41,7 @@ features = [
   "EventTarget",
   "HtmlSelectElement",
   "MouseEvent",
+  "console"
 ]
 
 [profile.release]

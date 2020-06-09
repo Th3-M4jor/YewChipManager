@@ -4,7 +4,9 @@ use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
 use crate::util::{alert, generate_element_images};
+use crate::components::pack_chip::PackChipComponent;
 use yew::events::MouseEvent;
+use wasm_bindgen::JsCast;
 
 use std::collections::HashMap;
 use unchecked_unwrap::UncheckedUnwrap;
@@ -30,6 +32,19 @@ pub struct PackComponent {
     sort_by: ChipSortOptions,
     link: ComponentLink<Self>,
     event_bus: Dispatcher<GlobalMsgBus>,
+    move_to_folder_callback: Callback<MouseEvent>
+}
+
+fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
+    if let Some(target) = e.current_target() {
+        return target.dyn_ref::<web_sys::HtmlElement>().map(|div| {
+            let id: String = div.id();
+            let val = id[2..].to_owned();
+            PackMsg::MoveToFolder(val)
+        }).unwrap_or(PackMsg::DoNothing)
+    } else {
+        return PackMsg::DoNothing;
+    }
 }
 
 impl Component for PackComponent {
@@ -38,11 +53,13 @@ impl Component for PackComponent {
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let event_bus = GlobalMsgBus::dispatcher();
+        let move_to_folder_callback = link.callback(move_to_folder_callback);
         Self {
             props,
             link,
             sort_by: ChipSortOptions::Name,
             event_bus,
+            move_to_folder_callback,
         }
     }
 
@@ -162,47 +179,10 @@ impl PackComponent {
         }
 
         let pack_list = self.fetch_and_sort_pack(&pack);
-        //let force_redraw_callback = self.link.callback(|msg: String| PackMsg::ForceRedrawMsg(msg));
-
-        let move_to_folder = self.link.callback(|name: String| PackMsg::MoveToFolder(name));
         
         pack_list.iter().map(|chip| {
-            let name = chip.chip.name.clone();
-            let move_to_folder_clone = move_to_folder.clone();
-            let on_dbl_click = Callback::once(move |_:MouseEvent| move_to_folder_clone.emit(name));
-            let chip_css = if chip.owned <= chip.used {
-                "UsedChip"
-            } else {
-                chip.chip.kind.to_css_class()
-            };
             html!{
-                <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={on_dbl_click} id={format!("{}_P", chip.chip.name)}>
-                    <div class="col-3 nopadding debug" style="white-space: nowrap">
-                        {&chip.chip.name}
-                    </div>
-                    <div class="col-2 nopadding debug">
-                        {chip.chip.skill()}
-                    </div>
-                    <div class="col-1 nopadding debug">
-                        {&chip.chip.damage}
-                    </div>
-                    <div class="col-1 nopadding debug centercontent">
-                        {&chip.chip.range}
-                    </div>
-                    <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
-                        {&chip.chip.hits}
-                    </div>
-                    <div class="col-1 nopadding debug centercontent">
-                        {generate_element_images(&chip.chip.element)}
-                    </div>
-                    <div class="col-1 nopadding">
-                        {chip.owned}
-                    </div>
-                    <div class="col-1 nopadding">
-                        {chip.used}
-                    </div>
-                </div>
-                //<PackChipComponent name={&chip.chip.name} force_redraw_callback={force_redraw_callback.clone()}/>
+                    <PackChipComponent used={chip.used} owned={chip.owned} chip={chip.chip.clone()} add_to_folder={self.move_to_folder_callback.clone()}/>
                 }
         }).collect::<Html>()
 

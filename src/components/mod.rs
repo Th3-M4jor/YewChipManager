@@ -2,8 +2,10 @@ pub mod library;
 pub mod library_chip;
 pub mod pack;
 pub mod folder;
+pub mod folder_chip;
+pub mod pack_chip;
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum ChipSortOptions {
     Name,
     Element,

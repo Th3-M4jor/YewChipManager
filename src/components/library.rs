@@ -96,7 +96,7 @@ impl Component for LibraryComponent {
 impl LibraryComponent {
     fn build_top_row(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center debug" style="background-color: gray">
+            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
                 <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
                     {"NAME"}
                 </div>
@@ -160,25 +160,18 @@ impl LibraryComponent {
 
     fn build_library_chips(&self) -> Html {
         let chip_lib = self.fetch_chips();
-        return if chip_lib.is_empty() {
-            html!{
-                <>
+        if chip_lib.is_empty() {
+           return html!{
+                <span class="noselect">
                 {"Nothing matched your search"}
-                </>
-            }
-        } else {
-            html!{
-                <>
-                {chip_lib.iter().map(|chip| {
-                    html!{
-                        <>
-                        <LibraryChip name={&chip.name}/>
-                        </>
-                    }
-                }).collect::<Html>()}
-                </>
+                </span>
             }
         }
+        chip_lib.iter().map(|chip| {
+            html!{    
+                <LibraryChip name={&chip.name}/>
+            }
+        }).collect::<Html>()
     }
 
     fn fetch_chips(&self) -> Vec<&Arc<BattleChip>> {

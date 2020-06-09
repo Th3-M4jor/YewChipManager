@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use std::cmp::{Ord, Ordering};
-#[derive(Deserialize, Eq, PartialEq, Clone, Copy)]
+#[derive(Deserialize, Clone, Copy)]
 pub enum ChipType {
     Standard,
     Mega,
@@ -28,6 +28,7 @@ impl std::default::Default for ChipType {
 }
 
 impl ChipType {
+    #[inline]
     fn to_num(&self) -> u32 {
         return match self {
             ChipType::Standard | ChipType::Support => 0,
@@ -37,6 +38,7 @@ impl ChipType {
         }
     }
 
+    #[inline]
     pub fn to_css_class(&self) -> &'static str {
         match self {
             ChipType::Standard => {"Chip"}
@@ -62,3 +64,11 @@ impl Ord for ChipType {
         first.cmp(&second)
     }
 }
+
+impl PartialEq for ChipType {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_num() == other.to_num()
+    }
+}
+
+impl Eq for ChipType {}
