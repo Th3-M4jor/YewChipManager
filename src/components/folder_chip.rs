@@ -55,7 +55,7 @@ impl Component for FolderChipComponent {
             self.props.chip.kind.to_css_class()
         };
 
-        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("render called on {} index {}", self.props.chip.name, self.props.idx)));
+        //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("render called on {} index {}", self.props.chip.name, self.props.idx)));
 
         html! {
             <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={self.props.return_to_pack_callback.clone()} id={format!("F1_{}", self.props.idx)}>

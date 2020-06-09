@@ -1,6 +1,6 @@
 use unchecked_unwrap::UncheckedUnwrap;
 use yew::prelude::*;
-use crate::components::{ChipSortOptions, folder_chip::FolderChipComponent as FolderChip};
+use crate::components::{ChipSortOptions, folder_chip::FolderChipComponent as FolderChip, sort_box::ChipSortBox};
 use crate::chip_library::{ChipLibrary, FolderChip as FldrChp};
 use crate::util::{alert, generate_element_images};
 use web_sys::MouseEvent;
@@ -22,44 +22,57 @@ pub enum FolderMsg {
     ForceRedraw,
 }
 
+impl From<std::option::NoneError> for FolderMsg {
+    fn from(_: std::option::NoneError) -> Self {
+        FolderMsg::DoNothing
+    }
+}
+
+impl std::ops::Try for FolderMsg {
+    type Ok = Self;
+    type Error = Self;
+
+    fn into_result(self) -> Result<Self::Ok, Self::Error> {
+        
+        match self {
+            FolderMsg::DoNothing => Err(FolderMsg::DoNothing),
+            _ => Ok(self)
+        }
+    }
+    fn from_error(v: Self::Error) -> Self {
+        FolderMsg::DoNothing
+    }
+    fn from_ok(v: Self::Ok) -> Self {
+        v
+    }
+    
+}
+
 pub struct FolderComponent {
     props: FolderProps,
     link: ComponentLink<Self>,
     sort_by: ChipSortOptions,
     return_to_pack: Callback<MouseEvent>,
     change_used_callback: Callback<MouseEvent>,
+    sort_change_callback: Callback<ChangeData>,
 }
 
 fn return_pack_callback(e: MouseEvent) -> FolderMsg {
-    if let Some(target) = e.current_target() {
-        return target.dyn_ref::<web_sys::HtmlElement>().map(|div| {
-            let id: String = div.id();
-            let val = id[3..].parse::<usize>();
-            if let Ok(idx) = val {
-                return FolderMsg::ReturnToPack(idx);
-            } else {
-                return FolderMsg::DoNothing;
-            }
-        }).unwrap_or(FolderMsg::DoNothing)
-    } else {
-        return FolderMsg::DoNothing;
-    }
+    
+    let target = e.current_target()?;
+    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+    let id = div.id();
+    let val = id[3..].parse::<usize>().ok()?;
+    FolderMsg::ReturnToPack(val)
 }
 
 fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
-    if let Some(target) = e.current_target() {
-        return target.dyn_ref::<web_sys::HtmlElement>().map(|div| {
-            let id: String = div.id();
-            let val = id[3..].parse::<usize>();
-            if let Ok(idx) = val {
-                return FolderMsg::ChangeUsed(idx);
-            } else {
-                return FolderMsg::DoNothing;
-            }
-        }).unwrap_or(FolderMsg::DoNothing)
-    } else {
-        return FolderMsg::DoNothing;
-    }
+    
+    let target = e.current_target()?;
+    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+    let id = div.id();
+    let val = id[3..].parse::<usize>().ok()?;
+    FolderMsg::ChangeUsed(val)
 }
 
 impl Component for FolderComponent {
@@ -69,12 +82,20 @@ impl Component for FolderComponent {
         //let return_to_pack = link.callback(|idx: usize| FolderMsg::ReturnToPack(idx));
         let change_used_callback = link.callback(change_used_callback_fn);
         let return_to_pack = link.callback(return_pack_callback);
+        let sort_change_callback = link.callback(|e: ChangeData| {
+            if let ChangeData::Select(val) = e {
+                FolderMsg::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
+            } else {
+                FolderMsg::DoNothing
+            }
+        });
         Self {
             props,
             link,
             sort_by: ChipSortOptions::Name,
             return_to_pack,
             change_used_callback,
+            sort_change_callback,
         }
     }
 
@@ -139,12 +160,12 @@ impl Component for FolderComponent {
                 <div class="row nopadding">
                     <div class="col-10 nopadding">
                         <div class={folder_containter_class}>
-                                {self.build_top_row()}
-                                {self.build_folder()}
+                            <FolderTopRow />
+                            {self.build_folder()}
                         </div>
                     </div>
                     <div class="col-2 nopadding">
-                    {self.build_sort_box()}
+                    <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
                     </div>
                 </div>
             </div>
@@ -155,32 +176,6 @@ impl Component for FolderComponent {
 }
 
 impl FolderComponent {
-    fn build_top_row(&self) -> Html {
-        html! {
-            <div class="row sticky-top justify-content-center debug" style="background-color: gray">
-                <div class="col-1 Chip nopadding debug"/>
-                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-2 Chip nopadding debug">
-                    {"SKILL"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"DMG"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"RANGE"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"HITS"}
-                </div>
-                <div class="col-1 Chip nopadding debug"/>
-                <div class="col-1 Chip nopadding debug">
-                    {"USED"}
-                </div>
-            </div>
-        }
-    }
 
     fn build_folder(&self) -> Html {
         let mut folder = ChipLibrary::get_instance().folder.write().unwrap();
@@ -233,27 +228,50 @@ impl FolderComponent {
         
     }
 
-    fn build_sort_box(&self) -> Html {
-        let sort_change_callback = self.link.callback(|e: ChangeData| {
-            if let ChangeData::Select(val) = e {
-                FolderMsg::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
-            } else {
-                FolderMsg::DoNothing
-            }
-        });
+}
 
-        html!{
-            <>
-            <span unselectable="on" class="Chip">{"Sort By"}</span>
-            <select value={&self.sort_by} style="width: 100%" class="custom-select" onchange={sort_change_callback}>
-                <option value="Name">{"Name"}</option>
-                <option value="Element">{"Element"}</option>
-                <option value="MaxDamage">{"MaxDamage"}</option>
-                <option value="AverageDamage">{"AverageDamage"}</option>
-                <option value="Skill">{"Skill"}</option>
-                <option value="Range">{"Range"}</option>
-            </select>
-            </>
+struct FolderTopRow;
+
+impl Component for FolderTopRow {
+    type Properties = ();
+    type Message = ();
+
+    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+        Self{}
+    }
+
+    fn update(&mut self, _: Self::Message) -> ShouldRender {
+        false
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
+    }
+
+    fn view(&self) -> Html {
+        html! {
+            <div class="row sticky-top justify-content-center debug" style="background-color: gray">
+                <div class="col-1 Chip nopadding debug"/>
+                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
+                    {"NAME"}
+                </div>
+                <div class="col-2 Chip nopadding debug">
+                    {"SKILL"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"DMG"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"RANGE"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"HITS"}
+                </div>
+                <div class="col-1 Chip nopadding debug"/>
+                <div class="col-1 Chip nopadding debug">
+                    {"USED"}
+                </div>
+            </div>
         }
     }
 }

@@ -32,3 +32,7 @@ pub fn set_timeout<F: FnMut() + 'static>(interval: i32, callback: F) -> Result<T
     })
 
 }
+
+pub fn eval_tooltip_fn() {
+    let _ = js_sys::eval("setTimeout(() => {$(function () {$('[data-toggle=\"tooltip\"]').tooltip()})})");
+}

@@ -3,17 +3,58 @@ use yew::html::{ChangeData, InputData};
 use std::sync::Arc;
 use unchecked_unwrap::UncheckedUnwrap;
 
-use crate::components::library_chip::LibraryChip;
-use super::ChipSortOptions;
+use crate::components::{ChipSortOptions, library_chip::LibraryChip, sort_box::ChipSortBox};
 use crate::chip_library::ChipLibrary;
 use crate::chip_library::battle_chip::BattleChip;
 
+
+
+pub struct LibraryTopRow;
+
+impl Component for LibraryTopRow {
+    type Message = ();
+    type Properties = ();
+
+    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+        Self{}
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
+    }
+
+    fn update(&mut self, _: Self::Message) -> ShouldRender {
+        false
+    }
+
+    fn view(&self) -> Html {
+        html! {
+            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
+                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
+                    {"NAME"}
+                </div>
+                <div class="col-2 Chip nopadding debug">
+                    {"SKILL"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"DMG"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"RANGE"}
+                </div>
+                <div class="col-1 Chip nopadding debug">
+                    {"HITS"}
+                </div>
+                <div class="col-1 Chip nopadding debug"/>
+            </div>
+        }
+    }
+}
 
 #[derive(Properties, Clone)]
 pub struct LibraryProps {
     pub active: bool,
 }
-
 
 pub enum LibraryMessage {
     ChangeSort(ChipSortOptions),
@@ -26,6 +67,8 @@ pub struct LibraryComponent{
     link: ComponentLink<Self>,
     sort_by: ChipSortOptions,
     filter_by: String,
+    sort_changed: Callback<ChangeData>,
+    text_changed: Callback<InputData>,
 }
 
 impl Component for LibraryComponent {
@@ -33,11 +76,25 @@ impl Component for LibraryComponent {
     type Properties = LibraryProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let sort_changed = link.callback(|e: ChangeData| {
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
+            if let ChangeData::Select(val) = e {
+                LibraryMessage::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
+            } else {
+                LibraryMessage::DoNothing
+            }
+        });
+        let text_changed = link.callback(|e: InputData| {
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
+            LibraryMessage::ChangeFilter(e.value)
+        });
         Self {
             props,
             link,
             sort_by: ChipSortOptions::Name,
             filter_by: String::default(),
+            sort_changed,
+            text_changed,
         }
     }
 
@@ -78,12 +135,12 @@ impl Component for LibraryComponent {
                 <div class="row nopadding">
                     <div class="col-10 nopadding">
                         <div class={library_containter_class}>
-                                {self.build_top_row()}
+                                <LibraryTopRow/>
                                 {self.build_library_chips()}
                         </div>
                     </div>
                     <div class="col-2 nopadding">
-                        {self.build_sort_box()}
+                        <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                         {self.build_search_box()}
                     </div>
                 </div>
@@ -94,59 +151,9 @@ impl Component for LibraryComponent {
 }
 
 impl LibraryComponent {
-    fn build_top_row(&self) -> Html {
-        html! {
-            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
-                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-2 Chip nopadding debug">
-                    {"SKILL"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"DMG"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"RANGE"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"HITS"}
-                </div>
-                <div class="col-1 Chip nopadding debug"/>
-            </div>
-        }
-    }
-
-    fn build_sort_box(&self) -> Html {
-        let select_changed = self.link.callback(|e: ChangeData| {
-            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
-            if let ChangeData::Select(val) = e {
-                LibraryMessage::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
-            } else {
-                LibraryMessage::DoNothing
-            }
-        });
-
-        html!{
-            <>
-            <span unselectable="on" class="Chip">{"Sort By"}</span>
-            <select value={&self.sort_by} style="width: 100%" class="custom-select" onchange={select_changed}>
-                <option value="Name">{"Name"}</option>
-                <option value="Element">{"Element"}</option>
-                <option value="MaxDamage">{"MaxDamage"}</option>
-                <option value="AverageDamage">{"AverageDamage"}</option>
-                <option value="Skill">{"Skill"}</option>
-                <option value="Range">{"Range"}</option>
-            </select>
-            </>
-        }
-    }
 
     fn build_search_box(&self) -> Html {
-        let text_changed = self.link.callback(|e: InputData| {
-            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
-            LibraryMessage::ChangeFilter(e.value)
-        });
+        let text_changed = self.text_changed.clone();
 
         html! {
             <>
@@ -159,7 +166,7 @@ impl LibraryComponent {
     }
 
     fn build_library_chips(&self) -> Html {
-        let chip_lib = self.fetch_chips();
+        let mut chip_lib = self.fetch_chips();
         if chip_lib.is_empty() {
            return html!{
                 <span class="noselect">
@@ -167,9 +174,10 @@ impl LibraryComponent {
                 </span>
             }
         }
-        chip_lib.iter().map(|chip| {
+
+        chip_lib.drain(..).map(|chip|{
             html!{    
-                <LibraryChip name={&chip.name}/>
+                <LibraryChip chip={chip}/>
             }
         }).collect::<Html>()
     }

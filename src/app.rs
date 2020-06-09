@@ -249,7 +249,6 @@ impl Component for App {
     fn view(&self) -> Html {
 
         let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
-        
 
         html! {
             <>

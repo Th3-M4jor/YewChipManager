@@ -1,6 +1,7 @@
 #![recursion_limit = "1024"]
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::eval_order_dependence)]
+#![feature(try_trait)]
 
 pub mod app;
 mod components;
@@ -23,7 +24,10 @@ use app::App;
 // This is the entry point for the web app
 #[wasm_bindgen]
 pub async fn run() -> Result<(), JsValue> {
+    #[cfg(debug_assertions)]
     wasm_logger::init(wasm_logger::Config::default());
+    #[cfg(not(debug_assertions))]
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Error));
     let mut opts = RequestInit::new();
     opts.method("GET");
     opts.mode(RequestMode::Cors);

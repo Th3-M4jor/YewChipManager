@@ -4,8 +4,9 @@ pub mod pack;
 pub mod folder;
 pub mod folder_chip;
 pub mod pack_chip;
+pub mod sort_box;
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ChipSortOptions {
     Name,
     Element,
