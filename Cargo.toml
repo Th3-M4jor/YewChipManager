@@ -24,8 +24,7 @@ wasm-bindgen-futures = "*"
 serde = {version = "*", features = ["rc"]}
 serde_json = "*"
 once_cell = "*"
-dashmap = {version = "^4.0.0-rc5"}
-regex = "*"
+#regex = "*"
 unchecked_unwrap = {version = "*", features = ["debug_checks"]}
 js-sys = "*"
 

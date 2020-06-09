@@ -2,8 +2,6 @@ use crate::chip_library::{elements::Elements, skills::Skills, chip_type::ChipTyp
 use serde::Deserialize;
 use std::cell::UnsafeCell;
 use std::cmp::{Ord, Ordering};
-use once_cell::sync::Lazy;
-use regex::Regex;
 
 #[derive(Deserialize)]
 #[serde(rename_all(deserialize = "PascalCase"))]
@@ -17,10 +15,10 @@ pub struct BattleChip {
     pub range: Ranges,
     pub hits: String,
     pub description: String,
-    #[serde(skip, default = "default_dmg_cell")]
+    #[serde(skip, default = "default_dmg_cell_float")]
     avg_dmg: UnsafeCell<Option<f32>>,
-    #[serde(skip, default = "default_dmg_cell")]
-    max_dmg: UnsafeCell<Option<f32>>,
+    #[serde(skip, default = "default_dmg_cell_int")]
+    max_dmg: UnsafeCell<Option<u32>>,
 }
 
 // using Unsafe cell because shouldn't need to be a mutex
@@ -63,8 +61,6 @@ impl PartialEq for BattleChip {
 
 impl Eq for BattleChip {}
 
-static DAMAGE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)d(\d+)").unwrap());
-
 impl BattleChip {
     pub fn skill(&self) -> Skills {
         if self.skills.len() > 1 {
@@ -98,7 +94,7 @@ impl BattleChip {
         self.load_dmg().0
     }
 
-    pub fn max_dmg(&self) -> f32 {
+    pub fn max_dmg(&self) -> u32 {
         let val = unsafe {&*self.max_dmg.get()};
         if let Some(max) = val {
             return *max;
@@ -108,17 +104,18 @@ impl BattleChip {
         self.load_dmg().1
     }
 
-    fn load_dmg(&self) -> (f32, f32) {
-        let (max,avg) = match DAMAGE_REGEX.captures(&self.damage) {
-            Some(damage_val) => {
-                let num_dice: f32 = damage_val[1].parse::<f32>().unwrap();
-                let die_size: f32 = damage_val[2].parse::<f32>().unwrap();
+    fn load_dmg(&self) -> (f32, u32) {
+        
+        let res = self.damage.split('d').collect::<Vec<&str>>();
+        let (max, avg) = if res.len() != 2 {
+            (0, 0.0)
+        } else {
+            let num_dice = res[0].parse::<u32>().unwrap_or(0);
+            let die_size = res[1].parse::<u32>().unwrap_or(0);
 
-                let avg = ((die_size / 2.0) + 0.5) * num_dice;
-                let max = num_dice * die_size;
-                (max, avg)
-            }
-            None => (0.0, 0.0),
+            let avg = ((die_size as f32 / 2.0) + 0.5) * (num_dice as f32);
+            let max = num_dice * die_size;
+            (max, avg)
         };
 
         let (avg_ptr, max_ptr) = unsafe{(&mut *self.avg_dmg.get(), &mut *self.max_dmg.get())};
@@ -132,6 +129,10 @@ impl BattleChip {
 
 }
 
-fn default_dmg_cell() -> UnsafeCell<Option<f32>> {
+fn default_dmg_cell_float() -> UnsafeCell<Option<f32>> {
+    UnsafeCell::new(None)
+}
+
+fn default_dmg_cell_int() -> UnsafeCell<Option<u32>> {
     UnsafeCell::new(None)
 }
