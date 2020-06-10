@@ -1,0 +1,29 @@
+@keyframes chip-in-one {
+    from {
+        transform: rotateY(-90deg);
+    }
+    to {
+        transform: rotateY(0deg);
+    }
+}
+
+@keyframes chip-in-two {
+    from {
+        transform: rotateY(-90deg);
+    }
+    to {
+        transform: rotateY(0deg);
+    }
+}
+
+.chipWindowOne {
+    animation-name: chip-in-one;
+    animation-duration: 0.3s;
+    animation-iteration-count: 1;
+}
+
+.chipWindowTwo {
+    animation-name: chip-in-two;
+    animation-duration: 0.3s;
+    animation-iteration-count: 1;
+}

@@ -1,7 +1,7 @@
 pub mod timeout;
 
 use yew::prelude::*;
-use crate::chip_library::elements::Elements;
+use crate::chip_library::Elements;
 
 use unchecked_unwrap::UncheckedUnwrap;
 

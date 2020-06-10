@@ -2,10 +2,10 @@ use yew::prelude::*;
 use yew::html::{ChangeData, InputData};
 use std::sync::Arc;
 use unchecked_unwrap::UncheckedUnwrap;
+use wasm_bindgen::JsCast;
 
 use crate::components::{ChipSortOptions, library_chip::LibraryChip, sort_box::ChipSortBox};
-use crate::chip_library::ChipLibrary;
-use crate::chip_library::battle_chip::BattleChip;
+use crate::chip_library::{BattleChip, ChipLibrary};
 
 
 
@@ -28,6 +28,7 @@ impl Component for LibraryTopRow {
     }
 
     fn view(&self) -> Html {
+        /*
         html! {
             <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
                 <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
@@ -48,10 +49,22 @@ impl Component for LibraryTopRow {
                 <div class="col-1 Chip nopadding debug"/>
             </div>
         }
+        */
+        html! {
+            <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
+                <div class="col-4 Chip nopadding" style="white-space: nowrap">
+                    {"NAME"}
+                </div>
+                <div class="col-3 Chip nopadding">
+                    {"SKILL"}
+                </div>
+                <div class="col-2 Chip nopadding"/>
+            </div>
+        }
     }
 }
 
-#[derive(Properties, Clone)]
+#[derive(Properties, Clone, PartialEq)]
 pub struct LibraryProps {
     pub active: bool,
 }
@@ -59,7 +72,48 @@ pub struct LibraryProps {
 pub enum LibraryMessage {
     ChangeSort(ChipSortOptions),
     ChangeFilter(String),
+    SetHighlightedChip(Arc<BattleChip>),
     DoNothing,
+}
+
+impl From<std::option::NoneError> for LibraryMessage {
+    fn from(_: std::option::NoneError) -> Self {
+        LibraryMessage::DoNothing
+    }
+}
+
+impl std::ops::Try for LibraryMessage {
+    type Ok = Self;
+    type Error = Self;
+
+    fn into_result(self) -> Result<Self::Ok, Self::Error> {
+        
+        match self {
+            LibraryMessage::DoNothing => Err(LibraryMessage::DoNothing),
+            _ => Ok(self)
+        }
+    }
+    fn from_error(v: Self::Error) -> Self {
+        LibraryMessage::DoNothing
+    }
+    fn from_ok(v: Self::Ok) -> Self {
+        v
+    }
+    
+}
+
+fn handle_mouseover_event(e: MouseEvent) -> LibraryMessage {
+    let target = e.current_target()?;
+
+    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+
+    let id = div.id();
+
+    let name = &id[2..];
+
+    let chip = ChipLibrary::get_instance().library.get(name)?.clone();
+
+    LibraryMessage::SetHighlightedChip(chip)
 }
 
 pub struct LibraryComponent{
@@ -69,6 +123,9 @@ pub struct LibraryComponent{
     filter_by: String,
     sort_changed: Callback<ChangeData>,
     text_changed: Callback<InputData>,
+    highlighted_chip: Option<Arc<BattleChip>>,
+    chip_mouseover: Callback<MouseEvent>,
+    chip_anim_count: u32,
 }
 
 impl Component for LibraryComponent {
@@ -88,6 +145,7 @@ impl Component for LibraryComponent {
             //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
             LibraryMessage::ChangeFilter(e.value)
         });
+        let chip_mouseover = link.callback(handle_mouseover_event);
         Self {
             props,
             link,
@@ -95,6 +153,9 @@ impl Component for LibraryComponent {
             filter_by: String::default(),
             sort_changed,
             text_changed,
+            highlighted_chip: None,
+            chip_mouseover,
+            chip_anim_count: 0,
         }
     }
 
@@ -113,16 +174,29 @@ impl Component for LibraryComponent {
                 self.filter_by = val.trim().to_ascii_lowercase();
                 true
             }
+            LibraryMessage::SetHighlightedChip(chip) => {
+                if let Some(curr_chip) = &self.highlighted_chip {
+                    if Arc::ptr_eq(curr_chip, &chip) {
+                        return false;
+                    }
+                }
+                self.highlighted_chip = Some(chip);
+                self.chip_anim_count += 1;
+                true
+            }
         }
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props.active == props.active {
+        if props.active == false && self.props.active == true {
             self.props = props;
-            false
+            return true;
+        } else if props.active == true && self.props.active == false {
+            self.props = props;
+            self.highlighted_chip.take();
+            return true;
         } else {
-            self.props = props;
-            true
+            return false;
         }
     }
 
@@ -133,15 +207,18 @@ impl Component for LibraryComponent {
         html! {
             <div class={outer_container_class}>
                 <div class="row nopadding">
-                    <div class="col-10 nopadding">
+                    <div class="col-2 nopadding">
+                        <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
+                        {self.build_search_box()}
+                    </div>
+                    <div class="col-7 nopadding">
                         <div class={library_containter_class}>
                                 <LibraryTopRow/>
                                 {self.build_library_chips()}
                         </div>
                     </div>
-                    <div class="col-2 nopadding">
-                        <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
-                        {self.build_search_box()}
+                    <div class="col-3 nopadding chipDescBackground">
+                        {self.highlighted_chip_text()}
                     </div>
                 </div>
             </div>
@@ -177,7 +254,7 @@ impl LibraryComponent {
 
         chip_lib.drain(..).map(|chip|{
             html!{    
-                <LibraryChip chip={chip}/>
+                <LibraryChip chip={chip} on_mouse_enter={self.chip_mouseover.clone()}/>
             }
         }).collect::<Html>()
     }
@@ -227,4 +304,61 @@ impl LibraryComponent {
         chip_lib
     }
 
+    fn highlighted_chip_text(&self) -> Html {
+        if let Some(chip) = &self.highlighted_chip {
+            let chip_anim_class = if self.chip_anim_count % 2 == 0 {
+                "chipWindowOne"
+            } else {
+                "chipWindowTwo"
+            };
+            let font_style = if chip.description.len() > 450 {
+                "font-size: 12px; text-align: left"
+            } else if chip.description.len() > 300 {
+                "font-size: 14px; text-align: left"
+            } else {
+                "font-size: 15px; text-align: left"
+            };
+            html!{
+                <div class={format!("{} {}",chip_anim_class, chip.kind.to_css_class())} style="padding: 3px">
+                    {build_damage_span(chip)}
+                    {build_range_span(chip)}
+                    {build_hits_span(chip)}
+                    <br/>
+                    <div style={font_style}>
+                        {&chip.description}
+                    </div>
+                </div>
+            }
+        } else {
+            html!{}
+        }
+    }
+}
+
+#[inline]
+fn build_damage_span(chip: &BattleChip) -> Html {
+    if chip.damage == "--" {
+        html!{}
+    } else {
+        html!{
+            <span style="float: left">{&chip.damage}</span>
+        }
+    }
+}
+
+#[inline]
+fn build_range_span(chip: &BattleChip) -> Html {
+    html!{
+        <span>{&chip.range}</span>
+    }
+}
+
+fn build_hits_span(chip: &BattleChip) -> Html {
+    if chip.hits == "0" {
+        html!{}
+    } else {
+        html!{
+            <span style="float: right">{format!("{} hits", chip.hits)}</span>
+        }
+    }
 }

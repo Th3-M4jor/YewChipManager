@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
-use crate::chip_library::{ChipLibrary, battle_chip::BattleChip};
+use crate::chip_library::{ChipLibrary, BattleChip};
 use crate::util::generate_element_images;
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
 use std::sync::Arc;
@@ -8,6 +8,7 @@ use std::sync::Arc;
 #[derive(Properties, Clone)]
 pub struct LibraryChipProps {
     pub chip: Arc<BattleChip>,
+    pub on_mouse_enter: Callback<MouseEvent>,
 }
 
 impl PartialEq for LibraryChipProps {
@@ -74,61 +75,21 @@ impl Component for LibraryChip {
         let chip_css = self.props.chip.kind.to_css_class();
         
         html! {
-            <div class=("row justify-content-center Chip noselect chipHover", chip_css) ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} id={format!("L_{}", self.props.chip.name)}>
-                <div class="col-3 nopadding debug" style="white-space: nowrap">
+            <div class=("row justify-content-center Chip noselect chipHover", chip_css) 
+                ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} 
+                id={format!("L_{}", self.props.chip.name)}
+                onmouseover={self.props.on_mouse_enter.clone()}>
+                <div class="col-4 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}
                 </div>
-                <div class="col-2 nopadding debug">
+                <div class="col-3 nopadding">
                     {self.props.chip.skill()}
                 </div>
-                <div class="col-1 nopadding debug">
-                    {&self.props.chip.damage}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {&self.props.chip.range}
-                </div>
-                <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
-                    {&self.props.chip.hits}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
+                <div class="col-2 nopadding centercontent">
                     {generate_element_images(&self.props.chip.element)}
                 </div>
             </div>
         }
     }
 
-}
-
-impl LibraryChip {
-    fn with_tooltip(&self) -> Html {
-        let chip_css = self.props.chip.kind.to_css_class();
-        todo!();
-    }
-
-    fn without_tooltip(&self) -> Html {
-        let chip_css = self.props.chip.kind.to_css_class();
-        
-        html! {
-            <div class=("row justify-content-center Chip noselect chipHover", chip_css) ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} id={format!("L_{}", self.props.chip.name)}>
-                <div class="col-3 nopadding debug" style="white-space: nowrap">
-                    {&self.props.chip.name}
-                </div>
-                <div class="col-2 nopadding debug">
-                    {self.props.chip.skill()}
-                </div>
-                <div class="col-1 nopadding debug">
-                    {&self.props.chip.damage}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {&self.props.chip.range}
-                </div>
-                <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
-                    {&self.props.chip.hits}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {generate_element_images(&self.props.chip.element)}
-                </div>
-            </div>
-        }
-    }
 }

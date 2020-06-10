@@ -3,6 +3,7 @@
 @use 'layout';
 @use 'buttons';
 @use 'modal';
+@use 'animations';
 
 div.Folder {
   border-radius: 8px;
@@ -37,7 +38,7 @@ body {
 }
 
 .debug {
-  border: 1px solid transparent;
+  border: 1px solid red;
 }
 
 .centercontent {

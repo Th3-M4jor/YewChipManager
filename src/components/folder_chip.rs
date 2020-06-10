@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use std::sync::Arc;
-use crate::chip_library::battle_chip::BattleChip;
+use crate::chip_library::BattleChip;
 use crate::util::generate_element_images;
 
 #[derive(Properties, Clone)]

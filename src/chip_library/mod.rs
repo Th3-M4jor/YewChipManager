@@ -1,14 +1,20 @@
-pub mod battle_chip;
-pub mod elements;
-pub mod skills;
-pub mod chip_type;
-pub mod ranges;
+mod battle_chip;
+mod elements;
+mod skills;
+mod chip_type;
+mod ranges;
+
+
+pub use self::battle_chip::BattleChip;
+pub use self::elements::Elements;
+pub use self::chip_type::ChipType;
+pub use self::ranges::Ranges;
+pub use self::skills::Skills;
 
 use std::collections::hash_map::HashMap;
 use std::sync::RwLock;
 use serde::Serialize;
 use once_cell::sync::OnceCell;
-use battle_chip::BattleChip;
 use unchecked_unwrap::UncheckedUnwrap;
 
 use std::sync::atomic::{Ordering, AtomicU32};
