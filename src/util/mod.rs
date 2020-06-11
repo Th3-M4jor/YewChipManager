@@ -12,7 +12,7 @@ pub fn generate_element_images(elem: &[Elements]) -> Html {
         <span style="white-space: nowrap; display: inline-block">
         {
             elem.iter().map(|element| html!{ 
-                <img src={element.to_img_url()} alt=""/>
+                <img src={element.to_img_url()} alt="" class="chipImg"/>
             }).collect::<Html>()
         }
         </span>

@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use std::sync::Arc;
 use crate::chip_library::BattleChip;
-use crate::util::{generate_element_images, timeout::eval_tooltip_fn};
+use crate::util::{generate_element_images};
 
 #[derive(Properties, Clone)]
 pub struct PackChipProps {
@@ -77,8 +77,6 @@ impl PackChipComponent {
         } else {
             self.props.chip.kind.to_css_class()
         };
-
-        eval_tooltip_fn();
 
         html!{
             <div class=("row justify-content-center noselect chipHover", chip_css) 

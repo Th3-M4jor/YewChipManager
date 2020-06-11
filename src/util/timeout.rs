@@ -17,7 +17,7 @@ impl Drop for TimeoutHandle {
     }
 }
 
-pub fn set_timeout<F: FnMut() + 'static>(interval: i32, callback: F) -> Result<TimeoutHandle, JsValue> {
+pub fn set_timeout<F: Fn() + 'static>(interval: i32, callback: F) -> Result<TimeoutHandle, JsValue> {
     let window = unsafe{web_sys::window().unchecked_unwrap()};
     let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
 
@@ -33,6 +33,17 @@ pub fn set_timeout<F: FnMut() + 'static>(interval: i32, callback: F) -> Result<T
 
 }
 
-pub fn eval_tooltip_fn() {
-    let _ = js_sys::eval("setTimeout(() => {$(function () {$('[data-toggle=\"tooltip\"]').tooltip()})})");
+pub fn set_interval<F: Fn() +'static>(interval: i32, callback: F) -> Result<TimeoutHandle, JsValue> {
+    let window = unsafe{web_sys::window().unchecked_unwrap()};
+    let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+
+    let id = window.set_interval_with_callback_and_timeout_and_arguments_0(
+        closure.as_ref().unchecked_ref(),
+        interval,
+    )?;
+
+    Ok(TimeoutHandle{
+        interval_id: id,
+        _closure: closure,
+    })
 }

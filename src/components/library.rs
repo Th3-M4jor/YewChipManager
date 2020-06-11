@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 
 use crate::components::{ChipSortOptions, library_chip::LibraryChip, sort_box::ChipSortBox};
 use crate::chip_library::{BattleChip, ChipLibrary};
-
+use crate::util::timeout::{TimeoutHandle, set_interval};
 
 
 pub struct LibraryTopRow;
@@ -28,28 +28,6 @@ impl Component for LibraryTopRow {
     }
 
     fn view(&self) -> Html {
-        /*
-        html! {
-            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
-                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-2 Chip nopadding debug">
-                    {"SKILL"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"DMG"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"RANGE"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"HITS"}
-                </div>
-                <div class="col-1 Chip nopadding debug"/>
-            </div>
-        }
-        */
         html! {
             <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
                 <div class="col-4 Chip nopadding" style="white-space: nowrap">
@@ -125,7 +103,8 @@ pub struct LibraryComponent{
     text_changed: Callback<InputData>,
     highlighted_chip: Option<Arc<BattleChip>>,
     chip_mouseover: Callback<MouseEvent>,
-    chip_anim_count: u32,
+    chip_anim_count: usize,
+    scroll_interval: Option<TimeoutHandle>,
 }
 
 impl Component for LibraryComponent {
@@ -146,6 +125,7 @@ impl Component for LibraryComponent {
             LibraryMessage::ChangeFilter(e.value)
         });
         let chip_mouseover = link.callback(handle_mouseover_event);
+        let scroll_interval = set_interval(75, scroll_interval).ok();
         Self {
             props,
             link,
@@ -156,6 +136,7 @@ impl Component for LibraryComponent {
             highlighted_chip: None,
             chip_mouseover,
             chip_anim_count: 0,
+            scroll_interval,
         }
     }
 
@@ -190,10 +171,12 @@ impl Component for LibraryComponent {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         if props.active == false && self.props.active == true {
             self.props = props;
+            self.scroll_interval.take();
             return true;
         } else if props.active == true && self.props.active == false {
             self.props = props;
             self.highlighted_chip.take();
+            self.scroll_interval = set_interval(75, scroll_interval).ok();
             return true;
         } else {
             return false;
@@ -306,25 +289,25 @@ impl LibraryComponent {
 
     fn highlighted_chip_text(&self) -> Html {
         if let Some(chip) = &self.highlighted_chip {
-            let chip_anim_class = if self.chip_anim_count % 2 == 0 {
+            let chip_anim_class = if self.chip_anim_count & 1 == 0 {
                 "chipWindowOne"
             } else {
                 "chipWindowTwo"
             };
-            let font_style = if chip.description.len() > 450 {
+            let font_style = if chip.description.len() > 700 {
                 "font-size: 12px; text-align: left"
-            } else if chip.description.len() > 300 {
+            } else if chip.description.len() > 450 {
                 "font-size: 14px; text-align: left"
             } else {
-                "font-size: 15px; text-align: left"
+                "font-size: 16px; text-align: left"
             };
             html!{
-                <div class={format!("{} {}",chip_anim_class, chip.kind.to_css_class())} style="padding: 3px">
+                <div class={format!("{} chipDescText",chip_anim_class)} style="padding: 3px">
                     {build_damage_span(chip)}
                     {build_range_span(chip)}
                     {build_hits_span(chip)}
                     <br/>
-                    <div style={font_style}>
+                    <div style={font_style} class="chipDescDiv" id="LibraryScrollText">
                         {&chip.description}
                     </div>
                 </div>
@@ -354,11 +337,48 @@ fn build_range_span(chip: &BattleChip) -> Html {
 }
 
 fn build_hits_span(chip: &BattleChip) -> Html {
-    if chip.hits == "0" {
+    
+    //else it's a range so we'll set it to a value that isn't 1 or 0, which are special cases
+    let count = chip.hits.parse::<isize>().unwrap_or(-1); 
+
+    if count == 0 {
         html!{}
+    } else if count == 1 {
+        html!{
+            <span style="float: right">{"1 hit"}</span>
+        }
     } else {
         html!{
             <span style="float: right">{format!("{} hits", chip.hits)}</span>
         }
     }
+}
+
+fn scroll_interval() {
+   let window = unsafe{web_sys::window().unchecked_unwrap()};
+   let document = unsafe{window.document().unchecked_unwrap()};
+   let elem = document.get_element_by_id("LibraryScrollText");
+   let div = match elem {
+       Some(div) => div,
+       None => return
+   };
+
+   let client_height = div.client_height();
+   let total_height = div.scroll_height();
+   let scroll_pos = div.scroll_top();
+
+   let max_scroll = total_height - client_height;
+
+   if max_scroll - 10 <= 0 {
+       return;
+   }
+
+   /*
+   if scroll_pos == max_scroll {
+       div.set_scroll_top(0);
+       return;
+   }
+   */
+
+   div.set_scroll_top(scroll_pos + 1);
 }
