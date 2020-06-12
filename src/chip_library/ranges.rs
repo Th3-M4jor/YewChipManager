@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
-pub enum Ranges {
+pub(crate) enum Ranges {
     Far,
     Near,
     Close,

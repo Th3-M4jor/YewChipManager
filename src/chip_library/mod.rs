@@ -5,11 +5,11 @@ mod chip_type;
 mod ranges;
 
 
-pub use self::battle_chip::BattleChip;
-pub use self::elements::Elements;
-pub use self::chip_type::ChipType;
-pub use self::ranges::Ranges;
-pub use self::skills::Skills;
+pub(crate) use self::battle_chip::BattleChip;
+pub(crate) use self::elements::Elements;
+pub(crate) use self::chip_type::ChipType;
+pub(crate) use self::ranges::Ranges;
+pub(crate) use self::skills::Skills;
 
 use std::collections::hash_map::HashMap;
 use std::sync::RwLock;
@@ -21,7 +21,7 @@ use std::sync::atomic::{Ordering, AtomicU32};
 use std::sync::Arc;
 
 #[derive(Serialize)]
-pub struct PackChip {
+pub(crate) struct PackChip {
     pub owned: u8,
     pub used: u8,
     #[serde(skip)]
@@ -29,14 +29,14 @@ pub struct PackChip {
 }
 
 #[derive(Serialize)]
-pub struct FolderChip {
+pub(crate) struct FolderChip {
     pub name: String,
     pub used: bool,
     #[serde(skip)]
     pub chip: Arc<BattleChip>,
 }
 
-pub struct ChipLibrary {
+pub(crate) struct ChipLibrary {
     pub library: HashMap<String, Arc<BattleChip>>,
     pub pack: RwLock<HashMap<String, PackChip>>,
     pub folder: RwLock<Vec<FolderChip>>,
@@ -47,7 +47,7 @@ static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
 
 impl ChipLibrary {
 
-    pub fn init(data: String) {
+    pub(crate) fn init(data: String) {
          //initialize library
         INSTANCE.get_or_init(|| {
             ChipLibrary::import_local(&data)
@@ -55,14 +55,14 @@ impl ChipLibrary {
     }
 
     // undefined behavior if init has yet to be called
-    pub fn get_instance() -> &'static ChipLibrary {
+    pub(crate) fn get_instance() -> &'static ChipLibrary {
         unsafe { INSTANCE.get().unchecked_unwrap() }
     }
 
     /// if the chip does not exist, causes undefined behavior
-    pub fn get_chip_unchecked(name: &str) -> &BattleChip {
+    pub(crate) unsafe fn get_chip_unchecked(name: &str) -> &BattleChip {
         let lib = ChipLibrary::get_instance();
-        unsafe{lib.library.get(name).unchecked_unwrap()}
+        lib.library.get(name).unchecked_unwrap()
     }
 
     fn import_local(data: &str) -> ChipLibrary {
@@ -178,7 +178,7 @@ impl ChipLibrary {
     }
 
     /// add a copy of a chip to the pack
-    pub fn add_copy_to_pack(&self, name: &str) -> Option<u8> {
+    pub(crate) fn add_copy_to_pack(&self, name: &str) -> Option<u8> {
         
         let mut pack = self.pack.write().unwrap();
 
@@ -198,7 +198,7 @@ impl ChipLibrary {
     }
 
     /// returned bool indicates if it was the last chip of that kind in the pack
-    pub fn move_to_folder(&self, name: &str) -> Result<bool, &'static str> {
+    pub(crate) fn move_to_folder(&self, name: &str) -> Result<bool, &'static str> {
         let mut folder = self.folder.write().unwrap();
         let mut pack = self.pack.write().unwrap();
         if self.chip_limit.load(Ordering::Relaxed) as usize <= folder.len() {
@@ -231,7 +231,7 @@ impl ChipLibrary {
     }
 
     /// returned bool indicates if it was used or not
-    pub fn return_fldr_chip_to_pack(&self, index: usize) -> Result<bool, &'static str> {
+    pub(crate) fn return_fldr_chip_to_pack(&self, index: usize) -> Result<bool, &'static str> {
         let mut folder = self.folder.write().unwrap();
         if folder.len() <= index {
             return Err("Index was out of bounds");
@@ -254,7 +254,7 @@ impl ChipLibrary {
         Ok(fldr_chip.used)
     }
 
-    pub fn clear_folder(&self) -> usize {
+    pub(crate) fn clear_folder(&self) -> usize {
         let mut folder = self.folder.write().unwrap();
         let mut pack = self.pack.write().unwrap();
         let returned_count = folder.len();
@@ -281,7 +281,7 @@ impl ChipLibrary {
         returned_count
     }
 
-    pub fn jack_out(&self) -> u32 {
+    pub(crate) fn jack_out(&self) -> u32 {
         let mut accumulator: u32 = 0;
         let mut folder = self.folder.write().unwrap();
         for chip in folder.iter_mut() {

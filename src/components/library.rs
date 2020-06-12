@@ -4,7 +4,7 @@ use std::sync::Arc;
 use unchecked_unwrap::UncheckedUnwrap;
 use wasm_bindgen::JsCast;
 
-use crate::components::{ChipSortOptions, library_chip::LibraryChip, sort_box::ChipSortBox};
+use crate::components::{ChipSortOptions, chips::LibraryChip, sort_box::ChipSortBox};
 use crate::chip_library::{BattleChip, ChipLibrary};
 use crate::util::timeout::{TimeoutHandle, set_interval};
 
@@ -187,6 +187,11 @@ impl Component for LibraryComponent {
 
         let (library_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
         
+        let chip_desc_background = match &self.highlighted_chip {
+            Some(chip) => chip.kind.to_background_css_class(),
+            None => "chipDescBackgroundStd",
+        };
+
         html! {
             <div class={outer_container_class}>
                 <div class="row nopadding">
@@ -200,7 +205,7 @@ impl Component for LibraryComponent {
                                 {self.build_library_chips()}
                         </div>
                     </div>
-                    <div class="col-3 nopadding chipDescBackground">
+                    <div class={format!("col-3 nopadding {}", chip_desc_background)}>
                         {self.highlighted_chip_text()}
                     </div>
                 </div>
@@ -301,11 +306,12 @@ impl LibraryComponent {
             } else {
                 "font-size: 16px; text-align: left"
             };
+
             html!{
                 <div class={format!("{} chipDescText",chip_anim_class)} style="padding: 3px">
-                    {build_damage_span(chip)}
-                    {build_range_span(chip)}
-                    {build_hits_span(chip)}
+                    {chip.damage_span()}
+                    {chip.range_span()}
+                    {chip.hits_span()}
                     <br/>
                     <div style={font_style} class="chipDescDiv" id="LibraryScrollText">
                         {&chip.description}
@@ -314,42 +320,6 @@ impl LibraryComponent {
             }
         } else {
             html!{}
-        }
-    }
-}
-
-#[inline]
-fn build_damage_span(chip: &BattleChip) -> Html {
-    if chip.damage == "--" {
-        html!{}
-    } else {
-        html!{
-            <span style="float: left">{&chip.damage}</span>
-        }
-    }
-}
-
-#[inline]
-fn build_range_span(chip: &BattleChip) -> Html {
-    html!{
-        <span>{&chip.range}</span>
-    }
-}
-
-fn build_hits_span(chip: &BattleChip) -> Html {
-    
-    //else it's a range so we'll set it to a value that isn't 1 or 0, which are special cases
-    let count = chip.hits.parse::<isize>().unwrap_or(-1); 
-
-    if count == 0 {
-        html!{}
-    } else if count == 1 {
-        html!{
-            <span style="float: right">{"1 hit"}</span>
-        }
-    } else {
-        html!{
-            <span style="float: right">{format!("{} hits", chip.hits)}</span>
         }
     }
 }

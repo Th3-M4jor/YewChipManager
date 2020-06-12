@@ -1,6 +1,6 @@
 use unchecked_unwrap::UncheckedUnwrap;
 use yew::prelude::*;
-use crate::components::{ChipSortOptions, folder_chip::FolderChipComponent as FolderChip, sort_box::ChipSortBox};
+use crate::components::{ChipSortOptions, chips::FolderChipComponent as FolderChip, sort_box::ChipSortBox};
 use crate::chip_library::{ChipLibrary, FolderChip as FldrChp};
 use crate::util::{alert, generate_element_images};
 use web_sys::MouseEvent;

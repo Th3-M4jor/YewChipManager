@@ -3,14 +3,14 @@ use std::collections::HashSet;
 use yew::worker::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Request {
+pub(crate) enum Request {
     SetHeaderMsg(String),
     JoinGroup,
     EraseData,
     ImportData,
 }
 
-pub struct GlobalMsgBus {
+pub(crate) struct GlobalMsgBus {
     link: AgentLink<Self>,
     subs: HashSet<HandlerId>,
 }

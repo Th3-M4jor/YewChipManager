@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
-pub enum Elements {
+pub(crate) enum Elements {
     Fire,
     Aqua,
     Elec,
@@ -33,7 +33,7 @@ const NULL_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCA
 
 
 impl Elements {
-    pub fn to_img_url(&self) -> String {
+    pub(crate) fn to_img_url(&self) -> String {
         return match self {
             Elements::Fire => FIRE_URL,
             Elements::Aqua => AQUA_URL,

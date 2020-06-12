@@ -1,4 +1,4 @@
-pub mod timeout;
+pub(crate) mod timeout;
 
 use yew::prelude::*;
 use crate::chip_library::Elements;

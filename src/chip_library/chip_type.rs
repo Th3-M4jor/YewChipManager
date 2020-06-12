@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::cmp::{Ord, Ordering};
 #[derive(Deserialize, Clone, Copy)]
-pub enum ChipType {
+pub(crate) enum ChipType {
     Standard,
     Mega,
     Giga,
@@ -39,13 +39,24 @@ impl ChipType {
     }
 
     #[inline]
-    pub fn to_css_class(&self) -> &'static str {
+    pub(crate) fn to_css_class(&self) -> &'static str {
         match self {
             ChipType::Standard => {"Chip"}
             ChipType::Mega => {"Mega"}
             ChipType::Giga => {"Giga"}
             ChipType::Dark => {"unknownChip"}
             ChipType::Support => {"SupportChip"}
+        }
+    }
+
+    #[inline]
+    pub(crate) fn to_background_css_class(&self) -> &'static str {
+        match self {
+            ChipType::Standard => {"chipDescBackgroundStd"}
+            ChipType::Mega => {"chipDescBackgroundMega"}
+            ChipType::Giga => {"chipDescBackgroundGiga"}
+            ChipType::Dark => {"chipDescBackgroundDark"}
+            ChipType::Support => {"chipDescBackgroundSupprt"}
         }
     }
 

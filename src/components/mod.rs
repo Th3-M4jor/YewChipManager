@@ -1,10 +1,9 @@
-pub mod library;
-pub mod library_chip;
-pub mod pack;
-pub mod folder;
-pub mod folder_chip;
-pub mod pack_chip;
-pub mod sort_box;
+pub(crate) mod library;
+pub(crate) mod pack;
+pub(crate) mod folder;
+pub(crate) mod sort_box;
+pub(crate) mod chips;
+pub(crate) mod chip_desc;
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ChipSortOptions {

@@ -2,10 +2,11 @@ use crate::chip_library::{elements::Elements, skills::Skills, chip_type::ChipTyp
 use serde::Deserialize;
 use std::cell::UnsafeCell;
 use std::cmp::{Ord, Ordering};
+use yew::prelude::*;
 
 #[derive(Deserialize)]
 #[serde(rename_all(deserialize = "PascalCase"))]
-pub struct BattleChip {
+pub(crate) struct BattleChip {
     pub name: String,
     pub element: Vec<Elements>,
     pub skills: Vec<Skills>,
@@ -62,29 +63,14 @@ impl PartialEq for BattleChip {
 impl Eq for BattleChip {}
 
 impl BattleChip {
-    pub fn skill(&self) -> Skills {
+    pub(crate) fn skill(&self) -> Skills {
         if self.skills.len() > 1 {
             return Skills::Varies;
         }
         self.skills[0]
     }
 
-    pub fn unknown_chip(name: &str) -> BattleChip {
-        BattleChip {
-            name: name.to_owned(),
-            element: vec![Elements::Null],
-            skills: vec![Skills::None],
-            damage: "--".to_owned(),
-            kind: ChipType::Dark,
-            range: Ranges::Itself,
-            hits: "--".to_string(),
-            description: "Unknown Chip".to_owned(),
-            avg_dmg: UnsafeCell::new(None),
-            max_dmg: UnsafeCell::new(None),
-        }
-    }
-
-    pub fn avg_dmg(&self) -> f32 {
+    pub(crate) fn avg_dmg(&self) -> f32 {
         let val = unsafe {&*self.avg_dmg.get()};
         if let Some(avg) = val {
             return *avg;
@@ -94,7 +80,7 @@ impl BattleChip {
         self.load_dmg().0
     }
 
-    pub fn max_dmg(&self) -> u32 {
+    pub(crate) fn max_dmg(&self) -> u32 {
         let val = unsafe {&*self.max_dmg.get()};
         if let Some(max) = val {
             return *max;
@@ -126,6 +112,54 @@ impl BattleChip {
         (avg, max)
     }
 
+    pub(crate) fn unknown_chip(name: &str) -> BattleChip {
+        BattleChip {
+            name: name.to_owned(),
+            element: vec![Elements::Null],
+            skills: vec![Skills::None],
+            damage: "--".to_owned(),
+            kind: ChipType::Dark,
+            range: Ranges::Itself,
+            hits: "--".to_string(),
+            description: "Unknown Chip".to_owned(),
+            avg_dmg: UnsafeCell::new(None),
+            max_dmg: UnsafeCell::new(None),
+        }
+    }
+
+    pub(crate) fn damage_span(&self) -> Html {
+        if self.damage == "--" {
+            html!{}
+        } else {
+            html!{
+                <span style="float: left">{&self.damage}</span>
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn range_span(&self) -> Html {
+        html!{
+            <span>{&self.range}</span>
+        }
+    }
+
+    pub(crate) fn hits_span(&self) -> Html {
+        //else it's a range so we'll set it to a value that isn't 1 or 0, which are special cases
+        let count = self.hits.parse::<isize>().unwrap_or(-1); 
+
+        if count == 0 {
+            html!{}
+        } else if count == 1 {
+            html!{
+                <span style="float: right">{"1 hit"}</span>
+            }
+        } else {
+            html!{
+                <span style="float: right">{format!("{} hits", self.hits)}</span>
+            }
+        }
+    }
 
 }
 
