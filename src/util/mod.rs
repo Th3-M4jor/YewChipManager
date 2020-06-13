@@ -5,7 +5,7 @@ use crate::chip_library::Elements;
 
 use unchecked_unwrap::UncheckedUnwrap;
 
-pub fn generate_element_images(elem: &[Elements]) -> Html {
+pub(crate) fn generate_element_images(elem: &[Elements]) -> Html {
     
     html!{
 
