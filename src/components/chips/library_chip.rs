@@ -3,31 +3,29 @@ use yew::agent::{Dispatcher, Dispatched};
 use crate::chip_library::{ChipLibrary, BattleChip};
 use crate::util::generate_element_images;
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
-use std::sync::Arc;
+use std::rc::Rc;
 
 #[derive(Properties, Clone)]
-pub struct LibraryChipProps {
-    pub chip: Arc<BattleChip>,
+pub(crate) struct LibraryChipProps {
+    pub chip: Rc<BattleChip>,
     pub on_mouse_enter: Callback<MouseEvent>,
 }
 
 impl PartialEq for LibraryChipProps {
     fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.chip, &other.chip)
+        Rc::ptr_eq(&self.chip, &other.chip)
     }
 }
 
-pub struct LibraryChip{
+pub(crate) struct LibraryChip {
     props: LibraryChipProps,
     link: ComponentLink<Self>,
     event_bus: Dispatcher<GlobalMsgBus>,
-    show_tooltip: bool,
 }
 
 #[derive(Eq, PartialEq)]
-pub enum LibraryChipMsg {
+pub(crate) enum LibraryChipMsg {
     DoubleClick,
-    ToggleTooltip,
 }
 
 impl Component for LibraryChip {
@@ -37,7 +35,7 @@ impl Component for LibraryChip {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let event_bus = GlobalMsgBus::dispatcher();
         Self {
-            props, link, event_bus, show_tooltip: false
+            props, link, event_bus
         }
     }
 
@@ -51,10 +49,6 @@ impl Component for LibraryChip {
                     None => {},
                 }
                 false
-            }
-            LibraryChipMsg::ToggleTooltip => {
-                self.show_tooltip = !self.show_tooltip;
-                true
             }
         }
 

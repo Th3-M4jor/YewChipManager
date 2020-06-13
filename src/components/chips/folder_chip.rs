@@ -1,28 +1,31 @@
 use yew::prelude::*;
-use std::sync::Arc;
+use std::rc::Rc;
 use crate::chip_library::BattleChip;
 use crate::util::generate_element_images;
 
 #[derive(Properties, Clone)]
-pub struct FolderChipProps {
+pub(crate) struct FolderChipProps {
     pub used: bool,
-    pub chip: Arc<BattleChip>,
+    pub chip: Rc<BattleChip>,
     pub idx: usize,
     pub swap_used: Callback<MouseEvent>,
-    pub return_to_pack_callback: Callback<MouseEvent>, 
+    pub return_to_pack_callback: Callback<MouseEvent>,
+    pub on_mouse_enter: Callback<MouseEvent>,
+
 }
 
 impl PartialEq for FolderChipProps {
     fn eq(&self, other: &Self) -> bool {
         self.used == other.used 
         && self.idx == other.idx 
-        && Arc::ptr_eq(&self.chip, &other.chip)
+        && Rc::ptr_eq(&self.chip, &other.chip)
         && self.swap_used == other.swap_used
         && self.return_to_pack_callback == other.return_to_pack_callback
+        && self.on_mouse_enter == other.on_mouse_enter
     }
 }
 
-pub struct FolderChipComponent {
+pub(crate) struct FolderChipComponent {
     props: FolderChipProps,
     link: ComponentLink<Self>,
 }
@@ -39,9 +42,11 @@ impl Component for FolderChipComponent {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        let should_update = self.props != props;
-        self.props = props;
-        should_update
+        if self.props != props {
+            self.props = props;
+            return true;
+        }
+        false
     }
 
     fn update(&mut self, _: Self::Message) -> ShouldRender {
@@ -57,6 +62,39 @@ impl Component for FolderChipComponent {
 
         //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("render called on {} index {}", self.props.chip.name, self.props.idx)));
 
+        html!{
+            <div
+                class=("row justify-content-center noselect chipHover", chip_css)
+                ondoubleclick={self.props.return_to_pack_callback.clone()}
+                id={format!("F1_{}", self.props.idx)}
+                onmouseover={self.props.on_mouse_enter.clone()}
+            >
+                <div class="col-1 nopadding">
+                    {self.props.idx + 1}
+                </div>
+                <div class="col-3 nopadding">
+                    {&self.props.chip.name}
+                </div>
+                <div class="col-3 nopadding">
+                    {self.props.chip.skill()}
+                </div>
+                <div class="col-2 nopadding">
+                    {generate_element_images(&self.props.chip.element)}
+                </div>
+                <div class="col-1 nopadding centercontent" ondoubleclick={self.link.callback(|e:MouseEvent| e.stop_propagation())}>
+                    <input
+                        name="chipUsed"
+                        type="checkbox"
+                        class="centerInputBox"
+                        checked={self.props.used}
+                        onclick={self.props.swap_used.clone()}
+                        id={format!("F1_{}", self.props.idx)}
+                    />
+                </div>
+            </div>
+        }
+
+        /*
         html! {
             <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={self.props.return_to_pack_callback.clone()} id={format!("F1_{}", self.props.idx)}>
                     <div class="col-1 nopadding debug">
@@ -85,6 +123,7 @@ impl Component for FolderChipComponent {
                     </div>
             </div>
         }
+        */
 
     }
 }
