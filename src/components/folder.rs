@@ -143,7 +143,7 @@ impl Component for FolderComponent {
 
             FolderMsg::ClearFolder => {
                 let count = ChipLibrary::get_instance().clear_folder();
-                let msg = format!("{} chips have been returned to your pack", count);
+                let msg = count.to_string() + " chips have been returned to your pack";
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 self.set_desc_bus.send(ChipDescMsg::ClearDesc);
                 true
@@ -151,14 +151,17 @@ impl Component for FolderComponent {
 
             FolderMsg::JackOut => {
                 let count = ChipLibrary::get_instance().jack_out();
-                let msg = format!("{} chips have been marked as unused", count);
+                let msg = count.to_string() + " chips have been marked as unused";
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 true
             },
+
             FolderMsg::ReturnToPack(idx) => {
                 let chip_library = ChipLibrary::get_instance();
-                let folder = chip_library.folder.borrow_mut();
-                let msg = format!("A copy of {} has been returned to your pack", folder.get(idx).unwrap().name);
+                let folder = chip_library.folder.borrow();
+                let name = unsafe{folder.get(idx).unchecked_unwrap().name.as_str()};
+                let msg = String::from("A copy of ") + name + " has been returned to your pack";
+                
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 drop(folder);
                 if let Err(why) = chip_library.return_fldr_chip_to_pack(idx) {
@@ -170,13 +173,19 @@ impl Component for FolderComponent {
             FolderMsg::ChangeUsed(idx) => {
                 let chip_library = ChipLibrary::get_instance();
                 let mut folder = chip_library.folder.borrow_mut();
-                folder[idx].used = !folder[idx].used;
+                let chip = unsafe{folder.get_mut(idx).unchecked_unwrap()};
+                chip.used = !chip.used;
+                //folder[idx].used = !folder[idx].used;
                 true
             },
             FolderMsg::SetHighlightedChip(idx) => {
                 let chip_library = ChipLibrary::get_instance();
                 let folder = chip_library.folder.borrow();
-                let name = folder[idx].name.clone();
+                let name = match folder.get(idx) {
+                    Some(chip) => chip.name.clone(),
+                    None => return false,
+                };
+                //let name = folder[idx].name.clone();
                 self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
                 false
             }

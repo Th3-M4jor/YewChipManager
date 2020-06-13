@@ -17,10 +17,10 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 log = "^0.4"
 yew = {version = "^0.16.2"}
-wasm-bindgen = {version = "^0.2", features=["nightly"]}
+wasm-bindgen = {version = "^0.2", features=["nightly", "enable-interning"]}
 wasm-logger = "0.2.0"
-#wee_alloc = "^0.4.5"
-wasm-bindgen-futures = "*"
+wee_alloc = "^0.4.5"
+#wasm-bindgen-futures = "*"
 serde = {version = "*", features = ["rc"]}
 serde_json = "*"
 once_cell = "*"
@@ -44,12 +44,12 @@ features = [
 ]
 
 [profile.release]
-opt-level = "s"
+opt-level = 'z'
 debug = false
 debug-assertions = false
 overflow-checks = false
 lto = true
-panic = 'unwind'
+panic = 'abort'
 incremental = false
 codegen-units = 16
 rpath = false

@@ -72,7 +72,6 @@ fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
 
     let id = div.id();
     let val = id[2..].to_owned();
-    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("{} is being added to folder", val)));
     PackMsg::MoveToFolder(val)
 }
 
@@ -131,7 +130,8 @@ impl Component for PackComponent {
             },
             PackMsg::JackOut => {
                 let count = ChipLibrary::get_instance().jack_out();
-                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(format!("{} chips have been marked as unused", count)));
+                let msg = count.to_string() + " chips have been marked as unused";
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 true
             },
             PackMsg::SetHighlightedChip(name) => {
@@ -186,32 +186,6 @@ impl Component for PackComponent {
             </div>
             </>
         }
-
-        /*
-        let (pack_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
-        html! {
-            <div class={outer_container_class}>
-                <div class="row nopadding">
-                    <div class="col-2 nopadding">
-                        <ChipSortBox include_owned={true} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
-                        <br/>
-                        <br/>
-                        <br/>
-                        {self.generate_buttons()}
-                    </div>
-                    <div class="col-7 nopadding">
-                        <div class={pack_containter_class}>
-                            <PackTopRow />
-                            {self.build_pack_chips()}
-                        </div>
-                    </div>
-                    <div class="col-3 nopadding">
-                    </div>
-                </div>
-            </div>
-        }
-        */
-
     }
 }
 
@@ -314,9 +288,9 @@ impl PackComponent {
 
     fn move_chip_to_folder(&mut self, name: &str) -> bool {
 
-        match ChipLibrary::get_instance().move_to_folder(&name) {
+        match ChipLibrary::get_instance().move_to_folder(name) {
             Ok(last_chip) => {
-                let msg = format!("A copy of {} has been added to your folder", name);
+                let msg = String::from("A copy of ") + name + " has been added to your folder";
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 if last_chip {self.set_desc_bus.send(ChipDescMsg::ClearDesc);}
             }

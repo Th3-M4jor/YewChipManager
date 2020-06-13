@@ -1,5 +1,5 @@
 use yew::prelude::*;
-
+use std::borrow::Cow;
 
 use crate::util::timeout::{set_timeout, TimeoutHandle};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
@@ -14,25 +14,30 @@ pub enum Tabs {
     GroupFolder(String),
 }
 
-impl std::fmt::Display for Tabs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Tabs {
+    pub fn shorten_string(&self) -> Cow<str> {
         match self {
-            Tabs::Library => write!(f, "Library"),
-            Tabs::Folder => write!(f, "Folder"),
-            Tabs::Pack => write!(f, "Pack"),
-            Tabs::GroupFolder(name) => write!(f, "{}'s Folder", name),
+            Tabs::Library => Cow::Borrowed("Lib"),
+            Tabs::Pack => Cow::Borrowed("Pck"),
+            Tabs::Folder => Cow::Borrowed("Fldr"),
+            Tabs::GroupFolder(grp_fldr) => {
+                let mut text = String::new();
+                text.push_str(&grp_fldr[..=4]);
+                text.push_str("...");
+                Cow::Owned(text)
+            }
         }
     }
-}
 
-impl Tabs {
-    pub fn shorten_string(&self) -> String {
+    pub fn to_display_text(&self) -> Cow<str> {
         match self {
-            Tabs::Library => { "Lib".to_string()}
-            Tabs::Pack => {"Pck".to_string()}
-            Tabs::Folder => {"Fldr".to_string()}
+            Tabs::Library => Cow::Borrowed("Library"),
+            Tabs::Pack => Cow::Borrowed("Pack"),
+            Tabs::Folder => Cow::Borrowed("Library"),
             Tabs::GroupFolder(grp_fldr) => {
-                format!("{}...", &grp_fldr[..=4])
+                let mut text = String::from(grp_fldr);
+                text.push_str("'s folder");
+                Cow::Owned(text)
             }
         }
     }
@@ -273,7 +278,7 @@ impl Component for App {
             <>
             <div style="background-color: #00637b; padding: 5px; max-width: 720px; margin: auto;">
                 <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
-                    <span style="padding-left: 5px">{&self.active_tab}</span><span style="float: right; color: red">{&self.message_txt}</span>
+                    <span style="padding-left: 5px">{self.active_tab.to_display_text()}</span><span style="float: right; color: red">{&self.message_txt}</span>
                 </div>
                 <div style="background-color: #4abdb5; padding: 10px;">
                     {self.gen_nav_tabs()}
@@ -291,42 +296,5 @@ impl Component for App {
         }
 
         //let library: RwLockReadGuard<ChipLibrary> = get_instance().get().unwrap().read().unwrap();
-        
-        /*
-        html! {
-            <>
-            {
-                library.library.iter().map(|chip| html!{
-                    <div>
-                        {&chip.1.name}{" "}{chip.1.kind}
-                    </div>
-                }).collect::<Html>()
-            }
-            </>
-        }
-        */
-
-
-
-        /*
-        html! {
-            <>
-                <Nav />
-                <Router<AppRoute, ()>
-                    render = Router::render(|switch: AppRoute | {
-                        match switch {
-                            AppRoute::Home => html!{ <Home /> },
-                            AppRoute::About => html!{ <About /> },
-                            AppRoute::PageNotFound(Permissive(None)) => html!{"Page not found"},
-                            AppRoute::PageNotFound(Permissive(Some(missed_route))) => html!{format!("Page '{}' not found", missed_route)}
-                        }
-                    } )
-                    redirect = Router::redirect(|route: Route<()>| {
-                        AppRoute::PageNotFound(Permissive(Some(route.route)))
-                    })
-                />
-            </>
-        }
-        */
     }
 }

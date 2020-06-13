@@ -140,7 +140,7 @@ impl BattleChip {
     #[inline]
     pub(crate) fn range_span(&self) -> Html {
         html!{
-            <span>{&self.range}</span>
+            <span>{&self.range.as_str()}</span>
         }
     }
 
@@ -155,8 +155,10 @@ impl BattleChip {
                 <span style="float: right">{"1 hit"}</span>
             }
         } else {
+            let mut text = String::from(&self.hits);
+            text.push_str(" hits");
             html!{
-                <span style="float: right">{format!("{} hits", self.hits)}</span>
+                <span style="float: right">{text}</span>
             }
         }
     }

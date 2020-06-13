@@ -40,7 +40,7 @@ impl Component for ChipDescComponent {
             }
         });
         let _producer = ChipDescMsgBus::bridge(callback);
-        let _scroll_interval = set_interval(75, scroll_interval).unwrap();
+        let _scroll_interval = unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
 
         Self {
             chip_anim_ct: 0,
@@ -111,11 +111,11 @@ impl ChipDescComponent {
     }
 
     fn with_chip(&self, chip: &BattleChip) -> Html {
-        let background = chip.kind.to_background_css_class();
+        let background = String::from("col-3 nopadding ") + chip.kind.to_background_css_class();
         let chip_anim_class = if self.chip_anim_ct & 1 == 0 {
-            "chipWindowOne"
+            "chipWindowOne chipDescText"
         } else {
-            "chipWindowTwo"
+            "chipWindowTwo chipDescText"
         };
         let font_style = if chip.description.len() > 700 {
             "font-size: 12px; text-align: left"
@@ -126,8 +126,8 @@ impl ChipDescComponent {
         };
 
         html!{
-            <div class={format!("col-3 nopadding {}", background)}>
-                <div class={format!("{} chipDescText",chip_anim_class)} style="padding: 3px">
+            <div class={background}>
+                <div class={chip_anim_class} style="padding: 3px">
                     {chip.damage_span()}
                     {chip.range_span()}
                     {chip.hits_span()}

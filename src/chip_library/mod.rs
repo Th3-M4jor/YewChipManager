@@ -7,12 +7,8 @@ mod ranges;
 
 pub(crate) use self::battle_chip::BattleChip;
 pub(crate) use self::elements::Elements;
-//pub(crate) use self::chip_type::ChipType;
-//pub(crate) use self::ranges::Ranges;
-//pub(crate) use self::skills::Skills;
 
 use std::collections::hash_map::HashMap;
-//use std::sync::RwLock;
 use std::cell::RefCell;
 use serde::Serialize;
 use once_cell::sync::OnceCell;
@@ -48,7 +44,7 @@ static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
 
 impl ChipLibrary {
 
-    pub(crate) fn init(data: String) {
+    pub(crate) fn init(data: &str) {
          //initialize library
         INSTANCE.get_or_init(|| {
             ChipLibrary::import_local(&data)
@@ -62,7 +58,7 @@ impl ChipLibrary {
     }
 
     fn import_local(data: &str) -> ChipLibrary {
-        let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(&data).expect("Failed to deserialize library");
+        let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(data).expect("Failed to deserialize library");
         let mut library: HashMap<String, Rc<BattleChip>> = HashMap::with_capacity(chip_list.len());
         while !chip_list.is_empty() {
             let chip = chip_list.pop().unwrap();
@@ -106,8 +102,8 @@ impl ChipLibrary {
         let mut to_ret: HashMap<String, PackChip> = HashMap::new();
 
         for pack_chip in map.iter() {
-            let owned = pack_chip.1["owned"].as_i64().unwrap() as u8;
-            let used = pack_chip.1["used"].as_i64().unwrap() as u8;
+            let owned = unsafe{pack_chip.1["owned"].as_i64().unchecked_unwrap()} as u8;
+            let used = unsafe{pack_chip.1["used"].as_i64().unchecked_unwrap()} as u8;
             if let Some(chip) = library.get(pack_chip.0.as_str()) {
                 to_ret.insert(pack_chip.0.clone(), PackChip{
                     owned,
@@ -129,8 +125,8 @@ impl ChipLibrary {
         let fldr = json.as_array()?;
         let mut to_ret: Vec<FolderChip> = Vec::new();
         for folder_chip in fldr.iter() {
-            let name = folder_chip["name"].as_str().unwrap();
-            let used = folder_chip["used"].as_bool().unwrap();
+            let name = unsafe{folder_chip["name"].as_str().unchecked_unwrap()};
+            let used = unsafe{folder_chip["used"].as_bool().unchecked_unwrap()};
             if let Some(chip) = library.get(name) {
                 to_ret.push(
                     FolderChip{
@@ -155,22 +151,26 @@ impl ChipLibrary {
     fn warn_missing_pack(name: &str, owned: u8, used: u8) {
 
         let window = web_sys::window().expect("Could not get window");
-        let _ = window.alert_with_message(&format!(
-            "Your pack had a chip named \"{}\", this no longer exists in the library, you owned {} (of which {} were used)",
-            name, 
-            owned, 
-            used
-        ));
+        let mut msg = String::from("Your pack had a chip named \"");
+        msg.push_str(name);
+        msg.push_str("\", this no longer exists in the library, you owned ");
+        msg.push_str(&owned.to_string());
+        msg.push_str(" (of which ");
+        msg.push_str(&used.to_string());
+        msg.push_str(" were used)");
+
+
+        let _ = window.alert_with_message(&msg);
     }
 
     fn warn_missing_fldr(name: &str, used: bool) {
         let window = web_sys::window().expect("Could not get window");
         let used_unused = if used {"used"} else {"unused"};
-        let _ = window.alert_with_message(&format!(
-            "Your folder had a chip named \"{}\", this no longer exists in the library, you had it marked as: {}",
-            name, 
-            used_unused  
-        ));
+        let mut msg = String::from("Your folder had a chip named \"");
+        msg.push_str(name);
+        msg.push_str("\", this no longer exists in the library, you had it marked as: ");
+        msg.push_str(used_unused);
+        let _ = window.alert_with_message(&msg);
     }
 
     /// add a copy of a chip to the pack
@@ -232,7 +232,7 @@ impl ChipLibrary {
         if folder.len() <= index {
             return Err("Index was out of bounds");
         }
-        let fldr_chip = folder.remove(index);
+        let fldr_chip = folder.swap_remove(index);
         let mut pack = self.pack.borrow_mut();
         let used_incr = if fldr_chip.used {1} else {0};
         if let Some(pack_chip) = pack.get_mut(&fldr_chip.name) {

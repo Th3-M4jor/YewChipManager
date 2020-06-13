@@ -9,13 +9,13 @@ pub(crate) enum Ranges {
     Itself,
 }
 
-impl std::fmt::Display for Ranges {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Ranges {
+    pub(crate) fn as_str(&self) -> &'static str {
         match self {
-            Ranges::Itself => write!(f, "Self"),
-            Ranges::Close => write!(f, "Close"),
-            Ranges::Near => write!(f, "Near"),
-            Ranges::Far => write!(f, "Far"),
+            Ranges::Itself => "Self",
+            Ranges::Close => "Close",
+            Ranges::Near => "Near",
+            Ranges::Far => "Far",
         }
     }
 }

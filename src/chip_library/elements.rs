@@ -33,8 +33,8 @@ const NULL_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCA
 
 
 impl Elements {
-    pub(crate) fn to_img_url(&self) -> String {
-        return match self {
+    pub(crate) fn to_img_url(&self) -> &'static str {
+        match self {
             Elements::Fire => FIRE_URL,
             Elements::Aqua => AQUA_URL,
             Elements::Elec => ELEC_URL,
@@ -47,6 +47,22 @@ impl Elements {
             Elements::Invis => INVIS_URL,
             Elements::Object => OBJECT_URL,
             Elements::Null => NULL_URL,
-        }.to_string()
+        }
+    }
+
+    /// fn to intern urls in JS as copying from rust is expensive
+    pub(crate) fn intern_urls() {
+        wasm_bindgen::intern(FIRE_URL);
+        wasm_bindgen::intern(AQUA_URL);
+        wasm_bindgen::intern(ELEC_URL);
+        wasm_bindgen::intern(WOOD_URL);
+        wasm_bindgen::intern(WIND_URL);
+        wasm_bindgen::intern(SWORD_URL);
+        wasm_bindgen::intern(BREAK_URL);
+        wasm_bindgen::intern(CURSOR_URL);
+        wasm_bindgen::intern(RECOVERY_URL);
+        wasm_bindgen::intern(INVIS_URL);
+        wasm_bindgen::intern(OBJECT_URL);
+        wasm_bindgen::intern(NULL_URL);
     }
 }

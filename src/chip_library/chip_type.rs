@@ -9,18 +9,6 @@ pub(crate) enum ChipType {
     Support,
 }
 
-impl std::fmt::Display for ChipType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChipType::Standard => write!(f, ""),
-            ChipType::Mega => write!(f, "Mega"),
-            ChipType::Giga => write!(f, "Giga"),
-            ChipType::Dark => write!(f, "Dark"),
-            ChipType::Support => write!(f, "Support"),
-        }
-    }
-}
-
 impl std::default::Default for ChipType {
     fn default() -> Self {
         ChipType::Standard
@@ -30,7 +18,7 @@ impl std::default::Default for ChipType {
 impl ChipType {
     #[inline]
     fn to_num(&self) -> u32 {
-        return match self {
+        match self {
             ChipType::Standard | ChipType::Support => 0,
             ChipType::Mega => 1,
             ChipType::Giga => 2,

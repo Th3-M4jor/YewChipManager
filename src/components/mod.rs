@@ -16,6 +16,7 @@ pub enum ChipSortOptions {
     Owned,
 }
 
+/*
 impl std::fmt::Display for ChipSortOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         return match self {
@@ -28,6 +29,21 @@ impl std::fmt::Display for ChipSortOptions {
             ChipSortOptions::Owned => write!(f, "Owned"),
         }
     }   
+}
+*/
+
+impl ChipSortOptions {
+    pub(crate) fn as_str(&self) -> &'static str {
+        match self {
+            ChipSortOptions::Name => {"Name"}
+            ChipSortOptions::Element => {"Element"}
+            ChipSortOptions::MaxDamage => {"MaxDmg"}
+            ChipSortOptions::AverageDamage => {"AvgDmg"}
+            ChipSortOptions::Skill => {"Skill"}
+            ChipSortOptions::Range => {"Range"}
+            ChipSortOptions::Owned => {"Owned"}
+        }
+    }
 }
 
 impl From<&str> for ChipSortOptions {

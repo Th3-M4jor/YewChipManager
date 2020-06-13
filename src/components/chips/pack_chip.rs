@@ -23,6 +23,7 @@ impl PartialEq for PackChipProps {
 
 pub(crate) struct PackChipComponent {
     props: PackChipProps,
+    id_str: String,
 }
 
 impl Component for PackChipComponent {
@@ -30,9 +31,9 @@ impl Component for PackChipComponent {
     type Message = ();
     
     fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
-        
+        let id_str = String::from("P_") + &props.chip.name;
         Self {
-            props,
+            props, id_str
         }
     }
 
@@ -41,9 +42,12 @@ impl Component for PackChipComponent {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        let should_update = self.props != props;
-        self.props = props;
-        should_update
+        if self.props != props {
+            self.props = props;
+            self.id_str = String::from("P_") + &self.props.chip.name;
+            return true;
+        }
+        false
     }
 
     fn view(&self) -> Html {
@@ -56,14 +60,14 @@ impl Component for PackChipComponent {
         html!{
             <div class=("row justify-content-center noselect chipHover", chip_css) 
                 ondoubleclick={self.props.add_to_folder.clone()} 
-                id={format!("P_{}", self.props.chip.name)} 
+                id={&self.id_str} 
                 onmouseover={self.props.on_mouse_enter.clone()}
                 >
                 <div class="col-3 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}
                 </div>
                 <div class="col-3 nopadding">
-                    {self.props.chip.skill()}
+                    {self.props.chip.skill().as_str()}
                 </div>
                 <div class="col-2 nopadding centercontent">
                     {generate_element_images(&self.props.chip.element)}
@@ -79,73 +83,3 @@ impl Component for PackChipComponent {
 
     }
 }
-
-/*
-impl PackChipComponent {
-    fn with_tooltip(&self) -> Html {
-        let chip_css = if self.props.owned <= self.props.used {
-            "UsedChip"
-        } else {
-            self.props.chip.kind.to_css_class()
-        };
-
-        html!{
-            <div class=("row justify-content-center noselect chipHover", chip_css) 
-                ondoubleclick={self.props.add_to_folder.clone()} id={format!("P_{}", self.props.chip.name)} 
-                onmouseout={self.toggle_tooltip_fn.clone()} data-toggle="tooltip" data-placement="bottom" data-animation="true" title={self.props.chip.description.clone()}>
-                <div class="col-3 nopadding debug" style="white-space: nowrap">
-                    {&self.props.chip.name}
-                </div>
-                <div class="col-2 nopadding debug">
-                    {self.props.chip.skill()}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {generate_element_images(&self.props.chip.element)}
-                </div>
-                <div class="col-1 nopadding">
-                    {self.props.owned}
-                </div>
-                <div class="col-1 nopadding">
-                    {self.props.used}
-                </div>
-            </div>
-        }
-    }
-
-    fn without_tooltip(&self) -> Html {
-        let chip_css = if self.props.owned <= self.props.used {
-            "UsedChip"
-        } else {
-            self.props.chip.kind.to_css_class()
-        };
-        html!{
-            <div class=("row justify-content-center noselect chipHover", chip_css) ondoubleclick={self.props.add_to_folder.clone()} id={format!("P_{}", self.props.chip.name)} onmouseover={self.toggle_tooltip_fn.clone()}>
-                <div class="col-3 nopadding debug" style="white-space: nowrap">
-                    {&self.props.chip.name}
-                </div>
-                <div class="col-2 nopadding debug">
-                    {self.props.chip.skill()}
-                </div>
-                <div class="col-1 nopadding debug">
-                    {&self.props.chip.damage}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {&self.props.chip.range}
-                </div>
-                <div class="col-1 nopadding debug centercontent" style="white-space: nowrap">
-                    {&self.props.chip.hits}
-                </div>
-                <div class="col-1 nopadding debug centercontent">
-                    {generate_element_images(&self.props.chip.element)}
-                </div>
-                <div class="col-1 nopadding">
-                    {self.props.owned}
-                </div>
-                <div class="col-1 nopadding">
-                    {self.props.used}
-                </div>
-            </div>
-        }
-    }
-}
-*/
