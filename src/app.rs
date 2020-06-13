@@ -2,7 +2,7 @@ use yew::prelude::*;
 
 
 use crate::util::timeout::{set_timeout, TimeoutHandle};
-use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder};
+use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalReq};
 
 
@@ -248,8 +248,9 @@ impl Component for App {
 
     fn view(&self) -> Html {
 
-        let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
+        //let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
 
+        /*
         html! {
             <>
             <div class="container-fluid" style="background-color: #00637b; padding: 5px; max-width: 720px">
@@ -264,6 +265,28 @@ impl Component for App {
                 </div>
             </div>
             {self.build_modal()}
+            </>
+        }
+        */
+        
+        html!{
+            <>
+            <div style="background-color: #00637b; padding: 5px; max-width: 720px; margin: auto;">
+                <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
+                    <span style="padding-left: 5px">{&self.active_tab}</span><span style="float: right; color: red">{&self.message_txt}</span>
+                </div>
+                <div style="background-color: #4abdb5; padding: 10px;">
+                    {self.gen_nav_tabs()}
+                    <div class="container-fluid">
+                        <div class="row">
+                            <Library active={self.active_tab == Tabs::Library}/>
+                            <Pack active={self.active_tab == Tabs::Pack}/>
+                            <Folder active={self.active_tab == Tabs::Folder}/>
+                            <ChipDescBox/>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </>
         }
 

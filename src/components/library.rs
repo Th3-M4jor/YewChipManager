@@ -1,12 +1,13 @@
 use yew::prelude::*;
+use yew::agent::{Dispatcher, Dispatched};
 use yew::html::{ChangeData, InputData};
-use std::sync::Arc;
+use std::rc::Rc;
 use unchecked_unwrap::UncheckedUnwrap;
 use wasm_bindgen::JsCast;
 
 use crate::components::{ChipSortOptions, chips::LibraryChip, sort_box::ChipSortBox};
 use crate::chip_library::{BattleChip, ChipLibrary};
-use crate::util::timeout::{TimeoutHandle, set_interval};
+use crate::agents::chip_desc::{ChipDescMsg, ChipDescMsgBus};
 
 
 pub struct LibraryTopRow;
@@ -50,7 +51,7 @@ pub struct LibraryProps {
 pub enum LibraryMessage {
     ChangeSort(ChipSortOptions),
     ChangeFilter(String),
-    SetHighlightedChip(Arc<BattleChip>),
+    SetHighlightedChip(String),
     DoNothing,
 }
 
@@ -87,32 +88,30 @@ fn handle_mouseover_event(e: MouseEvent) -> LibraryMessage {
 
     let id = div.id();
 
-    let name = &id[2..];
+    let name = id[2..].to_owned();
 
-    let chip = ChipLibrary::get_instance().library.get(name)?.clone();
+    //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
 
-    LibraryMessage::SetHighlightedChip(chip)
+    LibraryMessage::SetHighlightedChip(name)
 }
 
 pub struct LibraryComponent{
     props: LibraryProps,
-    link: ComponentLink<Self>,
+    _link: ComponentLink<Self>,
     sort_by: ChipSortOptions,
     filter_by: String,
     sort_changed: Callback<ChangeData>,
     text_changed: Callback<InputData>,
-    highlighted_chip: Option<Arc<BattleChip>>,
     chip_mouseover: Callback<MouseEvent>,
-    chip_anim_count: usize,
-    scroll_interval: Option<TimeoutHandle>,
+    set_desc_bus: Dispatcher<ChipDescMsgBus>,
 }
 
 impl Component for LibraryComponent {
     type Message = LibraryMessage;
     type Properties = LibraryProps;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let sort_changed = link.callback(|e: ChangeData| {
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        let sort_changed = _link.callback(|e: ChangeData| {
             //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("sort change emitted"));
             if let ChangeData::Select(val) = e {
                 LibraryMessage::ChangeSort(ChipSortOptions::from(val.value().as_ref()))
@@ -120,23 +119,21 @@ impl Component for LibraryComponent {
                 LibraryMessage::DoNothing
             }
         });
-        let text_changed = link.callback(|e: InputData| {
+        let text_changed = _link.callback(|e: InputData| {
             //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("text change emitted"));
             LibraryMessage::ChangeFilter(e.value)
         });
-        let chip_mouseover = link.callback(handle_mouseover_event);
-        let scroll_interval = set_interval(75, scroll_interval).ok();
+        let chip_mouseover = _link.callback(handle_mouseover_event);
+        let set_desc_bus = ChipDescMsgBus::dispatcher();
         Self {
             props,
-            link,
+            _link,
             sort_by: ChipSortOptions::Name,
             filter_by: String::default(),
             sort_changed,
             text_changed,
-            highlighted_chip: None,
             chip_mouseover,
-            chip_anim_count: 0,
-            scroll_interval,
+            set_desc_bus,
         }
     }
 
@@ -155,15 +152,9 @@ impl Component for LibraryComponent {
                 self.filter_by = val.trim().to_ascii_lowercase();
                 true
             }
-            LibraryMessage::SetHighlightedChip(chip) => {
-                if let Some(curr_chip) = &self.highlighted_chip {
-                    if Arc::ptr_eq(curr_chip, &chip) {
-                        return false;
-                    }
-                }
-                self.highlighted_chip = Some(chip);
-                self.chip_anim_count += 1;
-                true
+            LibraryMessage::SetHighlightedChip(name) => {
+                self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
+                false
             }
         }
     }
@@ -171,12 +162,10 @@ impl Component for LibraryComponent {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         if props.active == false && self.props.active == true {
             self.props = props;
-            self.scroll_interval.take();
             return true;
         } else if props.active == true && self.props.active == false {
             self.props = props;
-            self.highlighted_chip.take();
-            self.scroll_interval = set_interval(75, scroll_interval).ok();
+            self.set_desc_bus.send(ChipDescMsg::ClearDesc);
             return true;
         } else {
             return false;
@@ -185,31 +174,25 @@ impl Component for LibraryComponent {
 
     fn view(&self) -> Html {
 
-        let (library_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
-        
-        let chip_desc_background = match &self.highlighted_chip {
-            Some(chip) => chip.kind.to_background_css_class(),
-            None => "chipDescBackgroundStd",
-        };
+        let (col1_display, col2_display, library_containter_class) = if self.props.active {
+                ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+            } else {
+                ("inactiveTab", "inactiveTab", "container-fluid Folder")
+            };
 
         html! {
-            <div class={outer_container_class}>
-                <div class="row nopadding">
-                    <div class="col-2 nopadding">
-                        <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
-                        {self.build_search_box()}
-                    </div>
-                    <div class="col-7 nopadding">
-                        <div class={library_containter_class}>
-                                <LibraryTopRow/>
-                                {self.build_library_chips()}
-                        </div>
-                    </div>
-                    <div class={format!("col-3 nopadding {}", chip_desc_background)}>
-                        {self.highlighted_chip_text()}
-                    </div>
-                </div>
+            <>
+            <div class={col1_display}>
+                <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
+                {self.build_search_box()}
             </div>
+            <div class={col2_display}>
+                <div class={library_containter_class}>
+                    <LibraryTopRow/>
+                    {self.build_library_chips()}
+                 </div>
+            </div>
+            </>
         }
     }
 
@@ -247,13 +230,13 @@ impl LibraryComponent {
         }).collect::<Html>()
     }
 
-    fn fetch_chips(&self) -> Vec<&Arc<BattleChip>> {
+    fn fetch_chips(&self) -> Vec<&Rc<BattleChip>> {
         let mut chip_lib = if self.filter_by.is_empty() {
-            ChipLibrary::get_instance().library.values().collect::<Vec<&Arc<BattleChip>>>()
+            ChipLibrary::get_instance().library.values().collect::<Vec<&Rc<BattleChip>>>()
         } else {
             ChipLibrary::get_instance().library.values().filter(|chip| {
                 chip.name.to_ascii_lowercase().starts_with(&self.filter_by)
-            }).collect::<Vec<&Arc<BattleChip>>>()
+            }).collect::<Vec<&Rc<BattleChip>>>()
         };
 
         match self.sort_by {
@@ -291,64 +274,4 @@ impl LibraryComponent {
         }
         chip_lib
     }
-
-    fn highlighted_chip_text(&self) -> Html {
-        if let Some(chip) = &self.highlighted_chip {
-            let chip_anim_class = if self.chip_anim_count & 1 == 0 {
-                "chipWindowOne"
-            } else {
-                "chipWindowTwo"
-            };
-            let font_style = if chip.description.len() > 700 {
-                "font-size: 12px; text-align: left"
-            } else if chip.description.len() > 450 {
-                "font-size: 14px; text-align: left"
-            } else {
-                "font-size: 16px; text-align: left"
-            };
-
-            html!{
-                <div class={format!("{} chipDescText",chip_anim_class)} style="padding: 3px">
-                    {chip.damage_span()}
-                    {chip.range_span()}
-                    {chip.hits_span()}
-                    <br/>
-                    <div style={font_style} class="chipDescDiv" id="LibraryScrollText">
-                        {&chip.description}
-                    </div>
-                </div>
-            }
-        } else {
-            html!{}
-        }
-    }
-}
-
-fn scroll_interval() {
-   let window = unsafe{web_sys::window().unchecked_unwrap()};
-   let document = unsafe{window.document().unchecked_unwrap()};
-   let elem = document.get_element_by_id("LibraryScrollText");
-   let div = match elem {
-       Some(div) => div,
-       None => return
-   };
-
-   let client_height = div.client_height();
-   let total_height = div.scroll_height();
-   let scroll_pos = div.scroll_top();
-
-   let max_scroll = total_height - client_height;
-
-   if max_scroll - 10 <= 0 {
-       return;
-   }
-
-   /*
-   if scroll_pos == max_scroll {
-       div.set_scroll_top(0);
-       return;
-   }
-   */
-
-   div.set_scroll_top(scroll_pos + 1);
 }

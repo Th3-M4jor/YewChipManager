@@ -1,21 +1,36 @@
 use unchecked_unwrap::UncheckedUnwrap;
-use yew::prelude::*;
-use crate::components::{ChipSortOptions, chips::FolderChipComponent as FolderChip, sort_box::ChipSortBox};
-use crate::chip_library::{ChipLibrary, FolderChip as FldrChp};
-use crate::util::{alert, generate_element_images};
+use yew::{prelude::*, agent::{Dispatcher, Dispatched}};
+use crate::{
+    components::{
+        ChipSortOptions,
+        chips::FolderChipComponent as FolderChip,
+        sort_box::ChipSortBox
+    }, 
+    chip_library::ChipLibrary,
+    agents::{
+        global_msg::{
+            GlobalMsgBus,
+            Request as GlobalMsgReq
+        }, 
+        chip_desc::{
+            ChipDescMsg,
+            ChipDescMsgBus
+    }},
+    util::alert
+};
 use web_sys::MouseEvent;
 use wasm_bindgen::JsCast;
-
+use std::rc::Rc;
 #[derive(Properties, Clone)]
 pub struct FolderProps {
     pub active: bool,
-    pub set_msg_callback: Callback<String>,
 }
 
 pub enum FolderMsg {
     ChangeSort(ChipSortOptions),
     ChangeUsed(usize),
     ReturnToPack(usize),
+    SetHighlightedChip(usize),
     JackOut,
     ClearFolder,
     DoNothing,
@@ -39,7 +54,7 @@ impl std::ops::Try for FolderMsg {
             _ => Ok(self)
         }
     }
-    fn from_error(v: Self::Error) -> Self {
+    fn from_error(_: Self::Error) -> Self {
         FolderMsg::DoNothing
     }
     fn from_ok(v: Self::Ok) -> Self {
@@ -50,29 +65,38 @@ impl std::ops::Try for FolderMsg {
 
 pub struct FolderComponent {
     props: FolderProps,
-    link: ComponentLink<Self>,
+    _link: ComponentLink<Self>,
     sort_by: ChipSortOptions,
     return_to_pack: Callback<MouseEvent>,
     change_used_callback: Callback<MouseEvent>,
+    chip_mouseover: Callback<MouseEvent>,
     sort_change_callback: Callback<ChangeData>,
+    event_bus: Dispatcher<GlobalMsgBus>,
+    set_desc_bus: Dispatcher<ChipDescMsgBus>,
 }
 
 fn return_pack_callback(e: MouseEvent) -> FolderMsg {
-    
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id = div.id();
-    let val = id[3..].parse::<usize>().ok()?;
-    FolderMsg::ReturnToPack(val)
+    let id: String = div.id();
+    let index = id[3..].parse::<usize>().ok()?;
+    FolderMsg::ReturnToPack(index)
 }
 
 fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
-    
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id = div.id();
-    let val = id[3..].parse::<usize>().ok()?;
-    FolderMsg::ChangeUsed(val)
+    let id: String = div.id();
+    let index = id[3..].parse::<usize>().ok()?;
+    FolderMsg::ChangeUsed(index)
+}
+
+fn handle_mouseover_event(e: MouseEvent) -> FolderMsg {
+    let target = e.current_target()?;
+    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+    let id: String = div.id();
+    let index = id[3..].parse::<usize>().ok()?;
+    FolderMsg::SetHighlightedChip(index)
 }
 
 impl Component for FolderComponent {
@@ -89,13 +113,20 @@ impl Component for FolderComponent {
                 FolderMsg::DoNothing
             }
         });
+        let chip_mouseover = link.callback(handle_mouseover_event);
+        let set_desc_bus = ChipDescMsgBus::dispatcher();
+        let event_bus = GlobalMsgBus::dispatcher();
+
         Self {
             props,
-            link,
+            _link: link,
             sort_by: ChipSortOptions::Name,
             return_to_pack,
             change_used_callback,
             sort_change_callback,
+            event_bus,
+            set_desc_bus,
+            chip_mouseover,
         }
     }
 
@@ -112,30 +143,42 @@ impl Component for FolderComponent {
 
             FolderMsg::ClearFolder => {
                 let count = ChipLibrary::get_instance().clear_folder();
-                self.props.set_msg_callback.emit(format!("{} chips have been returned to your pack", count));
+                let msg = format!("{} chips have been returned to your pack", count);
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
+                self.set_desc_bus.send(ChipDescMsg::ClearDesc);
                 true
             },
 
             FolderMsg::JackOut => {
                 let count = ChipLibrary::get_instance().jack_out();
-                self.props.set_msg_callback.emit(format!("{} chips have been marked as unused", count));
+                let msg = format!("{} chips have been marked as unused", count);
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 true
             },
             FolderMsg::ReturnToPack(idx) => {
                 let chip_library = ChipLibrary::get_instance();
-                let folder = chip_library.folder.read().unwrap();
-                self.props.set_msg_callback.emit(format!("A copy of {} has been returned to your pack",folder.get(idx).unwrap().name));
+                let folder = chip_library.folder.borrow_mut();
+                let msg = format!("A copy of {} has been returned to your pack", folder.get(idx).unwrap().name);
+                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 drop(folder);
                 if let Err(why) = chip_library.return_fldr_chip_to_pack(idx) {
                    unsafe{alert(why)};
                 }
+                self.set_desc_bus.send(ChipDescMsg::ClearDesc);
                 true
             },
             FolderMsg::ChangeUsed(idx) => {
                 let chip_library = ChipLibrary::get_instance();
-                let mut folder = chip_library.folder.write().unwrap();
+                let mut folder = chip_library.folder.borrow_mut();
                 folder[idx].used = !folder[idx].used;
                 true
+            },
+            FolderMsg::SetHighlightedChip(idx) => {
+                let chip_library = ChipLibrary::get_instance();
+                let folder = chip_library.folder.borrow();
+                let name = folder[idx].name.clone();
+                self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
+                false
             }
             FolderMsg::DoNothing => false,
             FolderMsg::ForceRedraw => true,
@@ -143,32 +186,40 @@ impl Component for FolderComponent {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props.active == props.active {
+        // one being set to active has the job of clearing the description text
+        if props.active == false && self.props.active == true {
             self.props = props;
-            false
+            return true;
+        } else if props.active == true && self.props.active == false {
+            self.props = props;
+            self.set_desc_bus.send(ChipDescMsg::ClearDesc);
+            return true;
         } else {
-            self.props = props;
-            true
+            return false;
         }
     }
 
     fn view(&self) -> Html {
-        let (folder_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
+        //let (folder_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
 
-        html! {
-            <div class={outer_container_class}>
-                <div class="row nopadding">
-                    <div class="col-10 nopadding">
-                        <div class={folder_containter_class}>
-                            <FolderTopRow />
-                            {self.build_folder()}
-                        </div>
-                    </div>
-                    <div class="col-2 nopadding">
-                    <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
-                    </div>
+        let (col1_display, col2_display, folder_containter_class) = if self.props.active {
+            ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+        } else {
+            ("inactiveTab", "inactiveTab", "container-fluid Folder")
+        };
+
+        html!{
+            <>
+            <div class={col1_display}>
+                <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
+            </div>
+            <div class={col2_display}>
+                <div class={folder_containter_class}>
+                    <FolderTopRow />
+                    {self.build_folder()}
                 </div>
             </div>
+            </>
         }
 
     }
@@ -178,7 +229,7 @@ impl Component for FolderComponent {
 impl FolderComponent {
 
     fn build_folder(&self) -> Html {
-        let mut folder = ChipLibrary::get_instance().folder.write().unwrap();
+        let mut folder = ChipLibrary::get_instance().folder.borrow_mut();
         
         match self.sort_by {
             ChipSortOptions::Name => {
@@ -211,18 +262,28 @@ impl FolderComponent {
                     a.chip.range.cmp(&b.chip.range).then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
-            ChipSortOptions::Owned => unsafe{core::hint::unreachable_unchecked()}
+            ChipSortOptions::Owned => {
+                #[cfg(not(debug_assertions))]
+                unsafe{core::hint::unreachable_unchecked()};
+                #[cfg(debug_assertions)]
+                unreachable!();
+            },
         }
-
-        //self.fldr_to_html(&folder)
 
         
         let folder_len = folder.len();
 
         folder.iter().zip(0..folder_len).map(|(chip, index)|{
-            let battlechip = chip.chip.clone();
+            let battlechip = Rc::clone(&chip.chip);
             html!{
-                <FolderChip used={chip.used} idx={index} swap_used={self.change_used_callback.clone()} return_to_pack_callback={self.return_to_pack.clone()} chip={battlechip}/>
+                <FolderChip 
+                    used={chip.used} 
+                    idx={index} 
+                    swap_used={self.change_used_callback.clone()} 
+                    return_to_pack_callback={self.return_to_pack.clone()} 
+                    chip={battlechip}
+                    on_mouse_enter={self.chip_mouseover.clone()}
+                />
             }
         }).collect::<Html>()
         
@@ -250,26 +311,17 @@ impl Component for FolderTopRow {
 
     fn view(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center debug" style="background-color: gray">
-                <div class="col-1 Chip nopadding debug"/>
-                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
+            <div class="row sticky-top justify-content-center" style="background-color: gray">
+                <div class="col-1 Chip nopadding"/>
+                <div class="col-3 Chip nopadding" style="white-space: nowrap">
                     {"NAME"}
                 </div>
-                <div class="col-2 Chip nopadding debug">
+                <div class="col-3 Chip nopadding">
                     {"SKILL"}
                 </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"DMG"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"RANGE"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"HITS"}
-                </div>
-                <div class="col-1 Chip nopadding debug"/>
-                <div class="col-1 Chip nopadding debug">
-                    {"USED"}
+                <div class="col-2 Chip nopadding"/>
+                <div class="col-1 Chip nopadding">
+                    {"U"}
                 </div>
             </div>
         }

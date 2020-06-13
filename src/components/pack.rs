@@ -1,8 +1,8 @@
 use crate::chip_library::{ChipLibrary, PackChip};
-use crate::components::{ChipSortOptions, pack_chip::PackChipComponent, sort_box::ChipSortBox};
+use crate::components::{ChipSortOptions, chips::PackChipComponent, sort_box::ChipSortBox};
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
-use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalMsgReq};
+use crate::agents::{global_msg::{GlobalMsgBus, Request as GlobalMsgReq}, chip_desc::{ChipDescMsg, ChipDescMsgBus}};
 use crate::util::alert;
 use yew::events::MouseEvent;
 use wasm_bindgen::JsCast;
@@ -18,6 +18,7 @@ pub struct PackProps {
 pub enum PackMsg {
     ChangeSort(ChipSortOptions),
     MoveToFolder(String),
+    SetHighlightedChip(String),
     JackOut,
     ExportJson,
     ExportTxt,
@@ -58,7 +59,9 @@ pub struct PackComponent {
     link: ComponentLink<Self>,
     event_bus: Dispatcher<GlobalMsgBus>,
     sort_changed: Callback<ChangeData>,
-    move_to_folder_callback: Callback<MouseEvent>
+    move_to_folder_callback: Callback<MouseEvent>,
+    set_desc_bus: Dispatcher<ChipDescMsgBus>,
+    chip_mouseover: Callback<MouseEvent>,
 }
 
 fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
@@ -69,9 +72,24 @@ fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
 
     let id = div.id();
     let val = id[2..].to_owned();
-    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("{} is being added to folder", val)));
+    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!("{} is being added to folder", val)));
     PackMsg::MoveToFolder(val)
 }
+
+fn handle_mouseover_event(e: MouseEvent) -> PackMsg {
+    let target = e.current_target()?;
+
+    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+
+    let id = div.id();
+
+    let name = id[2..].to_owned();
+
+    //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
+
+    PackMsg::SetHighlightedChip(name)
+}
+
 
 impl Component for PackComponent {
     type Message = PackMsg;
@@ -88,6 +106,8 @@ impl Component for PackComponent {
                 PackMsg::DoNothing
             }
         });
+        let chip_mouseover = link.callback(handle_mouseover_event);
+        let set_desc_bus = ChipDescMsgBus::dispatcher();
         Self {
             props,
             link,
@@ -95,6 +115,8 @@ impl Component for PackComponent {
             event_bus,
             move_to_folder_callback,
             sort_changed,
+            chip_mouseover,
+            set_desc_bus,
         }
     }
 
@@ -112,6 +134,10 @@ impl Component for PackComponent {
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(format!("{} chips have been marked as unused", count)));
                 true
             },
+            PackMsg::SetHighlightedChip(name) => {
+                self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
+                false
+            }
             PackMsg::ExportJson => {todo!()},
             PackMsg::ExportTxt => {todo!()},
             PackMsg::EraseData => {todo!()}
@@ -122,27 +148,50 @@ impl Component for PackComponent {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props.active == props.active {
+        // one being set to active has the job of clearing the description text
+        if props.active == false && self.props.active == true {
             self.props = props;
-            false
+            return true;
+        } else if props.active == true && self.props.active == false {
+            self.props = props;
+            self.set_desc_bus.send(ChipDescMsg::ClearDesc);
+            return true;
         } else {
-            self.props = props;
-            true
+            return false;
         }
     }
 
     fn view(&self) -> Html {
-        
+
+        let (col1_display, col2_display, pack_containter_class) = if self.props.active {
+            ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+        } else {
+            ("inactiveTab", "inactiveTab", "container-fluid Folder")
+        };
+
+        html!{
+            <>
+            <div class={col1_display}>
+                <ChipSortBox include_owned={true} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
+                <br/>
+                <br/>
+                <br/>
+                {self.generate_buttons()}
+            </div>
+            <div class={col2_display}>
+                <div class={pack_containter_class}>
+                    <PackTopRow />
+                    {self.build_pack_chips()}
+                </div>
+            </div>
+            </>
+        }
+
+        /*
         let (pack_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
         html! {
             <div class={outer_container_class}>
                 <div class="row nopadding">
-                    <div class="col-10 nopadding">
-                        <div class={pack_containter_class}>
-                            <PackTopRow />
-                            {self.build_pack_chips()}
-                        </div>
-                    </div>
                     <div class="col-2 nopadding">
                         <ChipSortBox include_owned={true} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                         <br/>
@@ -150,9 +199,19 @@ impl Component for PackComponent {
                         <br/>
                         {self.generate_buttons()}
                     </div>
+                    <div class="col-7 nopadding">
+                        <div class={pack_containter_class}>
+                            <PackTopRow />
+                            {self.build_pack_chips()}
+                        </div>
+                    </div>
+                    <div class="col-3 nopadding">
+                    </div>
                 </div>
             </div>
         }
+        */
+
     }
 }
 
@@ -160,7 +219,7 @@ impl PackComponent {
 
     fn build_pack_chips(&self) -> Html {
         let lib = ChipLibrary::get_instance();
-        let pack = lib.pack.read().unwrap();
+        let pack = lib.pack.borrow();
         if pack.len() == 0 {
            return html!{ 
                 <span class="noselect Chip">
@@ -170,10 +229,9 @@ impl PackComponent {
         }
 
         let mut pack_list = self.fetch_and_sort_pack(&pack);
-        
         pack_list.drain(..).map(|chip| {
             html!{
-                    <PackChipComponent used={chip.used} owned={chip.owned} chip={chip.chip.clone()} add_to_folder={self.move_to_folder_callback.clone()}/>
+                    <PackChipComponent used={chip.used} owned={chip.owned} chip={chip.chip.clone()} add_to_folder={self.move_to_folder_callback.clone()} on_mouse_enter={self.chip_mouseover.clone()}/>
                 }
         }).collect::<Html>()
 
@@ -255,10 +313,12 @@ impl PackComponent {
     }
 
     fn move_chip_to_folder(&mut self, name: &str) -> bool {
+
         match ChipLibrary::get_instance().move_to_folder(&name) {
-            Ok(_) => {
+            Ok(last_chip) => {
                 let msg = format!("A copy of {} has been added to your folder", name);
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
+                if last_chip {self.set_desc_bus.send(ChipDescMsg::ClearDesc);}
             }
             Err(msg) => {
              unsafe{alert(msg)};
@@ -290,28 +350,19 @@ impl Component for PackTopRow {
     
     fn view(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center debug noselect" style="background-color: gray">
-                <div class="col-3 Chip nopadding debug" style="white-space: nowrap">
+            <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
+                <div class="col-3 Chip nopadding" style="white-space: nowrap">
                     {"NAME"}
                 </div>
-                <div class="col-2 Chip nopadding debug">
+                <div class="col-3 Chip nopadding">
                     {"SKILL"}
                 </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"DMG"}
+                <div class="col-2 Chip nopadding"/>
+                <div class="col-1 Chip nopadding">
+                    {"O"}
                 </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"RANGE"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"HITS"}
-                </div>
-                <div class="col-1 Chip nopadding debug"/>
-                <div class="col-1 Chip nopadding debug">
-                    {"OWN"}
-                </div>
-                <div class="col-1 Chip nopadding debug">
-                    {"USED"}
+                <div class="col-1 Chip nopadding">
+                    {"U"}
                 </div>
             </div>
         }
