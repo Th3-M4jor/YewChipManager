@@ -18,12 +18,15 @@ use crate::{
     }},
     util::alert
 };
+
 use web_sys::MouseEvent;
 use wasm_bindgen::JsCast;
 use std::rc::Rc;
+use std::sync::atomic::Ordering;
 #[derive(Properties, Clone)]
 pub struct FolderProps {
     pub active: bool,
+    pub in_folder_group: bool,
 }
 
 pub enum FolderMsg {
@@ -31,10 +34,12 @@ pub enum FolderMsg {
     ChangeUsed(usize),
     ReturnToPack(usize),
     SetHighlightedChip(usize),
+    ChangeChipLimit(u32),
     JackOut,
+    JoinFolerGroup,
+    LeaveFolderGroup,
     ClearFolder,
     DoNothing,
-    ForceRedraw,
 }
 
 impl From<std::option::NoneError> for FolderMsg {
@@ -73,6 +78,11 @@ pub struct FolderComponent {
     sort_change_callback: Callback<ChangeData>,
     event_bus: Dispatcher<GlobalMsgBus>,
     set_desc_bus: Dispatcher<ChipDescMsgBus>,
+    chip_limit_change: Callback<ChangeData>,
+    join_folder_group_callback: Callback<MouseEvent>,
+    leave_folder_group_callback: Callback<MouseEvent>,
+    jack_out_callback: Callback<MouseEvent>,
+    clear_folder_callback: Callback<MouseEvent>,
 }
 
 fn return_pack_callback(e: MouseEvent) -> FolderMsg {
@@ -113,9 +123,21 @@ impl Component for FolderComponent {
                 FolderMsg::DoNothing
             }
         });
+        let chip_limit_change = link.callback(|e: ChangeData| {
+            if let ChangeData::Value(text) = e {
+                let val = text.parse::<u32>().ok()?;
+                FolderMsg::ChangeChipLimit(val)
+            } else {
+                FolderMsg::DoNothing
+            }
+        });
         let chip_mouseover = link.callback(handle_mouseover_event);
         let set_desc_bus = ChipDescMsgBus::dispatcher();
         let event_bus = GlobalMsgBus::dispatcher();
+        let join_folder_group_callback = link.callback(|_: MouseEvent| FolderMsg::JoinFolerGroup);
+        let leave_folder_group_callback = link.callback(|_:MouseEvent| FolderMsg::LeaveFolderGroup);
+        let jack_out_callback = link.callback(|_: MouseEvent| FolderMsg::JackOut);
+        let clear_folder_callback = link.callback(|_: MouseEvent| FolderMsg::ClearFolder);
 
         Self {
             props,
@@ -127,6 +149,11 @@ impl Component for FolderComponent {
             event_bus,
             set_desc_bus,
             chip_mouseover,
+            chip_limit_change,
+            leave_folder_group_callback,
+            join_folder_group_callback,
+            jack_out_callback,
+            clear_folder_callback,
         }
     }
 
@@ -154,6 +181,15 @@ impl Component for FolderComponent {
                 let msg = count.to_string() + " chips have been marked as unused";
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 true
+            },
+            FolderMsg::ChangeChipLimit(val) => {
+                match ChipLibrary::get_instance().update_chip_limit(val) {
+                    Ok(should_update) => should_update,
+                    Err(msg) => {
+                        unsafe{alert(msg)};
+                        true
+                    }
+                }
             },
 
             FolderMsg::ReturnToPack(idx) => {
@@ -190,7 +226,14 @@ impl Component for FolderComponent {
                 false
             }
             FolderMsg::DoNothing => false,
-            FolderMsg::ForceRedraw => true,
+            FolderMsg::JoinFolerGroup => {
+                self.event_bus.send(GlobalMsgReq::JoinGroup);
+                false
+            }
+            FolderMsg::LeaveFolderGroup => {
+                self.event_bus.send(GlobalMsgReq::LeaveGroup);
+                false
+            }
         }
     }
 
@@ -202,6 +245,9 @@ impl Component for FolderComponent {
         } else if props.active == true && self.props.active == false {
             self.props = props;
             self.set_desc_bus.send(ChipDescMsg::ClearDesc);
+            return true;
+        } else if props.in_folder_group != self.props.in_folder_group {
+            self.props = props;
             return true;
         } else {
             return false;
@@ -216,11 +262,26 @@ impl Component for FolderComponent {
         } else {
             ("inactiveTab", "inactiveTab", "container-fluid Folder")
         };
-
+        let lib_instance = ChipLibrary::get_instance();
+        let chip_limit_val = lib_instance.chip_limit.load(Ordering::Relaxed).to_string();
+        let min_val = lib_instance.folder.borrow().len().to_string();
+        
         html!{
             <>
             <div class={col1_display}>
+                <span unselectable="on" class="Chip noselect">{"Chip Limit:"}</span>
+                <input 
+                    type="number" class="form-control"
+                    min={min_val} max="45"
+                    value={&chip_limit_val} 
+                    onchange={self.chip_limit_change.clone()}
+                />
+                <br/>
                 <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
+                <br/>
+                <br/>
+                <br/>
+                {self.generate_buttons()}
             </div>
             <div class={col2_display}>
                 <div class={folder_containter_class}>
@@ -239,7 +300,13 @@ impl FolderComponent {
 
     fn build_folder(&self) -> Html {
         let mut folder = ChipLibrary::get_instance().folder.borrow_mut();
-        
+        if folder.len() == 0 {
+            return html!{
+                <span class="noselect Chip">
+                {"Your folder is empty!"}
+                </span>
+            }
+        }
         match self.sort_by {
             ChipSortOptions::Name => {
                 folder.sort_by(|a, b| {
@@ -298,6 +365,30 @@ impl FolderComponent {
         
     }
 
+    fn generate_buttons(&self) -> Html {
+        let (join_or_leave_text, join_or_leave_callback) = if self.props.in_folder_group {
+            ("Leave folder group", self.leave_folder_group_callback.clone())
+        } else {
+            ("Join folder group", self.join_folder_group_callback.clone())
+        };
+
+        html!{
+            <div class="centercontent">
+                <button class="btn sideButtons ripple" onclick={self.jack_out_callback.clone()}>
+                    <span class="Chip">{"Jack Out"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick={self.clear_folder_callback.clone()}>
+                    <span class="Chip">{"Clear Folder"}</span>
+                </button>
+                <br/>
+                <button class="btn sideButtons ripple" onclick={join_or_leave_callback}>
+                    <span class="Chip">{join_or_leave_text}</span>
+                </button>
+                <br/>
+            </div>
+        }
+    }
 }
 
 struct FolderTopRow;
@@ -320,15 +411,19 @@ impl Component for FolderTopRow {
 
     fn view(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center" style="background-color: gray">
-                <div class="col-1 Chip nopadding"/>
+            <div class="row sticky-top justify-content-center" style="background-color: gray; z-index: 1">
+                <div class="col-1 Chip nopadding">
+                    {"#"}
+                </div>
                 <div class="col-3 Chip nopadding" style="white-space: nowrap">
                     {"NAME"}
                 </div>
                 <div class="col-3 Chip nopadding">
                     {"SKILL"}
                 </div>
-                <div class="col-2 Chip nopadding"/>
+                <div class="col-2 Chip nopadding">
+                    {"ELEM"}
+                </div>
                 <div class="col-1 Chip nopadding">
                     {"U"}
                 </div>

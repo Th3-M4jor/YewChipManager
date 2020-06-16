@@ -44,7 +44,7 @@ impl std::ops::Try for PackMsg {
             _ => Ok(self)
         }
     }
-    fn from_error(v: Self::Error) -> Self {
+    fn from_error(_: Self::Error) -> Self {
         PackMsg::DoNothing
     }
     fn from_ok(v: Self::Ok) -> Self {
@@ -56,12 +56,17 @@ impl std::ops::Try for PackMsg {
 pub struct PackComponent {
     props: PackProps,
     sort_by: ChipSortOptions,
-    link: ComponentLink<Self>,
+    _link: ComponentLink<Self>,
     event_bus: Dispatcher<GlobalMsgBus>,
     sort_changed: Callback<ChangeData>,
     move_to_folder_callback: Callback<MouseEvent>,
     set_desc_bus: Dispatcher<ChipDescMsgBus>,
     chip_mouseover: Callback<MouseEvent>,
+    jack_out_callback: Callback<MouseEvent>,
+    export_json_callback: Callback<MouseEvent>,
+    export_txt_callback: Callback<MouseEvent>,
+    erase_data_callback: Callback<MouseEvent>,
+    import_data_callback: Callback<MouseEvent>,
 }
 
 fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
@@ -105,17 +110,27 @@ impl Component for PackComponent {
                 PackMsg::DoNothing
             }
         });
+        let jack_out_callback = link.callback(|_: MouseEvent| PackMsg::JackOut);
+        let export_json_callback = link.callback(|_: MouseEvent| PackMsg::ExportJson);
+        let export_txt_callback = link.callback(|_: MouseEvent| PackMsg::ExportTxt);
+        let erase_data_callback = link.callback(|_: MouseEvent| PackMsg::EraseData);
+        let import_data_callback = link.callback(|_: MouseEvent| PackMsg::ImportJson);
         let chip_mouseover = link.callback(handle_mouseover_event);
         let set_desc_bus = ChipDescMsgBus::dispatcher();
         Self {
             props,
-            link,
+            _link: link,
             sort_by: ChipSortOptions::Name,
             event_bus,
             move_to_folder_callback,
             sort_changed,
             chip_mouseover,
             set_desc_bus,
+            export_json_callback,
+            export_txt_callback,
+            erase_data_callback,
+            import_data_callback,
+            jack_out_callback,
         }
     }
 
@@ -138,10 +153,22 @@ impl Component for PackComponent {
                 self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
                 false
             }
-            PackMsg::ExportJson => {todo!()},
-            PackMsg::ExportTxt => {todo!()},
-            PackMsg::EraseData => {todo!()}
-            PackMsg::ImportJson => {todo!()},
+            PackMsg::ExportJson => {
+                ChipLibrary::get_instance().export_json();
+                false
+            },
+            PackMsg::ExportTxt => {
+                ChipLibrary::get_instance().export_txt();
+                false
+            },
+            PackMsg::EraseData => {
+                self.event_bus.send(GlobalMsgReq::EraseData);
+                false
+            }
+            PackMsg::ImportJson => {
+                self.event_bus.send(GlobalMsgReq::ImportData);
+                false
+            },
             PackMsg::DoNothing => false,
             PackMsg::MoveToFolder(name) => self.move_chip_to_folder(&name)
         }
@@ -254,31 +281,27 @@ impl PackComponent {
     }
 
     fn generate_buttons(&self) -> Html {
-        let jack_out_callback = self.link.callback(|_: MouseEvent| PackMsg::JackOut);
-        let export_json_callback = self.link.callback(|_: MouseEvent| PackMsg::ExportJson);
-        let export_txt_callback = self.link.callback(|_: MouseEvent| PackMsg::ExportTxt);
-        let erase_data_callback = self.link.callback(|_: MouseEvent| PackMsg::EraseData);
-        let import_data_callback = self.link.callback(|_: MouseEvent| PackMsg::ImportJson);
+        
 
         html!{
             <div class="centercontent">
-                <button class="btn sideButtons ripple" onclick=jack_out_callback>
+                <button class="btn sideButtons ripple" onclick={self.jack_out_callback.clone()}>
                     <span class="Chip">{"Jack Out"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick=export_json_callback>
+                <button class="btn sideButtons ripple" onclick={self.export_json_callback.clone()}>
                     <span class="Chip">{"Export JSON"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick=export_txt_callback>
+                <button class="btn sideButtons ripple" onclick={self.export_txt_callback.clone()}>
                     <span class="Chip">{"Export Txt"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick=erase_data_callback>
+                <button class="btn sideButtons ripple" onclick={self.erase_data_callback.clone()}>
                     <span class="Chip">{"Erase Data"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick=import_data_callback>
+                <button class="btn sideButtons ripple" onclick={self.import_data_callback.clone()}>
                     <span class="Chip">{"Import Data"}</span>
                 </button>
             </div>
@@ -324,14 +347,16 @@ impl Component for PackTopRow {
     
     fn view(&self) -> Html {
         html! {
-            <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
+            <div class="row sticky-top justify-content-center noselect" style="background-color: gray; z-index: 1">
                 <div class="col-3 Chip nopadding" style="white-space: nowrap">
                     {"NAME"}
                 </div>
                 <div class="col-3 Chip nopadding">
                     {"SKILL"}
                 </div>
-                <div class="col-2 Chip nopadding"/>
+                <div class="col-2 Chip nopadding">
+                    {"ELEM"}
+                </div>
                 <div class="col-1 Chip nopadding">
                     {"O"}
                 </div>

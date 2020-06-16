@@ -18,10 +18,10 @@ crate-type = ["cdylib", "rlib"]
 log = "^0.4"
 yew = {version = "^0.16.2"}
 wasm-bindgen = {version = "^0.2", features=["nightly", "enable-interning"]}
-wasm-logger = "0.2.0"
+wasm-logger = "^0.2.0"
 wee_alloc = "^0.4.5"
 #wasm-bindgen-futures = "*"
-serde = {version = "*", features = ["rc"]}
+serde = {version = "*"}
 serde_json = "*"
 once_cell = "*"
 #regex = "*"
@@ -29,7 +29,7 @@ unchecked_unwrap = {version = "*", features = ["debug_checks"]}
 js-sys = "*"
 
 [dependencies.web-sys]
-version = "0.3"
+version = "^0.3"
 features = [
   "Document",
   "Element",
@@ -39,8 +39,13 @@ features = [
   "Event",
   "EventTarget",
   "HtmlSelectElement",
+  "HtmlInputElement",
   "MouseEvent",
-  "console"
+  "console",
+  "WebSocket",
+  "File",
+  "FileList",
+  "Blob",
 ]
 
 [profile.release]
@@ -51,5 +56,5 @@ overflow-checks = false
 lto = true
 panic = 'abort'
 incremental = false
-codegen-units = 16
+codegen-units = 4
 rpath = false

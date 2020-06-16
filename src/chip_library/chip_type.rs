@@ -48,6 +48,13 @@ impl ChipType {
         }
     }
 
+    pub(crate) fn max_in_folder(&self) -> u8 {
+        match self {
+            ChipType::Standard | ChipType::Support => 3,
+            ChipType::Mega | ChipType::Giga | ChipType::Dark => 1,
+        }
+    }
+
 }
 
 impl PartialOrd for ChipType {

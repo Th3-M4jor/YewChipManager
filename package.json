@@ -1,5 +1,5 @@
 {
-  "author": "Jet Li <jing.i.qin@icloud.com>",
+  "author": "The Major",
   "name": "yew-app",
   "version": "0.1.0",
   "scripts": {
@@ -8,9 +8,26 @@
     "test": "wasm-pack test --headless --chrome"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@types/file-saver": "^2.0.1",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-wasm.rs": "^1.2.16",
     "sass": "^1.26.8",
     "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.2"
+  },
+  "babel": {
+    "presets": [
+      [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "browsers" : "> 0.5%, not IE 11"
+        }
+      }
+    ]
+  ]
   }
 }

@@ -4,7 +4,9 @@ use std::borrow::Cow;
 use crate::util::timeout::{set_timeout, TimeoutHandle};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalReq};
+use crate::chip_library::ChipLibrary;
 
+use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum Tabs {
@@ -60,13 +62,67 @@ impl PartialEq<str> for Tabs {
 pub enum TopLevelMsg {
     ChangeTab(Tabs),
     SetMsg(String),
+    JoinGroupData{group_name: String, player_name: String},
     JoinGroup,
+    LeaveGroup,
     EraseData,
     ImportData,
+    FileSelected(web_sys::File),
+    LoadFile(String),
     CancelModal,
     ModalOk,
+    DoNothing,
 }
 
+impl From<std::option::NoneError> for TopLevelMsg {
+    fn from(_: std::option::NoneError) -> Self {
+        TopLevelMsg::DoNothing
+    }
+}
+
+impl std::ops::Try for TopLevelMsg {
+    type Ok = Self;
+    type Error = Self;
+
+    fn into_result(self) -> Result<Self::Ok, Self::Error> {
+        
+        match self {
+            TopLevelMsg::DoNothing => Err(TopLevelMsg::DoNothing),
+            _ => Ok(self)
+        }
+    }
+    fn from_error(_: Self::Error) -> Self {
+        TopLevelMsg::DoNothing
+    }
+    fn from_ok(v: Self::Ok) -> Self {
+        v
+    }
+    
+}
+
+impl From<GlobalReq> for TopLevelMsg {
+    fn from(msg: GlobalReq) -> Self {
+        match msg {
+            GlobalReq::SetHeaderMsg(msg) => {
+                TopLevelMsg::SetMsg(msg)
+            }
+            GlobalReq::JoinGroup => {
+                TopLevelMsg::JoinGroup
+            }
+            GlobalReq::EraseData => {
+                TopLevelMsg::EraseData
+            }
+            GlobalReq::ImportData => {
+                TopLevelMsg::ImportData
+            }
+            GlobalReq::LeaveGroup => {
+                TopLevelMsg::LeaveGroup
+            }
+        }
+    }
+}
+
+#[derive(PartialEq)]
 pub enum ModalStatus {
     JoinGroup,
     EraseData,
@@ -79,10 +135,40 @@ pub struct App
 {
     active_tab: Tabs,
     link: ComponentLink<Self>,
+    load_file_callback: Callback<ChangeData>,
     message_txt: String,
     message_clear_timeout_handle: Option<TimeoutHandle>,
     _producer: Box<dyn Bridge<GlobalMsgBus>>,
     modal_status: ModalStatus,
+    in_group: bool,
+    load_file_callback_promise: Option<Closure<dyn FnMut(JsValue)>>,
+    file_input_ref: NodeRef,
+}
+
+fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
+    let window = web_sys::window()?;
+    let document = window.document()?;
+
+    let group_name_element = document.get_element_by_id("group_name")?;
+    let player_name_element = document.get_element_by_id("player_name")?;
+
+    let group_name_input = group_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
+    let player_name_input = player_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
+
+    let group_name = group_name_input.value();
+    let player_name = player_name_input.value();
+
+    TopLevelMsg::JoinGroupData{player_name, group_name}
+
+}
+
+fn load_file_callback(e: ChangeData) -> TopLevelMsg {
+    if let ChangeData::Files(files) = e {
+        let file = files.item(0)?;
+        TopLevelMsg::FileSelected(file)
+    } else {
+        TopLevelMsg::DoNothing
+    }
 }
 
 impl App {
@@ -125,7 +211,7 @@ impl App {
 
     fn gen_nav_tabs(&self) -> Html {
 
-        return match self.active_tab {
+        match self.active_tab {
 
             Tabs::Library => {
                 html! {
@@ -155,45 +241,104 @@ impl App {
                 }
             }
             _ => { 
-                html! {
-                    <div/>
-                }
+                unreachable!()
             }
-        };
+        }
         
     }
 
     fn build_modal(&self) -> Html {
         match self.modal_status {
+
             ModalStatus::JoinGroup => {
                 self.join_group_modal()
             }
             ModalStatus::EraseData => {
-                self.erase_data_modal()
+                self.import_or_erase_modal(false)
             }
             ModalStatus::ImportData => {
-                self.import_data_modal()
+                self.import_or_erase_modal(true)
             }
             
             //closed, display nothing
-            ModalStatus::Closed => {
-                html!{
-                    <></>
-                }
-            }
+            ModalStatus::Closed => html!{},
         }
     }
 
     fn join_group_modal(&self) -> Html {
-        todo!();
+        let cancel_callback = self.link.callback(|_: MouseEvent| TopLevelMsg::CancelModal);
+        let ok_callback = self.link.callback(join_group_callback);
+
+        html!{
+            <div class="yew-modal">
+                <div class="yew-modal-content">
+                    <div class="yew-modal-header">
+                        <h2>{"Join Group"}</h2>
+                    </div>
+                    <div class="yew-modal-body">
+                        <input type="text" placeholder="group name" id="group_name"/>
+                        <br/>
+                        <input type="text" placeholder="player name" id="player_name"/>
+                    </div>
+                    <div class="yew-modal-footer">
+                        <span style="padding-left: 5px">
+                            <button class="btn btn-danger" onclick={ok_callback}>{"Ok"}</button>
+                        </span>
+                        <span style="float: right">
+                            <button class="btn btn-secondary" onclick={cancel_callback}>{"Cancel"}</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+
     }
 
-    fn erase_data_modal(&self) -> Html {
-        todo!();
+    fn import_or_erase_modal(&self, import: bool) -> Html {
+        let cancel_callback = self.link.callback(|_: MouseEvent| TopLevelMsg::CancelModal);
+        let ok_callback = self.link.callback(|_:MouseEvent| TopLevelMsg::ModalOk);
+        let header_text = if import {"Import Data"} else {"Erase Data"};
+        html!{
+            <div class="yew-modal">
+                <div class="yew-modal-content">
+                    <div class="yew-modal-header">
+                        <h2>{header_text}</h2>
+                    </div>
+                    <div class="yew-modal-body">
+                        {"This will erase all existing data, are you sure?"}
+                    </div>
+                    <div class="yew-modal-footer">
+                        <span style="padding-left: 5px">
+                            <button class="btn btn-danger" onclick={ok_callback}>{"Ok"}</button>
+                        </span>
+                        <span style="float: right">
+                            <button class="btn btn-secondary" onclick={cancel_callback}>{"Cancel"}</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+        //todo!();
     }
 
-    fn import_data_modal(&self) -> Html {
-        todo!();
+    fn modal_ok(&mut self) -> bool {
+        match self.modal_status {
+            ModalStatus::EraseData => {
+                ChipLibrary::get_instance().erase_data();
+            }
+            ModalStatus::ImportData => {
+                if let Some(element) = self.file_input_ref.cast::<web_sys::HtmlInputElement>() {
+                    element.click();
+                }
+                return false;
+            }
+            ModalStatus::Closed | ModalStatus::JoinGroup => {
+                unreachable!();
+            }
+        }
+        self.modal_status = ModalStatus::Closed;
+        self.active_tab = Tabs::Library;
+        true
     }
 }
 
@@ -202,30 +347,22 @@ impl Component for App {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let callback = link.callback(|e| {
-            match e {
-                GlobalReq::SetHeaderMsg(msg) => {
-                    TopLevelMsg::SetMsg(msg)
-                }
-                GlobalReq::JoinGroup => {
-                    TopLevelMsg::JoinGroup
-                }
-                GlobalReq::EraseData => {
-                    TopLevelMsg::EraseData
-                }
-                GlobalReq::ImportData => {
-                    TopLevelMsg::ImportData
-                }
-            }
+        let callback = link.callback(|e: GlobalReq| {
+            TopLevelMsg::from(e)
         });
         let _producer = GlobalMsgBus::bridge(callback);
+        let load_file_callback = link.callback(load_file_callback);
         App {
             active_tab: Tabs::Library,
             message_txt: "".to_owned(),
             message_clear_timeout_handle: None,
             link,
             _producer,
+            load_file_callback,
             modal_status: ModalStatus::Closed,
+            in_group: false,
+            load_file_callback_promise: None,
+            file_input_ref: NodeRef::default(),
         }
     }
 
@@ -237,16 +374,60 @@ impl Component for App {
         return match msg {
             TopLevelMsg::ChangeTab(tab) => self.change_tab(tab),
             TopLevelMsg::SetMsg(message) => self.set_message(message),
-            TopLevelMsg::JoinGroup => {false}
-            TopLevelMsg::EraseData => {false}
-            TopLevelMsg::ImportData => {false}
+            TopLevelMsg::JoinGroup => {
+                self.modal_status = ModalStatus::JoinGroup;
+                true
+            }
+            TopLevelMsg::LeaveGroup => {
+                true
+            }
+            TopLevelMsg::EraseData => {
+                self.modal_status = ModalStatus::EraseData;
+                true
+            }
+            TopLevelMsg::ImportData => {
+                self.modal_status = ModalStatus::ImportData;
+                true
+            }
             TopLevelMsg::CancelModal => {
                 self.modal_status = ModalStatus::Closed;
                 true
             }
             TopLevelMsg::ModalOk => {
+                self.modal_ok()
+            }
+            TopLevelMsg::DoNothing => {
+                false
+            }
+            TopLevelMsg::JoinGroupData{group_name: _, player_name: _} => {
                 self.modal_status = ModalStatus::Closed;
                 true
+            }
+            TopLevelMsg::LoadFile(json) => {
+                self.load_file_callback_promise.take();
+                //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("load file callback was called"));
+                self.modal_status = ModalStatus::Closed;
+                self.active_tab = Tabs::Library;
+                match ChipLibrary::get_instance().import_json(json) {
+                    Ok(()) => {
+                        self.set_message("chips imported".to_string());
+                    }
+                    Err(msg) => {
+                        unsafe{crate::util::alert(msg)};
+                    }
+                }
+                true
+            }
+            TopLevelMsg::FileSelected(file) => {
+                let promise = file.text();
+                let component_callback = self.link.callback(|text: JsValue| {
+                    let res = text.as_string()?;
+                    TopLevelMsg::LoadFile(res)
+                });
+                let callback = Closure::once(move |text: JsValue| component_callback.emit(text));
+                let _ = promise.then(&callback);
+                self.load_file_callback_promise = Some(callback);
+                false
             }
         }
     }
@@ -254,25 +435,6 @@ impl Component for App {
     fn view(&self) -> Html {
 
         //let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
-
-        /*
-        html! {
-            <>
-            <div class="container-fluid" style="background-color: #00637b; padding: 5px; max-width: 720px">
-                <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
-                    <span style="padding-left: 5px">{&self.active_tab}</span><span style="float: right; color: red">{&self.message_txt}</span>
-                </div>
-                <div style="background-color: #4abdb5; padding: 10px">
-                    {self.gen_nav_tabs()}
-                    <Library active={self.active_tab == Tabs::Library}/>
-                    <Pack active={self.active_tab == Tabs::Pack} />
-                    <Folder active={self.active_tab == Tabs::Folder} set_msg_callback={set_msg_callback.clone()}/>
-                </div>
-            </div>
-            {self.build_modal()}
-            </>
-        }
-        */
         
         html!{
             <>
@@ -286,12 +448,14 @@ impl Component for App {
                         <div class="row">
                             <Library active={self.active_tab == Tabs::Library}/>
                             <Pack active={self.active_tab == Tabs::Pack}/>
-                            <Folder active={self.active_tab == Tabs::Folder}/>
+                            <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.in_group}/>
                             <ChipDescBox/>
                         </div>
                     </div>
                 </div>
             </div>
+            {self.build_modal()}
+            <input id="jsonFile" type="file" style="display: none" accept=".json" onchange={self.load_file_callback.clone()} ref={self.file_input_ref.clone()}/>
             </>
         }
 

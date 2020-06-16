@@ -13,6 +13,7 @@ use std::cell::RefCell;
 use serde::Serialize;
 use once_cell::sync::OnceCell;
 use unchecked_unwrap::UncheckedUnwrap;
+use serde_json::{Value, json};
 
 use std::sync::atomic::{Ordering, AtomicU32};
 use std::rc::Rc;
@@ -60,10 +61,15 @@ impl ChipLibrary {
     fn import_local(data: &str) -> ChipLibrary {
         let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(data).expect("Failed to deserialize library");
         let mut library: HashMap<String, Rc<BattleChip>> = HashMap::with_capacity(chip_list.len());
+        for chip in chip_list.drain(..) {
+            library.insert(chip.name.clone(), Rc::new(chip));
+        }
+        /*
         while !chip_list.is_empty() {
             let chip = chip_list.pop().unwrap();
             library.insert(chip.name.clone(), Rc::new(chip));
         }
+        */
         let window = web_sys::window().expect("Could not get window");
         let storage = match window.local_storage().ok().flatten() {
             Some(storage) => storage,
@@ -208,6 +214,19 @@ impl ChipLibrary {
             return Err("You do not have any unused coppies of that chip");
         }
 
+        let mut count = 0u8;
+
+        for chip in folder.iter() {
+            // can use ptr_eq of the pointed library chip since there will always be only one
+            if Rc::ptr_eq(&chip.chip, &pack_chip.chip) {
+                count += 1;
+            }
+        }
+
+        if count >= pack_chip.chip.kind.max_in_folder() {
+            return Err("You cannot add any more coppies of that chip to your folder");
+        }
+
         pack_chip.owned -= 1;
         let folder_chip = FolderChip {
             name: name.to_owned(),
@@ -295,6 +314,168 @@ impl ChipLibrary {
         accumulator
     }
 
+    /// update the chip limit, returns true if the value changed
+    pub(crate) fn update_chip_limit(&self, new_limit: u32) -> Result<bool, &'static str> {
+        if (new_limit as usize) < self.folder.borrow().len() {
+            return Err("You must remove chips from your folder first");
+        }
+
+        if new_limit == self.chip_limit.load(Ordering::Relaxed) {
+            return Ok(false);
+        }
+
+        self.chip_limit.store(new_limit, Ordering::Relaxed);
+        Ok(true)
+    }
+
+    pub(crate) fn export_json(&self) {
+        let (folder, pack) = unsafe {
+            let folder = self.folder.try_borrow_unguarded().unwrap();
+            let pack = self.pack.try_borrow_unguarded().unwrap();
+            (folder, pack)
+        };
+        let limit = self.chip_limit.load(Ordering::Relaxed);
+        let to_save = json!({
+            "Folder": folder,
+            "Pack": pack,
+            "Limit": limit,
+        });
+        let data = serde_json::to_string_pretty(&to_save).unwrap();
+        crate::util::save_json(data);
+    }
+
+    pub(crate) fn import_json(&self, data: String) -> Result<(), &'static str> {
+        self.erase_data();
+        let save_data = serde_json::from_str::<Value>(&data).map_err(|_| "Ill formed save data")?;
+        let limit = save_data["Limit"].as_u64().ok_or("Ill formed save data")?;
+        if limit > 45 {
+            return Err("Ill formed save data, folder limit too high");
+        }
+        self.chip_limit.store(limit as u32, Ordering::Relaxed);
+        if let Some(folder_chips) = save_data["Folder"].as_array() {
+            self.parse_folder(folder_chips)?;
+        }
+        if let Some(pack_chips) = save_data["Pack"].as_object() {
+            self.parse_pack(pack_chips)?;
+        }
+
+        Ok(())
+    }
+
+    fn parse_pack(&self, data: &serde_json::Map<String, Value>) -> Result<(), &'static str> {
+        let mut pack = self.pack.borrow_mut();
+        for (name, chip) in data.iter() {
+            let owned = chip["owned"].as_u64().ok_or("Ill formed save data")?;
+            let used = chip["used"].as_u64().ok_or("Ill formed save data")?;
+            if used > owned {
+                return Err("Ill formed save data");
+            }
+            if let Some(lib_chip) = self.library.get(name) {
+                let pack_chip = PackChip{
+                    owned: owned as u8,
+                    used: used as u8,
+                    chip: Rc::clone(lib_chip)
+                };
+                pack.insert(name.clone(), pack_chip);
+            } else {
+                let msg = String::from("Ignoring a chip your pack has that doesn't exist anymore: ") + name;
+                unsafe{crate::util::alert(&msg)};
+            }
+        }
+        Ok(())
+    }
+
+    fn parse_folder(&self, data: &Vec<serde_json::Value>) -> Result<(), &'static str> {
+        let mut folder = self.folder.borrow_mut();
+        if data.len() > self.chip_limit.load(Ordering::Relaxed) as usize {
+            return Err("Chip limit was set lower than the actual folder size");
+        }
+        for chip in data.iter() {
+            let name = chip["name"].as_str().ok_or("Ill formed save data")?;
+            let used = chip["used"].as_bool().ok_or("Ill formed save data")?;
+            if let Some(lib_chip) = self.library.get(name) {
+                folder.push(FolderChip{
+                    name: name.to_owned(),
+                    used,
+                    chip: Rc::clone(lib_chip)
+                });
+            } else {
+                let msg = String::from("Ignoring a chip your folder has that doesn't exist anymore: ") + name;
+                unsafe{crate::util::alert(&msg)};
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn export_txt(&self) {
+        let folder = self.folder.borrow();
+        let pack = self.pack.borrow();
+        //let mut to_save_text = String::with_capacity(100);
+        let folder_text_vec = folder.iter().map(|chip| {
+            let mut to_ret = String::from(&chip.name);
+            if chip.used {
+                to_ret.push_str(" (Used)");
+            }
+            to_ret
+        }).collect::<Vec<String>>();
+        let mut text_to_save = if folder_text_vec.len() > 0 {
+            String::from("Folder: ") + &folder_text_vec.join(", ") + "\n"
+        } else {
+            String::new()
+        };
+        let mut pack_vec = pack.values().collect::<Vec<&PackChip>>();
+        pack_vec.sort_unstable_by(|a,b| {
+            a.chip.kind.cmp(&b.chip.kind).then_with(||a.chip.name.cmp(&b.chip.name))
+        });
+
+        let pack_str_vec = pack_vec.iter().map(|chip| {
+            let mut to_ret = String::from(&chip.chip.name);
+            if chip.owned == 1 && chip.used == 1 {
+                to_ret += " (Used)";
+                return to_ret;
+            }
+            
+            if chip.owned > 1 {
+                to_ret.push_str(" x");
+                to_ret.push_str(&chip.owned.to_string());
+            }
+
+            if chip.used > 0 {
+                to_ret.push_str(" (");
+                to_ret.push_str(&chip.owned.to_string());
+                to_ret.push_str(" Used)");
+            }
+            to_ret
+        }).collect::<Vec<String>>();
+        let pack_text = if pack_str_vec.len() > 0 {
+            String::from("Pack: ") + &pack_str_vec.join(", ")
+        } else {
+            String::new()
+        };
+        text_to_save.push_str(&pack_text);
+        crate::util::save_txt(text_to_save);
+    }
+
+    pub(crate) fn erase_data(&self) {
+        self.chip_limit.store(12, Ordering::Relaxed);
+        let mut folder = self.folder.borrow_mut();
+        let mut pack = self.pack.borrow_mut();
+        folder.clear();
+        pack.clear();
+        drop(folder);
+        drop(pack);
+
+        let window = web_sys::window().expect("Could not get window");
+        let storage = match window.local_storage().ok().flatten() {
+            Some(storage) => storage,
+            None => {return;}
+        };
+        
+        let _ = storage.remove_item("folder");
+        let _ = storage.remove_item("pack");
+        let _ = storage.remove_item("chip_limit");
+
+    }
 }
 
 unsafe impl Send for ChipLibrary{}

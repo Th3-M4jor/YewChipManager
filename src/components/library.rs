@@ -37,7 +37,9 @@ impl Component for LibraryTopRow {
                 <div class="col-3 Chip nopadding">
                     {"SKILL"}
                 </div>
-                <div class="col-2 Chip nopadding"/>
+                <div class="col-2 Chip nopadding">
+                    {"ELEM"}
+                </div>
             </div>
         }
     }
@@ -72,7 +74,7 @@ impl std::ops::Try for LibraryMessage {
             _ => Ok(self)
         }
     }
-    fn from_error(v: Self::Error) -> Self {
+    fn from_error(_: Self::Error) -> Self {
         LibraryMessage::DoNothing
     }
     fn from_ok(v: Self::Ok) -> Self {
