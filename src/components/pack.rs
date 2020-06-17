@@ -5,7 +5,7 @@ use yew::agent::{Dispatcher, Dispatched};
 use crate::agents::{global_msg::{GlobalMsgBus, Request as GlobalMsgReq}, chip_desc::{ChipDescMsg, ChipDescMsgBus}};
 use crate::util::alert;
 use yew::events::MouseEvent;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 
 use std::collections::HashMap;
 use unchecked_unwrap::UncheckedUnwrap;
@@ -19,6 +19,10 @@ pub enum PackMsg {
     ChangeSort(ChipSortOptions),
     MoveToFolder(String),
     SetHighlightedChip(String),
+    RemoveFromPack(String),
+    MarkCopyUnused(String),
+    ShowContextMenu{name: String, x: String, y: String},
+    HideContextMenu,
     JackOut,
     ExportJson,
     ExportTxt,
@@ -67,6 +71,9 @@ pub struct PackComponent {
     export_txt_callback: Callback<MouseEvent>,
     erase_data_callback: Callback<MouseEvent>,
     import_data_callback: Callback<MouseEvent>,
+    open_context_menu_callback: Callback<MouseEvent>,
+    context_menu: Option<(String, String, String)>,
+    context_menu_close_wrapper: Option<js_sys::Function>,
 }
 
 fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
@@ -94,6 +101,27 @@ fn handle_mouseover_event(e: MouseEvent) -> PackMsg {
     PackMsg::SetHighlightedChip(name)
 }
 
+fn open_ctx_menu(e: MouseEvent) -> PackMsg {
+    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("right click detected"));
+    e.prevent_default();
+    let window = web_sys::window()?;
+    let document = window.document()?;
+    let target = document.query_selector(".chipHover:hover").ok().flatten()?;
+    let id = target.id();
+    let name = id[2..].to_owned();
+    let x = e.client_x();
+    let y = e.client_y();
+
+    let x_str = x.to_string() + "px";
+    let y_str = y.to_string() + "px";
+
+    //let msg = format!("{}; {}; {}", name, x_str, y_str);
+    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&msg));
+
+    PackMsg::ShowContextMenu{name, x: x_str, y: y_str}
+
+}
+
 
 impl Component for PackComponent {
     type Message = PackMsg;
@@ -115,6 +143,7 @@ impl Component for PackComponent {
         let export_txt_callback = link.callback(|_: MouseEvent| PackMsg::ExportTxt);
         let erase_data_callback = link.callback(|_: MouseEvent| PackMsg::EraseData);
         let import_data_callback = link.callback(|_: MouseEvent| PackMsg::ImportJson);
+        let open_context_menu_callback = link.callback(open_ctx_menu);
         let chip_mouseover = link.callback(handle_mouseover_event);
         let set_desc_bus = ChipDescMsgBus::dispatcher();
         Self {
@@ -131,6 +160,9 @@ impl Component for PackComponent {
             erase_data_callback,
             import_data_callback,
             jack_out_callback,
+            context_menu: None,
+            context_menu_close_wrapper: None,
+            open_context_menu_callback,
         }
     }
 
@@ -170,7 +202,18 @@ impl Component for PackComponent {
                 false
             },
             PackMsg::DoNothing => false,
-            PackMsg::MoveToFolder(name) => self.move_chip_to_folder(&name)
+            PackMsg::MoveToFolder(name) => self.move_chip_to_folder(&name),
+            PackMsg::RemoveFromPack(name) => self.remove_from_pack(&name),
+            PackMsg::MarkCopyUnused(name) => self.mark_unused(&name),
+            PackMsg::ShowContextMenu { name, x, y } => self.setup_context_menu(name, x, y),
+            PackMsg::HideContextMenu => {
+                self.context_menu.take();
+                if let Some(close_function) = self.context_menu_close_wrapper.take() {
+                    let window = web_sys::window().unwrap();
+                    window.remove_event_listener_with_callback("click", &close_function).unwrap();
+                }
+                true
+            }
         }
     }
 
@@ -206,11 +249,12 @@ impl Component for PackComponent {
                 {self.generate_buttons()}
             </div>
             <div class={col2_display}>
-                <div class={pack_containter_class}>
+                <div class={pack_containter_class} oncontextmenu={self.open_context_menu_callback.clone()}>
                     <PackTopRow />
                     {self.build_pack_chips()}
                 </div>
             </div>
+            {self.context_menu()}
             </>
         }
     }
@@ -282,7 +326,6 @@ impl PackComponent {
 
     fn generate_buttons(&self) -> Html {
         
-
         html!{
             <div class="centercontent">
                 <button class="btn sideButtons ripple" onclick={self.jack_out_callback.clone()}>
@@ -322,6 +365,82 @@ impl PackComponent {
             }
         }
         true
+    }
+
+    fn remove_from_pack(&mut self, name: &str) -> bool {
+        self.context_menu.take();
+        match ChipLibrary::get_instance().remove_from_pack(name) {
+            Ok(last_chip) => {
+                if last_chip {self.set_desc_bus.send(ChipDescMsg::ClearDesc);}
+            }
+            Err(msg) => {
+                unsafe{alert(msg)};
+            }
+        }
+        true
+    }
+
+    fn mark_unused(&mut self, name: &str) -> bool {
+        self.context_menu.take();
+        if let Err(msg) = ChipLibrary::get_instance().mark_pack_copy_unused(name) {
+            unsafe{alert(msg)};
+        }
+        true
+    }
+
+    fn setup_context_menu(&mut self, name: String, x: String, y: String) -> bool {
+        
+        if let Some(js_function) = self.context_menu_close_wrapper.take() {
+            //calling it just because if it never is called, it's a memory leak
+            js_function.call0(&JsValue::NULL).unwrap();
+            let window = web_sys::window().unwrap();
+            window.remove_event_listener_with_callback("click", &js_function).unwrap();
+        }
+        
+        let close_menu_link = self._link.callback_once(|e:JsValue| {
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("close menu callback was called"));
+            if e.has_type::<MouseEvent>() {
+                PackMsg::HideContextMenu
+            } else {
+                PackMsg::DoNothing
+            }
+        });
+        let close_menu_wrapper: js_sys::Function = Closure::once_into_js(move |e: JsValue| {
+            //let event = e.dyn_into::<MouseEvent>().unwrap();
+            close_menu_link.emit(e);
+        }).dyn_into::<js_sys::Function>().unwrap();
+        let window = web_sys::window().unwrap();
+        window.add_event_listener_with_callback("click", &close_menu_wrapper).unwrap();
+        self.context_menu = Some((name, x, y));
+        self.context_menu_close_wrapper = Some(close_menu_wrapper);
+        true
+    }
+
+    fn context_menu(&self) -> Html {
+        let (name, x, y) = match &self.context_menu {
+            Some((name, x,  y)) => {
+                (name, x, y)
+            }
+            None => {
+                return html!{};
+            }
+        };
+        let name1 = name.clone();
+        let name2 = name.clone();
+
+        let remove_chip = self._link.callback_once(move |_: MouseEvent| PackMsg::RemoveFromPack(name1));
+        let mark_unused = self._link.callback_once(move |_: MouseEvent| PackMsg::MarkCopyUnused(name2));
+        let style = String::from("left: ") + x + "; top: " + y;
+        
+        html!{
+            <div class="menu" style={style}>
+                <ul class="menu-options">
+                    <li class="menu-option noselect" onclick={remove_chip}>{"Remove from pack"}</li>
+                    <li class="menu-option noselect" onclick={mark_unused}>{"Mark copy unused"}</li>
+                </ul>
+            </div>
+        }
+        
     }
 }
 

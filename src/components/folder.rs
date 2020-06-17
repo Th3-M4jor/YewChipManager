@@ -34,7 +34,7 @@ pub enum FolderMsg {
     ChangeUsed(usize),
     ReturnToPack(usize),
     SetHighlightedChip(usize),
-    ChangeChipLimit(u32),
+    ChangeChipLimit(usize),
     JackOut,
     JoinFolerGroup,
     LeaveFolderGroup,
@@ -125,7 +125,7 @@ impl Component for FolderComponent {
         });
         let chip_limit_change = link.callback(|e: ChangeData| {
             if let ChangeData::Value(text) = e {
-                let val = text.parse::<u32>().ok()?;
+                let val = text.parse::<usize>().ok()?;
                 FolderMsg::ChangeChipLimit(val)
             } else {
                 FolderMsg::DoNothing

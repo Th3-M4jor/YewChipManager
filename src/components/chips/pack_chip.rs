@@ -5,8 +5,8 @@ use crate::util::generate_element_images;
 
 #[derive(Properties, Clone)]
 pub(crate) struct PackChipProps {
-    pub used: u8,
-    pub owned: u8,
+    pub used: u32,
+    pub owned: u32,
     pub add_to_folder: Callback<MouseEvent>,
     pub on_mouse_enter: Callback<MouseEvent>,
     pub chip: Rc<BattleChip>,

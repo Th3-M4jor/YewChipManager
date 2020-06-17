@@ -420,7 +420,7 @@ impl Component for App {
             }
             TopLevelMsg::FileSelected(file) => {
                 let promise = file.text();
-                let component_callback = self.link.callback(|text: JsValue| {
+                let component_callback = self.link.callback_once(|text: JsValue| {
                     let res = text.as_string()?;
                     TopLevelMsg::LoadFile(res)
                 });

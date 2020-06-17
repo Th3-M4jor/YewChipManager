@@ -15,13 +15,13 @@ use once_cell::sync::OnceCell;
 use unchecked_unwrap::UncheckedUnwrap;
 use serde_json::{Value, json};
 
-use std::sync::atomic::{Ordering, AtomicU32};
+use std::sync::atomic::{Ordering, AtomicUsize};
 use std::rc::Rc;
 
 #[derive(Serialize)]
 pub(crate) struct PackChip {
-    pub owned: u8,
-    pub used: u8,
+    pub owned: u32,
+    pub used: u32,
     #[serde(skip)]
     pub chip: Rc<BattleChip>,
 }
@@ -38,7 +38,7 @@ pub(crate) struct ChipLibrary {
     pub library: HashMap<String, Rc<BattleChip>>,
     pub pack: RefCell<HashMap<String, PackChip>>,
     pub folder: RefCell<Vec<FolderChip>>,
-    pub chip_limit: AtomicU32,
+    pub chip_limit: AtomicUsize,
 }
 
 static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
@@ -79,14 +79,14 @@ impl ChipLibrary {
                     library,
                     pack: RefCell::new(HashMap::new()),
                     folder: RefCell::new(Vec::new()),
-                    chip_limit: AtomicU32::new(12),
+                    chip_limit: AtomicUsize::new(12),
                 };
             }
         };
 
         let pack = RefCell::new(ChipLibrary::load_pack(&storage, &library).unwrap_or_default());
         let folder = RefCell::new(ChipLibrary::load_folder(&storage, &library).unwrap_or_default());
-        let chip_limit = AtomicU32::new(ChipLibrary::load_chip_limit(&storage).unwrap_or(12));
+        let chip_limit = AtomicUsize::new(ChipLibrary::load_chip_limit(&storage).unwrap_or(12));
 
 
         ChipLibrary {
@@ -108,8 +108,8 @@ impl ChipLibrary {
         let mut to_ret: HashMap<String, PackChip> = HashMap::new();
 
         for pack_chip in map.iter() {
-            let owned = unsafe{pack_chip.1["owned"].as_i64().unchecked_unwrap()} as u8;
-            let used = unsafe{pack_chip.1["used"].as_i64().unchecked_unwrap()} as u8;
+            let owned = unsafe{pack_chip.1["owned"].as_u64().unchecked_unwrap()} as u32;
+            let used = unsafe{pack_chip.1["used"].as_u64().unchecked_unwrap()} as u32;
             if let Some(chip) = library.get(pack_chip.0.as_str()) {
                 to_ret.insert(pack_chip.0.clone(), PackChip{
                     owned,
@@ -149,12 +149,12 @@ impl ChipLibrary {
     }
 
     /// load the folder size from local storage
-    fn load_chip_limit(storage: &web_sys::Storage) -> Option<u32> {
+    fn load_chip_limit(storage: &web_sys::Storage) -> Option<usize> {
         let limit_str: String = storage.get_item("chip_limit").ok().flatten()?;
-        limit_str.parse::<u32>().ok()
+        limit_str.parse::<usize>().ok()
     }
 
-    fn warn_missing_pack(name: &str, owned: u8, used: u8) {
+    fn warn_missing_pack(name: &str, owned: u32, used: u32) {
 
         let window = web_sys::window().expect("Could not get window");
         let mut msg = String::from("Your pack had a chip named \"");
@@ -180,7 +180,7 @@ impl ChipLibrary {
     }
 
     /// add a copy of a chip to the pack
-    pub(crate) fn add_copy_to_pack(&self, name: &str) -> Option<u8> {
+    pub(crate) fn add_copy_to_pack(&self, name: &str) -> Option<u32> {
         
         let mut pack = self.pack.borrow_mut();
 
@@ -203,7 +203,7 @@ impl ChipLibrary {
     pub(crate) fn move_to_folder(&self, name: &str) -> Result<bool, &'static str> {
         let mut folder = self.folder.borrow_mut();
         let mut pack = self.pack.borrow_mut();
-        if self.chip_limit.load(Ordering::Relaxed) as usize <= folder.len() {
+        if self.chip_limit.load(Ordering::Relaxed) <= folder.len() {
             return Err("Your folder is full");
         }
 
@@ -245,6 +245,30 @@ impl ChipLibrary {
         Ok(true)
     }
 
+    /// returned bool indicates if it was the last chip of that kind in the pack
+    pub(crate) fn remove_from_pack(&self, name:&str) -> Result<bool, &'static str> {
+        let mut pack = self.pack.borrow_mut();
+        let pack_chip = pack.get_mut(name).ok_or("No chip with that name in the pack")?;
+        pack_chip.owned -= 1;
+        if pack_chip.owned != 0 {
+            return Ok(false);
+        }
+
+        //else last chip
+        drop(pack_chip);
+        pack.remove(name);
+        Ok(true)
+    }
+
+    pub(crate) fn mark_pack_copy_unused(&self, name: &str) -> Result<u32, &'static str> {
+        let mut pack = self.pack.borrow_mut();
+        let chip = pack.get_mut(name).ok_or("No copy of that chip in your pack")?;
+        if chip.used == 0 {
+            return Err("No used coppies of that chip in you pack");
+        }
+        chip.used -= 1;
+        Ok(chip.used)
+    }
     /// returned bool indicates if it was used or not
     pub(crate) fn return_fldr_chip_to_pack(&self, index: usize) -> Result<bool, &'static str> {
         let mut folder = self.folder.borrow_mut();
@@ -315,8 +339,8 @@ impl ChipLibrary {
     }
 
     /// update the chip limit, returns true if the value changed
-    pub(crate) fn update_chip_limit(&self, new_limit: u32) -> Result<bool, &'static str> {
-        if (new_limit as usize) < self.folder.borrow().len() {
+    pub(crate) fn update_chip_limit(&self, new_limit: usize) -> Result<bool, &'static str> {
+        if new_limit < self.folder.borrow().len() {
             return Err("You must remove chips from your folder first");
         }
 
@@ -351,7 +375,7 @@ impl ChipLibrary {
         if limit > 45 {
             return Err("Ill formed save data, folder limit too high");
         }
-        self.chip_limit.store(limit as u32, Ordering::Relaxed);
+        self.chip_limit.store(limit as usize, Ordering::Relaxed);
         if let Some(folder_chips) = save_data["Folder"].as_array() {
             self.parse_folder(folder_chips)?;
         }
@@ -372,8 +396,8 @@ impl ChipLibrary {
             }
             if let Some(lib_chip) = self.library.get(name) {
                 let pack_chip = PackChip{
-                    owned: owned as u8,
-                    used: used as u8,
+                    owned: owned as u32,
+                    used: used as u32,
                     chip: Rc::clone(lib_chip)
                 };
                 pack.insert(name.clone(), pack_chip);

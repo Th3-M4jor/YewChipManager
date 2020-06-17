@@ -25,7 +25,7 @@ pub unsafe fn alert(msg: &str) {
     let _ = window.alert_with_message(msg);
 }
 
-#[wasm_bindgen(module="/static/save.js")]
+#[wasm_bindgen(module="/static/util.js")]
 extern "C" {
     pub(crate) fn save_json(data: String);
 
