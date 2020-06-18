@@ -1,12 +1,14 @@
 use yew::prelude::*;
 use std::borrow::Cow;
 
-use crate::util::timeout::{set_timeout, TimeoutHandle};
+use crate::util::{storage_available,timeout::{set_timeout, set_interval, TimeoutHandle}};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
 use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalReq};
 use crate::chip_library::ChipLibrary;
 
 use wasm_bindgen::{JsCast, JsValue, closure::Closure};
+
+
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum Tabs {
@@ -143,6 +145,11 @@ pub struct App
     in_group: bool,
     load_file_callback_promise: Option<Closure<dyn FnMut(JsValue)>>,
     file_input_ref: NodeRef,
+    _save_interval_handle: Option<TimeoutHandle>,
+}
+
+fn save_interval_callback() {
+    ChipLibrary::get_instance().save_data();
 }
 
 fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
@@ -352,6 +359,15 @@ impl Component for App {
         });
         let _producer = GlobalMsgBus::bridge(callback);
         let load_file_callback = link.callback(load_file_callback);
+
+        let _save_interval_handle = if storage_available("localStorage".to_owned()) {
+            
+            let handle = set_interval(300000, save_interval_callback).unwrap();
+            Some(handle)
+        } else {
+            None
+        };
+
         App {
             active_tab: Tabs::Library,
             message_txt: "".to_owned(),
@@ -363,8 +379,11 @@ impl Component for App {
             in_group: false,
             load_file_callback_promise: None,
             file_input_ref: NodeRef::default(),
+            _save_interval_handle,
         }
     }
+
+    
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
         false

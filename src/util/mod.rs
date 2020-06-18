@@ -30,4 +30,6 @@ extern "C" {
     pub(crate) fn save_json(data: String);
 
     pub(crate) fn save_txt(data: String);
+
+    pub(crate) fn storage_available(kind: String) -> bool;
 }

@@ -54,3 +54,9 @@ pub fn run(data: &str) -> Result<(), JsValue> {
     yew::start_app::<App>();
     Ok(())
 }
+
+#[wasm_bindgen]
+pub fn save_before_exit() -> Result<(), JsValue> {
+    ChipLibrary::get_instance().save_data();
+    Ok(())
+}

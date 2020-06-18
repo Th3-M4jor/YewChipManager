@@ -8,14 +8,15 @@ mod ranges;
 pub(crate) use self::battle_chip::BattleChip;
 pub(crate) use self::elements::Elements;
 
+
+use crate::util;
 use std::collections::hash_map::HashMap;
 use std::cell::RefCell;
 use serde::Serialize;
 use once_cell::sync::OnceCell;
 use unchecked_unwrap::UncheckedUnwrap;
 use serde_json::{Value, json};
-
-use std::sync::atomic::{Ordering, AtomicUsize};
+use std::sync::atomic::{Ordering, AtomicUsize, AtomicBool};
 use std::rc::Rc;
 
 #[derive(Serialize)]
@@ -39,7 +40,11 @@ pub(crate) struct ChipLibrary {
     pub pack: RefCell<HashMap<String, PackChip>>,
     pub folder: RefCell<Vec<FolderChip>>,
     pub chip_limit: AtomicUsize,
+    change_since_last_save: AtomicBool,
 }
+
+unsafe impl Send for ChipLibrary{}
+unsafe impl Sync for ChipLibrary{}
 
 static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
 
@@ -70,16 +75,18 @@ impl ChipLibrary {
             library.insert(chip.name.clone(), Rc::new(chip));
         }
         */
+
         let window = web_sys::window().expect("Could not get window");
         let storage = match window.local_storage().ok().flatten() {
             Some(storage) => storage,
             None => {
-                let _ = window.alert_with_message("Local storage is not available, it is used to backup your folder and pack periodically");
+                unsafe{util::alert("Local storage is not available, it is used to backup your folder and pack periodically")};
                 return ChipLibrary {
                     library,
                     pack: RefCell::new(HashMap::new()),
                     folder: RefCell::new(Vec::new()),
                     chip_limit: AtomicUsize::new(12),
+                    change_since_last_save: AtomicBool::new(false),
                 };
             }
         };
@@ -89,11 +96,13 @@ impl ChipLibrary {
         let chip_limit = AtomicUsize::new(ChipLibrary::load_chip_limit(&storage).unwrap_or(12));
 
 
+
         ChipLibrary {
             library,
             pack,
             folder,
             chip_limit,
+            change_since_last_save: AtomicBool::new(false),
         }
         
     }
@@ -195,7 +204,7 @@ impl ChipLibrary {
             owned: 1,
             chip: Rc::clone(lib_chip),
         });
-
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Some(1)
     }
 
@@ -214,6 +223,7 @@ impl ChipLibrary {
             return Err("You do not have any unused coppies of that chip");
         }
 
+        // find out how many coppies of that chip are in their folder
         let mut count = 0u8;
 
         for chip in folder.iter() {
@@ -223,6 +233,7 @@ impl ChipLibrary {
             }
         }
 
+        // is it greater than the limit for that type of chip?
         if count >= pack_chip.chip.kind.max_in_folder() {
             return Err("You cannot add any more coppies of that chip to your folder");
         }
@@ -236,6 +247,7 @@ impl ChipLibrary {
 
         folder.push(folder_chip);
         drop(folder);
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         if pack_chip.owned != 0 {
             return Ok(false);
         }
@@ -257,6 +269,7 @@ impl ChipLibrary {
         //else last chip
         drop(pack_chip);
         pack.remove(name);
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Ok(true)
     }
 
@@ -267,6 +280,7 @@ impl ChipLibrary {
             return Err("No used coppies of that chip in you pack");
         }
         chip.used -= 1;
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Ok(chip.used)
     }
     /// returned bool indicates if it was used or not
@@ -275,7 +289,7 @@ impl ChipLibrary {
         if folder.len() <= index {
             return Err("Index was out of bounds");
         }
-        let fldr_chip = folder.swap_remove(index);
+        let fldr_chip = folder.remove(index);
         let mut pack = self.pack.borrow_mut();
         let used_incr = if fldr_chip.used {1} else {0};
         if let Some(pack_chip) = pack.get_mut(&fldr_chip.name) {
@@ -290,6 +304,7 @@ impl ChipLibrary {
             };
             pack.insert(fldr_chip.name, pack_chip);
         }
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Ok(fldr_chip.used)
     }
 
@@ -317,6 +332,9 @@ impl ChipLibrary {
                 pack.insert(fldr_chip.name, pack_chip);
             }
         }
+        if returned_count > 0 {
+            self.change_since_last_save.store(true, Ordering::Relaxed);
+        }
         returned_count
     }
 
@@ -335,6 +353,11 @@ impl ChipLibrary {
             accumulator += chip.used as u32;
             chip.used = 0;
         }
+
+        if accumulator > 0 {
+            self.change_since_last_save.store(true, Ordering::Relaxed);
+        }
+
         accumulator
     }
 
@@ -349,6 +372,7 @@ impl ChipLibrary {
         }
 
         self.chip_limit.store(new_limit, Ordering::Relaxed);
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Ok(true)
     }
 
@@ -382,7 +406,7 @@ impl ChipLibrary {
         if let Some(pack_chips) = save_data["Pack"].as_object() {
             self.parse_pack(pack_chips)?;
         }
-
+        self.change_since_last_save.store(true, Ordering::Relaxed);
         Ok(())
     }
 
@@ -429,6 +453,39 @@ impl ChipLibrary {
             }
         }
         Ok(())
+    }
+
+    pub(crate) fn save_data(&self) {
+        if self.change_since_last_save.load(Ordering::Relaxed) == false {
+            return;
+        }
+        
+        let window = web_sys::window().expect("Could not get window");
+        let storage = match window.local_storage().ok().flatten() {
+            Some(storage) => storage,
+            None => return,
+        };
+        let pack = self.pack.borrow();
+        let pack_text = serde_json::to_string(&*pack).expect("Failed to serialize pack");
+        storage.set_item("pack", &pack_text).unwrap();
+        // no longer needed, free memory
+        drop(pack_text);
+        drop(pack);
+
+        let folder = self.folder.borrow();
+
+        //have to deref then borrow to coerce to a reference from a std::cell::Ref
+        let folder_text = serde_json::to_string(&*folder).expect("Failed to serialize folder");
+
+        storage.set_item("folder", &folder_text).unwrap();
+
+        drop(folder);
+        drop(folder_text);
+
+        let chip_limit = self.chip_limit.load(Ordering::Relaxed).to_string();
+        storage.set_item("chip_limit", &chip_limit).unwrap();
+
+        self.change_since_last_save.store(false, Ordering::Relaxed);
     }
 
     pub(crate) fn export_txt(&self) {
@@ -498,9 +555,6 @@ impl ChipLibrary {
         let _ = storage.remove_item("folder");
         let _ = storage.remove_item("pack");
         let _ = storage.remove_item("chip_limit");
-
+        self.change_since_last_save.store(false, Ordering::Relaxed);
     }
 }
-
-unsafe impl Send for ChipLibrary{}
-unsafe impl Sync for ChipLibrary{}
