@@ -275,10 +275,9 @@ impl Component for FolderComponent {
                     min={min_val} max="45"
                     value={&chip_limit_val} 
                     onchange={self.chip_limit_change.clone()}
+                    style="width: 95%"
                 />
-                <br/>
                 <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
-                <br/>
                 <br/>
                 <br/>
                 {self.generate_buttons()}

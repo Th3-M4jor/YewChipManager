@@ -208,9 +208,8 @@ impl LibraryComponent {
         html! {
             <>
             <br/>
-            <br/>
             <span unselectable="on" class="Chip">{"Search"}</span>
-            <input type="text" class="form-control form-control-sm" value={&self.filter_by} oninput={text_changed}/>
+            <input type="text" class="form-control form-control-sm" value={&self.filter_by} oninput={text_changed} style="width: 95%"/>
             </>
         }
     }

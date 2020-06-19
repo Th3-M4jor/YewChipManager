@@ -245,7 +245,6 @@ impl Component for PackComponent {
                 <ChipSortBox include_owned={true} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                 <br/>
                 <br/>
-                <br/>
                 {self.generate_buttons()}
             </div>
             <div class={col2_display}>
