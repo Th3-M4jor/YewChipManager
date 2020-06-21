@@ -6,7 +6,6 @@ use yew::worker::*;
 pub(crate) enum Request {
     SetHeaderMsg(String),
     JoinGroup,
-    LeaveGroup,
     EraseData,
     ImportData,
 }

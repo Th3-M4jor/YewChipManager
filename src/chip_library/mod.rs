@@ -12,7 +12,7 @@ pub(crate) use self::elements::Elements;
 use crate::util;
 use std::collections::hash_map::HashMap;
 use std::cell::RefCell;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use once_cell::sync::OnceCell;
 use unchecked_unwrap::UncheckedUnwrap;
 use serde_json::{Value, json};
@@ -35,12 +35,20 @@ pub(crate) struct FolderChip {
     pub chip: Rc<BattleChip>,
 }
 
+#[derive(Deserialize)]
+pub(crate) struct GroupFolderChip {
+    pub name: String,
+    pub used: bool,
+}
+
 pub(crate) struct ChipLibrary {
     pub library: HashMap<String, Rc<BattleChip>>,
     pub pack: RefCell<HashMap<String, PackChip>>,
     pub folder: RefCell<Vec<FolderChip>>,
+    pub group_folders: RefCell<HashMap<String, Vec<GroupFolderChip>>>,
     pub chip_limit: AtomicUsize,
     change_since_last_save: AtomicBool,
+    change_since_last_group_post: AtomicBool,
 }
 
 unsafe impl Send for ChipLibrary{}
@@ -86,7 +94,9 @@ impl ChipLibrary {
                     pack: RefCell::new(HashMap::new()),
                     folder: RefCell::new(Vec::new()),
                     chip_limit: AtomicUsize::new(12),
+                    group_folders: RefCell::new(HashMap::new()),
                     change_since_last_save: AtomicBool::new(false),
+                    change_since_last_group_post: AtomicBool::new(false),
                 };
             }
         };
@@ -102,7 +112,9 @@ impl ChipLibrary {
             pack,
             folder,
             chip_limit,
+            group_folders: RefCell::new(HashMap::new()),
             change_since_last_save: AtomicBool::new(false),
+            change_since_last_group_post: AtomicBool::new(false),
         }
         
     }
@@ -248,6 +260,7 @@ impl ChipLibrary {
         folder.push(folder_chip);
         drop(folder);
         self.change_since_last_save.store(true, Ordering::Relaxed);
+        self.change_since_last_group_post.store(true, Ordering::Relaxed);
         if pack_chip.owned != 0 {
             return Ok(false);
         }
@@ -255,6 +268,17 @@ impl ChipLibrary {
         drop(pack_chip);
         pack.remove(name);
         Ok(true)
+    }
+
+    pub(crate) fn flip_used_folder(&self, idx: usize) {
+        let mut folder = self.folder.borrow_mut();
+        let chip = match folder.get_mut(idx) {
+            Some(chip) => chip,
+            None => return,
+        };
+        chip.used = !chip.used;
+        self.change_since_last_group_post.store(true, Ordering::Relaxed);
+        self.change_since_last_save.store(true, Ordering::Relaxed);
     }
 
     /// returned bool indicates if it was the last chip of that kind in the pack
@@ -305,6 +329,7 @@ impl ChipLibrary {
             pack.insert(fldr_chip.name, pack_chip);
         }
         self.change_since_last_save.store(true, Ordering::Relaxed);
+        self.change_since_last_group_post.store(true, Ordering::Relaxed);
         Ok(fldr_chip.used)
     }
 
@@ -334,6 +359,7 @@ impl ChipLibrary {
         }
         if returned_count > 0 {
             self.change_since_last_save.store(true, Ordering::Relaxed);
+            self.change_since_last_group_post.store(true, Ordering::Relaxed);
         }
         returned_count
     }
@@ -356,6 +382,7 @@ impl ChipLibrary {
 
         if accumulator > 0 {
             self.change_since_last_save.store(true, Ordering::Relaxed);
+            self.change_since_last_group_post.store(true, Ordering::Relaxed);
         }
 
         accumulator
@@ -556,5 +583,19 @@ impl ChipLibrary {
         let _ = storage.remove_item("pack");
         let _ = storage.remove_item("chip_limit");
         self.change_since_last_save.store(false, Ordering::Relaxed);
+    }
+
+    pub(crate) fn serialize_folder(&self) -> String {
+        let folder = self.folder.borrow();
+        let folder_str = serde_json::to_string(&*folder).unwrap_or_else(|_|String::from("[]"));
+        self.change_since_last_group_post.store(false, Ordering::Relaxed);
+        folder_str
+    }
+    
+    /// Returns true if the folder has changed since the last time
+    /// it was serialized for sharing via websocket
+    #[inline]
+    pub(crate) fn folder_changed(&self) -> bool {
+        self.change_since_last_group_post.load(Ordering::Relaxed)
     }
 }

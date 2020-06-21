@@ -1,9 +1,10 @@
 use yew::prelude::*;
+use yew::services::interval::{IntervalService, IntervalTask};
 
 use crate::chip_library::{ChipLibrary, BattleChip};
-use crate::util::timeout::{set_interval, TimeoutHandle};
 use crate::agents::chip_desc::{ChipDescMsgBus, ChipDescMsg};
 use std::rc::Rc;
+use std::time::Duration;
 
 use unchecked_unwrap::UncheckedUnwrap;
 
@@ -11,12 +12,13 @@ pub(crate) enum ChipDescComponentMsg {
     SetDesc(String),
     ShowUnknown(String),
     ClearDesc,
+    DoNothing,
 }
 
 pub(crate) struct ChipDescComponent {
     chip_anim_ct: usize,
     curr_chip: Option<Rc<BattleChip>>,
-    _scroll_interval: TimeoutHandle,
+    _scroll_interval: IntervalTask,
     _link: ComponentLink<Self>,
     _producer: Box<dyn Bridge<ChipDescMsgBus>>,
 }
@@ -40,7 +42,7 @@ impl Component for ChipDescComponent {
             }
         });
         let _producer = ChipDescMsgBus::bridge(callback);
-        let _scroll_interval = unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
+        let _scroll_interval = IntervalService::new().spawn(Duration::from_millis(75), link.callback(scroll_interval));//unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
 
         Self {
             chip_anim_ct: 0,
@@ -65,6 +67,7 @@ impl Component for ChipDescComponent {
                 self.curr_chip.take();
                 true
             }
+            ChipDescComponentMsg::DoNothing => false,
         }
     }
 
@@ -142,13 +145,13 @@ impl ChipDescComponent {
 }
 
 
-fn scroll_interval() {
+fn scroll_interval(_: ()) -> ChipDescComponentMsg {
     let window = unsafe{web_sys::window().unchecked_unwrap()};
     let document = unsafe{window.document().unchecked_unwrap()};
     let elem = document.get_element_by_id("ScrollTextDiv");
     let div = match elem {
         Some(div) => div,
-        None => return
+        None => return ChipDescComponentMsg::DoNothing,
     };
  
     let client_height = div.client_height();
@@ -158,7 +161,7 @@ fn scroll_interval() {
     let max_scroll = total_height - client_height;
  
     if max_scroll - 10 <= 0 {
-        return;
+        return ChipDescComponentMsg::DoNothing;
     }
  
     /*
@@ -169,4 +172,5 @@ fn scroll_interval() {
     */
  
     div.set_scroll_top(scroll_pos + 1);
+    ChipDescComponentMsg::DoNothing
  }

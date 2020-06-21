@@ -1,5 +1,3 @@
-pub(crate) mod timeout;
-
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use crate::chip_library::Elements;

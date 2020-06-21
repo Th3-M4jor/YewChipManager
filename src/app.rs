@@ -1,13 +1,21 @@
 use yew::prelude::*;
+use yew::services::{
+    reader::{ReaderService, ReaderTask, FileData},
+    timeout::{TimeoutService, TimeoutTask},
+    interval::{IntervalService, IntervalTask},
+};
 use std::borrow::Cow;
+use std::time::Duration;
 
-use crate::util::{storage_available,timeout::{set_timeout, set_interval, TimeoutHandle}};
+use crate::util::{storage_available, alert};
 use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
-use crate::agents::global_msg::{GlobalMsgBus, Request as GlobalReq};
+use crate::agents::{
+    global_msg::{GlobalMsgBus, Request as GlobalReq},
+    group_folder::{GroupFldrMsgBus, GroupFldrAgentOutMsg, GroupFldrAgentReq},
+};
 use crate::chip_library::ChipLibrary;
 
-use wasm_bindgen::{JsCast, JsValue, closure::Closure};
-
+use wasm_bindgen::JsCast;
 
 
 #[derive(PartialEq, Eq, Clone)]
@@ -66,11 +74,12 @@ pub enum TopLevelMsg {
     SetMsg(String),
     JoinGroupData{group_name: String, player_name: String},
     JoinGroup,
-    LeaveGroup,
+    LeftGroup,
+    GroupsUpdated,
     EraseData,
     ImportData,
     FileSelected(web_sys::File),
-    LoadFile(String),
+    LoadFile(Vec<u8>),
     CancelModal,
     ModalOk,
     DoNothing,
@@ -117,12 +126,27 @@ impl From<GlobalReq> for TopLevelMsg {
             GlobalReq::ImportData => {
                 TopLevelMsg::ImportData
             }
-            GlobalReq::LeaveGroup => {
-                TopLevelMsg::LeaveGroup
+        }
+    }
+}
+
+impl From<GroupFldrAgentOutMsg> for TopLevelMsg {
+    fn from(msg: GroupFldrAgentOutMsg) -> Self {
+        match msg {
+            GroupFldrAgentOutMsg::JoinedGroup => {
+                TopLevelMsg::DoNothing   
+            }
+            GroupFldrAgentOutMsg::LeftGroup => {
+                TopLevelMsg::LeftGroup
+            }
+            GroupFldrAgentOutMsg::GroupUpdated => {
+                TopLevelMsg::GroupsUpdated
             }
         }
     }
 }
+
+
 
 #[derive(PartialEq)]
 pub enum ModalStatus {
@@ -139,17 +163,20 @@ pub struct App
     link: ComponentLink<Self>,
     load_file_callback: Callback<ChangeData>,
     message_txt: String,
-    message_clear_timeout_handle: Option<TimeoutHandle>,
+    message_clear_timeout_handle: Option<TimeoutTask>,
+    message_clear_callback: Callback<()>,
     _producer: Box<dyn Bridge<GlobalMsgBus>>,
+    group_folder: Box<dyn Bridge<GroupFldrMsgBus>>,
     modal_status: ModalStatus,
     in_group: bool,
-    load_file_callback_promise: Option<Closure<dyn FnMut(JsValue)>>,
+    load_file_callback_promise: Option<ReaderTask>,
     file_input_ref: NodeRef,
-    _save_interval_handle: Option<TimeoutHandle>,
+    _save_interval_handle: Option<IntervalTask>,
 }
 
-fn save_interval_callback() {
+fn save_interval_callback(_:()) -> TopLevelMsg {
     ChipLibrary::get_instance().save_data();
+    TopLevelMsg::DoNothing
 }
 
 fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
@@ -193,9 +220,8 @@ impl App {
     /// change the current message, returns true for consistency with change_tab
     fn set_message(&mut self, message: String) -> bool {
 
-        if message == "" {
-            let handle = self.message_clear_timeout_handle.take();
-            drop(handle);
+        if message.is_empty() {
+            self.message_clear_timeout_handle.take();
         } else {
             self.set_message_clear_timeout();
         }
@@ -207,12 +233,11 @@ impl App {
     fn set_message_clear_timeout(&mut self) {
 
         //ensure that previous timeout is cancelled
-        let old_timeout = self.message_clear_timeout_handle.take();
-        drop(old_timeout);
-
-        let callback = self.link.callback_once(|_: ()| TopLevelMsg::SetMsg("".to_owned()));
+        self.message_clear_timeout_handle.take();
+        let handle = TimeoutService::new().spawn(Duration::from_secs(15), self.message_clear_callback.clone());
+        //let callback = self.link.callback_once(|_: ()| TopLevelMsg::SetMsg("".to_owned()));
         
-        self.message_clear_timeout_handle = Some(set_timeout(15000, move || callback.emit(())).unwrap());
+        self.message_clear_timeout_handle = Some(handle);
         
     }
 
@@ -347,6 +372,44 @@ impl App {
         self.active_tab = Tabs::Library;
         true
     }
+
+    fn load_file(&mut self, json: Vec<u8>) -> bool {
+        self.load_file_callback_promise.take();
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("load file callback was called"));
+            self.modal_status = ModalStatus::Closed;
+            self.active_tab = Tabs::Library;
+            let json = match String::from_utf8(json) {
+                Ok(json) => json,
+                Err(_) => {
+                    unsafe{alert("File was invalid, corrupted maybe?")};
+                    return false;
+                }
+            };
+            match ChipLibrary::get_instance().import_json(json) {
+                Ok(()) => {
+                    self.set_message("chips imported".to_string());
+                }
+                Err(msg) => {
+                    unsafe{alert(msg)};
+                }
+            }
+        true
+    }
+
+    fn file_selected(&mut self, file: web_sys::File) -> bool {
+        let callback = self.link.callback(|e: FileData|{
+            TopLevelMsg::LoadFile(e.content)
+        });
+        let handle = match ReaderService::new().read_file(file, callback) {
+            Ok(handle) => handle,
+            Err(why) => {
+                unsafe{alert(&why.to_string())};
+                return false;
+            }
+        };
+        self.load_file_callback_promise = Some(handle);
+        false
+    }
 }
 
 impl Component for App {
@@ -354,23 +417,34 @@ impl Component for App {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let callback = link.callback(|e: GlobalReq| {
+        let global_callback = link.callback(|e: GlobalReq| {
             TopLevelMsg::from(e)
         });
-        let _producer = GlobalMsgBus::bridge(callback);
+        let _producer = GlobalMsgBus::bridge(global_callback);
+
+        let group_callback = link.callback(|e: GroupFldrAgentOutMsg|{
+            TopLevelMsg::from(e)
+        });
+
+        let group_folder = GroupFldrMsgBus::bridge(group_callback);
+
         let load_file_callback = link.callback(load_file_callback);
 
         let _save_interval_handle = if storage_available("localStorage".to_owned()) {
-            
-            let handle = set_interval(300000, save_interval_callback).unwrap();
+            let callback = link.callback(save_interval_callback);
+            let handle = IntervalService::new().spawn(Duration::from_secs(300), callback);//set_interval(300000, save_interval_callback).unwrap();
             Some(handle)
         } else {
             None
         };
 
+        let message_clear_callback = link.callback(|_:()|{
+            TopLevelMsg::SetMsg(String::new())
+        });
+
         App {
             active_tab: Tabs::Library,
-            message_txt: "".to_owned(),
+            message_txt: String::new(),
             message_clear_timeout_handle: None,
             link,
             _producer,
@@ -380,10 +454,10 @@ impl Component for App {
             load_file_callback_promise: None,
             file_input_ref: NodeRef::default(),
             _save_interval_handle,
+            group_folder,
+            message_clear_callback,
         }
     }
-
-    
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
         false
@@ -395,9 +469,6 @@ impl Component for App {
             TopLevelMsg::SetMsg(message) => self.set_message(message),
             TopLevelMsg::JoinGroup => {
                 self.modal_status = ModalStatus::JoinGroup;
-                true
-            }
-            TopLevelMsg::LeaveGroup => {
                 true
             }
             TopLevelMsg::EraseData => {
@@ -415,39 +486,20 @@ impl Component for App {
             TopLevelMsg::ModalOk => {
                 self.modal_ok()
             }
-            TopLevelMsg::DoNothing => {
-                false
-            }
-            TopLevelMsg::JoinGroupData{group_name: _, player_name: _} => {
+            TopLevelMsg::JoinGroupData{group_name, player_name} => {
                 self.modal_status = ModalStatus::Closed;
+                self.group_folder.send(GroupFldrAgentReq::JoinGroup{group_name, player_name});
+                self.in_group = true;
                 true
             }
-            TopLevelMsg::LoadFile(json) => {
-                self.load_file_callback_promise.take();
-                //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("load file callback was called"));
-                self.modal_status = ModalStatus::Closed;
-                self.active_tab = Tabs::Library;
-                match ChipLibrary::get_instance().import_json(json) {
-                    Ok(()) => {
-                        self.set_message("chips imported".to_string());
-                    }
-                    Err(msg) => {
-                        unsafe{crate::util::alert(msg)};
-                    }
-                }
+            TopLevelMsg::LoadFile(json) => self.load_file(json),
+            TopLevelMsg::FileSelected(file) => self.file_selected(file),
+            TopLevelMsg::LeftGroup => {
+                self.in_group = false;
                 true
-            }
-            TopLevelMsg::FileSelected(file) => {
-                let promise = file.text();
-                let component_callback = self.link.callback_once(|text: JsValue| {
-                    let res = text.as_string()?;
-                    TopLevelMsg::LoadFile(res)
-                });
-                let callback = Closure::once(move |text: JsValue| component_callback.emit(text));
-                let _ = promise.then(&callback);
-                self.load_file_callback_promise = Some(callback);
-                false
-            }
+            },
+            TopLevelMsg::GroupsUpdated => true,
+            TopLevelMsg::DoNothing => false,
         }
     }
 

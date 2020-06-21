@@ -15,7 +15,12 @@ use crate::{
         chip_desc::{
             ChipDescMsg,
             ChipDescMsgBus
-    }},
+        },
+        group_folder::{
+            GroupFldrMsgBus,
+            GroupFldrAgentReq,
+        },
+    },
     util::alert
 };
 
@@ -207,11 +212,7 @@ impl Component for FolderComponent {
                 true
             },
             FolderMsg::ChangeUsed(idx) => {
-                let chip_library = ChipLibrary::get_instance();
-                let mut folder = chip_library.folder.borrow_mut();
-                let chip = unsafe{folder.get_mut(idx).unchecked_unwrap()};
-                chip.used = !chip.used;
-                //folder[idx].used = !folder[idx].used;
+                ChipLibrary::get_instance().flip_used_folder(idx);
                 true
             },
             FolderMsg::SetHighlightedChip(idx) => {
@@ -231,7 +232,8 @@ impl Component for FolderComponent {
                 false
             }
             FolderMsg::LeaveFolderGroup => {
-                self.event_bus.send(GlobalMsgReq::LeaveGroup);
+                //self.event_bus.send(GlobalMsgReq::LeaveGroup);
+                GroupFldrMsgBus::dispatcher().send(GroupFldrAgentReq::LeaveGroup);
                 false
             }
         }
