@@ -629,6 +629,12 @@ impl Component for App {
             }
             TopLevelMsg::JoinGroupData{group_name, player_name} => {
                 self.modal_status = ModalStatus::Closed;
+                let group_name = group_name.trim().to_owned();
+                let player_name = player_name.trim().to_owned();
+                if player_name.is_empty() || group_name.is_empty() {
+                    unsafe{alert("Cannot have an empty player or group name")};
+                    return true;
+                }
                 let player_name2 = player_name.clone();
                 self.group_folder.send(GroupFldrAgentReq::JoinGroup{group_name, player_name});
                 self.player_name = Some(player_name2);
