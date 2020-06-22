@@ -8,7 +8,13 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use crate::util::{storage_available, alert};
-use crate::components::{library::LibraryComponent as Library, pack::PackComponent as Pack, folder::FolderComponent as Folder, chip_desc::ChipDescComponent as ChipDescBox};
+use crate::components::{
+    library::LibraryComponent as Library,
+    pack::PackComponent as Pack,
+    folder::FolderComponent as Folder,
+    chip_desc::ChipDescComponent as ChipDescBox,
+    group_folder::GroupFolderComponent as GroupFolder,
+};
 use crate::agents::{
     global_msg::{GlobalMsgBus, Request as GlobalReq},
     group_folder::{GroupFldrMsgBus, GroupFldrAgentOutMsg, GroupFldrAgentReq},
@@ -382,47 +388,6 @@ impl App {
                 <button class={library_class} onclick={library_callback}>{"Library"}</button>
             </div>
         }
-
-        /*
-        match self.active_tab {
-            Tabs::Library => {
-                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
-                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
-                let library_callback = Callback::noop();
-                let pack_class = "btn inactiveNavTab";
-                let library_class = "btn activeNavTab";
-                let folder_class = "btn inactiveNavTab";
-                html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                        <button class={folder_class} onclick={folder_callback}>{"Folder"}</button>
-                        <button class={pack_class} onclick={pack_callback}>{"Pack"}</button>
-                        <button class={library_class} onclick={library_callback}>{"Library"}</button>
-                    </div>
-                }
-            }
-            Tabs::Pack => {
-                html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
-                        <button class="btn activeNavTab">{"Pack"}</button>
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
-                    </div>
-                }
-            }
-            Tabs::Folder => {
-                html! {
-                    <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                        <button class="btn activeNavTab">{"Folder"}</button>
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library))>{"Library"}</button>
-                    </div>
-                }
-            }
-            _ => { 
-                unreachable!()
-            }
-        }
-        */
     }
 
     fn build_modal(&self) -> Html {
@@ -556,6 +521,36 @@ impl App {
         self.load_file_callback_promise = Some(handle);
         false
     }
+
+    fn gen_group_folders(&self) -> Html {
+        let player_name = match &self.player_name {
+            Some(name) => name,
+            None => return html!{},
+        };
+        let library = ChipLibrary::get_instance();
+        let folders = library.group_folders.borrow();
+
+        let mut players = folders.keys().collect::<Vec<&String>>();
+
+        players.sort_unstable();
+
+        players.iter().map(|player| {
+            
+            if player_name == *player {
+                //don't show the current player
+                return html!{};
+            }
+            
+            
+            let name = (*player).to_owned();
+            let active = self.active_tab == *name.as_str();
+            html!{
+                <GroupFolder player_name={name} active={active}/>
+            }
+        }).collect::<Html>()
+
+
+    }
 }
 
 impl Component for App {
@@ -675,6 +670,7 @@ impl Component for App {
                             <Library active={self.active_tab == Tabs::Library}/>
                             <Pack active={self.active_tab == Tabs::Pack}/>
                             <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()}/>
+                            {self.gen_group_folders()}
                             <ChipDescBox/>
                         </div>
                     </div>
