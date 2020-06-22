@@ -243,14 +243,82 @@ impl App {
 
     fn gen_nav_tabs(&self) -> Html {
 
-        match self.active_tab {
+       if self.in_group {
+           self.in_group_nav_tabs()
+       } else {
+           self.not_in_group_nav_tabs()
+       }
+        
+    }
 
+    fn in_group_nav_tabs(&self) -> Html {
+        html!{}
+    }
+
+    fn not_in_group_nav_tabs(&self) -> Html {
+        
+        
+        let (
+            pack_callback,
+            folder_callback,
+            library_callback,
+            pack_class,
+            library_class,
+            folder_class,
+        ) = 
+        match self.active_tab {
             Tabs::Library => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = Callback::noop();
+                let pack_class = "btn inactiveNavTab";
+                let library_class = "btn activeNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            Tabs::Pack => {
+                let pack_callback = Callback::noop();
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
+                let pack_class = "btn activeNavTab";
+                let library_class = "btn inactiveNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            Tabs::Folder => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = Callback::noop();
+                let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
+                let pack_class = "btn activeNavTab";
+                let library_class = "btn inactiveNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            Tabs::GroupFolder(_) => {unreachable!()}
+        };
+
+        html! {
+            <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
+                <button class={folder_class} onclick={folder_callback}>{"Folder"}</button>
+                <button class={pack_class} onclick={pack_callback}>{"Pack"}</button>
+                <button class={library_class} onclick={library_callback}>{"Library"}</button>
+            </div>
+        }
+
+        /*
+        match self.active_tab {
+            Tabs::Library => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = Callback::noop();
+                let pack_class = "btn inactiveNavTab";
+                let library_class = "btn activeNavTab";
+                let folder_class = "btn inactiveNavTab";
                 html! {
                     <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder))>{"Folder"}</button>
-                        <button class="btn inactiveNavTab" onclick=self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack))>{"Pack"}</button>
-                        <button class="btn activeNavTab">{"Library"}</button>
+                        <button class={folder_class} onclick={folder_callback}>{"Folder"}</button>
+                        <button class={pack_class} onclick={pack_callback}>{"Pack"}</button>
+                        <button class={library_class} onclick={library_callback}>{"Library"}</button>
                     </div>
                 }
             }
@@ -276,7 +344,7 @@ impl App {
                 unreachable!()
             }
         }
-        
+        */
     }
 
     fn build_modal(&self) -> Html {
@@ -498,7 +566,15 @@ impl Component for App {
                 self.in_group = false;
                 true
             },
-            TopLevelMsg::GroupsUpdated => true,
+            TopLevelMsg::GroupsUpdated => {
+                if let Tabs::GroupFolder(name) = &self.active_tab {
+                    if !ChipLibrary::get_instance().group_folders.borrow().contains_key(name.as_str()) {
+                        // player left
+                        self.active_tab = Tabs::Library;
+                    }
+                }
+                true
+            },
             TopLevelMsg::DoNothing => false,
         }
     }

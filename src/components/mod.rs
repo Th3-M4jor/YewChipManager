@@ -4,6 +4,7 @@ pub(crate) mod folder;
 pub(crate) mod sort_box;
 pub(crate) mod chips;
 pub(crate) mod chip_desc;
+pub(crate) mod group_folder;
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ChipSortOptions {

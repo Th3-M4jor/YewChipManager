@@ -392,7 +392,7 @@ impl FolderComponent {
     }
 }
 
-struct FolderTopRow;
+pub(crate) struct FolderTopRow;
 
 impl Component for FolderTopRow {
     type Properties = ();
