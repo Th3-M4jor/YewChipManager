@@ -27,7 +27,7 @@ pub enum Tabs {
 }
 
 impl Tabs {
-    pub fn shorten_string(&self) -> Cow<str> {
+    pub fn shorten_string(&self) -> Cow<'static, str> {
         match self {
             Tabs::Library => Cow::Borrowed("Lib"),
             Tabs::Pack => Cow::Borrowed("Pck"),
@@ -168,7 +168,7 @@ pub struct App
     _producer: Box<dyn Bridge<GlobalMsgBus>>,
     group_folder: Box<dyn Bridge<GroupFldrMsgBus>>,
     modal_status: ModalStatus,
-    in_group: bool,
+    player_name: Option<String>,
     load_file_callback_promise: Option<ReaderTask>,
     file_input_ref: NodeRef,
     _save_interval_handle: Option<IntervalTask>,
@@ -243,16 +243,94 @@ impl App {
 
     fn gen_nav_tabs(&self) -> Html {
 
-       if self.in_group {
+       if self.player_name.is_some() {
            self.in_group_nav_tabs()
        } else {
            self.not_in_group_nav_tabs()
        }
-        
+    
     }
 
     fn in_group_nav_tabs(&self) -> Html {
-        html!{}
+        
+        let folders = ChipLibrary::get_instance().group_folders.borrow();
+        let mut players = folders.keys().collect::<Vec<&String>>();
+
+        players.sort_unstable();
+        
+        let player_tabs = players.iter().map(|player| {
+            if self.player_name.contains(*player) {
+                return html!{};
+            }
+            //else is not the current player
+            let tab = Tabs::GroupFolder((*player).clone());
+            let btn_text = tab.shorten_string();
+            let (button_class, callback) = if self.active_tab == *player.as_str() {
+                //is active tab
+                ("btn activeNavTab", Callback::noop())
+            } else {
+                ("btn inactiveNavtab", self.link.callback_once(|_: MouseEvent| TopLevelMsg::ChangeTab(tab)))
+            };
+            html!{
+                <button class={button_class} onclick={callback}>{btn_text}</button>
+            }
+        }).collect::<Html>();
+
+        let (
+            pack_callback,
+            folder_callback,
+            library_callback,
+            pack_class,
+            library_class,
+            folder_class,
+        ) = 
+        match self.active_tab {
+            Tabs::Library => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = Callback::noop();
+                let pack_class = "btn inactiveNavTab";
+                let library_class = "btn activeNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            Tabs::Pack => {
+                let pack_callback = Callback::noop();
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
+                let pack_class = "btn activeNavTab";
+                let library_class = "btn inactiveNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            Tabs::Folder => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = Callback::noop();
+                let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
+                let pack_class = "btn inactiveNavTab";
+                let library_class = "btn inactiveNavTab";
+                let folder_class = "btn activeNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+            _ => {
+                let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
+                let folder_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Folder));
+                let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
+                let pack_class = "btn inactiveNavTab";
+                let library_class = "btn inactiveNavTab";
+                let folder_class = "btn inactiveNavTab";
+                (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
+            }
+        };
+
+        html!{
+            <div class="btn-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
+                <button class={folder_class} onclick={folder_callback}>{Tabs::Folder.shorten_string()}</button>
+                <button class={pack_class} onclick={pack_callback}>{Tabs::Pack.shorten_string()}</button>
+                <button class={library_class} onclick={library_callback}>{Tabs::Library.shorten_string()}</button>
+                {player_tabs}
+            </div>
+        }
     }
 
     fn not_in_group_nav_tabs(&self) -> Html {
@@ -289,9 +367,9 @@ impl App {
                 let pack_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Pack));
                 let folder_callback = Callback::noop();
                 let library_callback = self.link.callback(|_| TopLevelMsg::ChangeTab(Tabs::Library));
-                let pack_class = "btn activeNavTab";
+                let pack_class = "btn inactiveNavTab";
                 let library_class = "btn inactiveNavTab";
-                let folder_class = "btn inactiveNavTab";
+                let folder_class = "btn activeNavTab";
                 (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
             }
             Tabs::GroupFolder(_) => {unreachable!()}
@@ -518,7 +596,7 @@ impl Component for App {
             _producer,
             load_file_callback,
             modal_status: ModalStatus::Closed,
-            in_group: false,
+            player_name: None,
             load_file_callback_promise: None,
             file_input_ref: NodeRef::default(),
             _save_interval_handle,
@@ -556,14 +634,15 @@ impl Component for App {
             }
             TopLevelMsg::JoinGroupData{group_name, player_name} => {
                 self.modal_status = ModalStatus::Closed;
+                let player_name2 = player_name.clone();
                 self.group_folder.send(GroupFldrAgentReq::JoinGroup{group_name, player_name});
-                self.in_group = true;
+                self.player_name = Some(player_name2);
                 true
             }
             TopLevelMsg::LoadFile(json) => self.load_file(json),
             TopLevelMsg::FileSelected(file) => self.file_selected(file),
             TopLevelMsg::LeftGroup => {
-                self.in_group = false;
+                self.player_name.take();
                 true
             },
             TopLevelMsg::GroupsUpdated => {
@@ -595,7 +674,7 @@ impl Component for App {
                         <div class="row">
                             <Library active={self.active_tab == Tabs::Library}/>
                             <Pack active={self.active_tab == Tabs::Pack}/>
-                            <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.in_group}/>
+                            <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()}/>
                             <ChipDescBox/>
                         </div>
                     </div>
