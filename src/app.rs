@@ -53,9 +53,15 @@ impl Tabs {
             Tabs::Pack => Cow::Borrowed("Pack"),
             Tabs::Folder => Cow::Borrowed("Library"),
             Tabs::GroupFolder(grp_fldr) => {
-                let mut text = String::from(grp_fldr);
-                text.push_str("'s folder");
-                Cow::Owned(text)
+                if grp_fldr.len() > 15 {
+                    let mut text = String::from(&grp_fldr[..=12]);
+                    text.push_str("'s folder");
+                    Cow::Owned(text)
+                } else {
+                    let mut text = String::from(grp_fldr);
+                    text.push_str("'s folder");
+                    Cow::Owned(text)
+                }
             }
         }
     }
