@@ -35,7 +35,7 @@ pub(crate) struct FolderChip {
     pub chip: Rc<BattleChip>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct GroupFolderChip {
     pub name: String,
     pub used: bool,

@@ -66,7 +66,7 @@ pub(crate) enum GroupFldrAgentReq {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub(crate) enum SocketMsg {
-    FoldersUpdated(String),
+    FoldersUpdated(HashMap<String, Vec<GroupFolderChip>>),
     Error(String),
     Ready,
 }
@@ -172,10 +172,11 @@ impl GroupFldrMsgBus {
         let mut socket = WebSocketService::new();
         let message_callback = self.link.callback(|msg: Text| {
             let data = msg.ok()?;
+            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&data));
             let res  = serde_json::from_str::<SocketMsg>(&data).ok()?;
             match res {
-                SocketMsg::FoldersUpdated(folder_str) => {
-                    let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
+                SocketMsg::FoldersUpdated(folders) => {
+                    //let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
                     let mut group = ChipLibrary::get_instance().group_folders.borrow_mut();
                     *group = folders;
                     GroupFldrAgentSocketMsg::GroupUpdated
@@ -193,7 +194,7 @@ impl GroupFldrMsgBus {
         let socket_notification_callback = self.link.callback(|msg: WebSocketStatus| {
             match msg {
                 WebSocketStatus::Opened => {
-                    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Socket opened"));
+                    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Socket opened"));
                     GroupFldrAgentSocketMsg::DoNothing
                 },
                 WebSocketStatus::Closed => GroupFldrAgentSocketMsg::LeftGroup,
