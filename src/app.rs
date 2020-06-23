@@ -281,7 +281,7 @@ impl App {
                 //is active tab
                 ("btn activeNavTab", Callback::noop())
             } else {
-                ("btn inactiveNavtab", self.link.callback_once(|_: MouseEvent| TopLevelMsg::ChangeTab(tab)))
+                ("btn inactiveNavTab", self.link.callback_once(|_: MouseEvent| TopLevelMsg::ChangeTab(tab)))
             };
             html!{
                 <button class={button_class} onclick={callback}>{btn_text}</button>
