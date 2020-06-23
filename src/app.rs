@@ -679,9 +679,9 @@ impl Component for App {
                     {self.gen_nav_tabs()}
                     <div class="container-fluid">
                         <div class="row">
-                            <Library active={self.active_tab == Tabs::Library}/>
-                            <Pack active={self.active_tab == Tabs::Pack}/>
                             <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()}/>
+                            <Pack active={self.active_tab == Tabs::Pack}/>
+                            <Library active={self.active_tab == Tabs::Library}/>
                             {self.gen_group_folders()}
                             <ChipDescBox/>
                         </div>
