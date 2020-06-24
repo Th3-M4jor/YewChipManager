@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
 use yew::html::{ChangeData, InputData};
+use yewtil::function_component;
 use std::rc::Rc;
 use unchecked_unwrap::UncheckedUnwrap;
 use wasm_bindgen::JsCast;
@@ -10,38 +11,21 @@ use crate::chip_library::{BattleChip, ChipLibrary};
 use crate::agents::chip_desc::{ChipDescMsg, ChipDescMsgBus};
 
 
-pub struct LibraryTopRow;
 
-impl Component for LibraryTopRow {
-    type Message = ();
-    type Properties = ();
-
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self{}
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
-        html! {
-            <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
-                <div class="col-4 Chip nopadding" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-3 Chip nopadding">
-                    {"SKILL"}
-                </div>
-                <div class="col-2 Chip nopadding">
-                    {"ELEM"}
-                </div>
+#[function_component(LibraryTopRow)]
+pub(crate) fn library_top_row() -> Html {
+    html! {
+        <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
+            <div class="col-4 Chip nopadding" style="white-space: nowrap">
+                {"NAME"}
             </div>
-        }
+            <div class="col-3 Chip nopadding">
+                {"SKILL"}
+            </div>
+            <div class="col-2 Chip nopadding">
+                {"ELEM"}
+            </div>
+        </div>
     }
 }
 

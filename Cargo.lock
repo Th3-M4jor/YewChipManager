@@ -498,9 +498,9 @@ checksum = "4da3758203a1b51dde0aa9ab4b8d75761cda72b1a467a0a47205491cf0942e4e"
 
 [[package]]
 name = "unicode-xid"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
+checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
 
 [[package]]
 name = "wasm-bindgen"
@@ -509,6 +509,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c2dc4aa152834bc334f506c1a06b866416a8b6697d5c9f75b9a689c8486def0"
 dependencies = [
  "cfg-if",
+ "serde",
+ "serde_json",
  "wasm-bindgen-macro",
 ]
 
@@ -614,8 +616,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "yew"
 version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc1e1b60b090bf29758c6c42da2d2d6d54aa97dc73e3ccd1cd99d664b4c754cf"
+source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
 dependencies = [
  "anyhow",
  "anymap",
@@ -656,17 +657,40 @@ dependencies = [
  "wasm-logger",
  "web-sys",
  "yew",
+ "yewtil",
 ]
 
 [[package]]
 name = "yew-macro"
 version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1d2fe46d7922ecd99af4e5b4eddcab58c70ec741e31de6e1b910d5873a3095f"
+source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
 dependencies = [
  "boolinator",
  "lazy_static",
  "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "yewtil"
+version = "0.2.0"
+source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+dependencies = [
+ "futures",
+ "log",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "yew",
+ "yewtil-macro",
+]
+
+[[package]]
+name = "yewtil-macro"
+version = "0.1.0"
+source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn",

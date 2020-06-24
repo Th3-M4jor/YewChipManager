@@ -15,7 +15,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 log = "^0.4"
-yew = {version = "^0.16.2"}
+yew = {git = "https://github.com/yewstack/yew.git", branch = "master"}
+yewtil = {git = "https://github.com/yewstack/yew.git", branch = "master"}
 wasm-bindgen = {version = "^0.2", features=["nightly", "enable-interning"]}
 wasm-logger = "^0.2.0"
 #wee_alloc = "^0.4.5"

@@ -14,6 +14,7 @@ use crate::components::{
     folder::FolderComponent as Folder,
     chip_desc::ChipDescComponent as ChipDescBox,
     group_folder::GroupFolderComponent as GroupFolder,
+    //group_folders::GroupFolders,
 };
 use crate::agents::{
     global_msg::{GlobalMsgBus, Request as GlobalReq},
@@ -246,7 +247,7 @@ impl App {
 
         //ensure that previous timeout is cancelled
         self.message_clear_timeout_handle.take();
-        let handle = TimeoutService::new().spawn(Duration::from_secs(15), self.message_clear_callback.clone());
+        let handle = TimeoutService::spawn(Duration::from_secs(15), self.message_clear_callback.clone());
         //let callback = self.link.callback_once(|_: ()| TopLevelMsg::SetMsg("".to_owned()));
         
         self.message_clear_timeout_handle = Some(handle);
@@ -528,6 +529,7 @@ impl App {
         false
     }
 
+    
     fn gen_group_folders(&self) -> Html {
         let player_name = match &self.player_name {
             Some(name) => name,
@@ -549,14 +551,16 @@ impl App {
             
             
             let name = (*player).to_owned();
+            let player_key = name.clone();
             let active = self.active_tab == *name.as_str();
             html!{
-                <GroupFolder player_name={name} active={active}/>
+                <GroupFolder player_name={name} active={active} key={player_key}/>
             }
         }).collect::<Html>()
 
 
     }
+    
 }
 
 impl Component for App {
@@ -579,7 +583,7 @@ impl Component for App {
 
         let _save_interval_handle = if storage_available("localStorage".to_owned()) {
             let callback = link.callback(save_interval_callback);
-            let handle = IntervalService::new().spawn(Duration::from_secs(300), callback);//set_interval(300000, save_interval_callback).unwrap();
+            let handle = IntervalService::spawn(Duration::from_secs(300), callback);//set_interval(300000, save_interval_callback).unwrap();
             Some(handle)
         } else {
             None
@@ -679,11 +683,11 @@ impl Component for App {
                     {self.gen_nav_tabs()}
                     <div class="container-fluid">
                         <div class="row">
-                            <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()}/>
-                            <Pack active={self.active_tab == Tabs::Pack}/>
-                            <Library active={self.active_tab == Tabs::Library}/>
+                            <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()} key={"Folder".to_owned()}/>
+                            <Pack active={self.active_tab == Tabs::Pack} key={"Pack".to_owned()}/>
+                            <Library active={self.active_tab == Tabs::Library} key={"Library".to_owned()}/>
                             {self.gen_group_folders()}
-                            <ChipDescBox/>
+                            <ChipDescBox key={"ChipDescBox".to_owned()}/>
                         </div>
                     </div>
                 </div>

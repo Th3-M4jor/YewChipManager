@@ -42,7 +42,7 @@ impl Component for ChipDescComponent {
             }
         });
         let _producer = ChipDescMsgBus::bridge(callback);
-        let _scroll_interval = IntervalService::new().spawn(Duration::from_millis(75), link.callback(scroll_interval));//unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
+        let _scroll_interval = IntervalService::spawn(Duration::from_millis(75), link.callback(scroll_interval));//unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
 
         Self {
             chip_anim_ct: 0,

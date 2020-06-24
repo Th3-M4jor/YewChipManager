@@ -82,7 +82,7 @@ pub(crate) struct GroupFldrMsgBus {
 //static GroupMsgCallbackLink: Lazy<RwLock<Option<Callback<GroupFldrAgentMsg>>>> = Lazy::new(|| RwLock::new(None));
 
 impl Agent for GroupFldrMsgBus {
-    type Reach = Context;
+    type Reach = Context<Self>;
     type Message = GroupFldrAgentSocketMsg;
     type Input = GroupFldrAgentReq;
     type Output = GroupFldrAgentOutMsg;
@@ -103,7 +103,7 @@ impl Agent for GroupFldrMsgBus {
                 match &mut self.web_socket {
                     Some(socket) => {
                         socket.send(Ok(folder));
-                        let handle = IntervalService::new().spawn(
+                        let handle = IntervalService::spawn(
                             Duration::from_secs(10),
                             self.link.callback(|_| GroupFldrAgentSocketMsg::CheckFolderUpdated)
                         );
@@ -117,6 +117,7 @@ impl Agent for GroupFldrMsgBus {
             GroupFldrAgentSocketMsg::LeftGroup => {
                 self.web_socket.take();
                 self.socket_update_interval.take();
+                self.clear_group_folders();
                 GroupFldrAgentOutMsg::LeftGroup
             }
             GroupFldrAgentSocketMsg::GroupUpdated => {
@@ -126,6 +127,7 @@ impl Agent for GroupFldrMsgBus {
                 unsafe{alert(&why)};
                 self.web_socket.take();
                 self.socket_update_interval.take();
+                self.clear_group_folders();
                 GroupFldrAgentOutMsg::LeftGroup
             }
             GroupFldrAgentSocketMsg::CheckFolderUpdated => {
@@ -149,6 +151,7 @@ impl Agent for GroupFldrMsgBus {
             }
             GroupFldrAgentReq::LeaveGroup => {
                 self.leave_group();
+                self.clear_group_folders();
                 for sub in self.subs.iter() {
                     self.link.respond(*sub, GroupFldrAgentOutMsg::LeftGroup);
                 }
@@ -169,7 +172,7 @@ impl GroupFldrMsgBus {
 
     fn join_group(&mut self, group_name: String, player_name: String) -> Result<(), String> {
         let url = String::from("wss://spartan364.hopto.org/join/") + &group_name + "/" + &player_name;
-        let mut socket = WebSocketService::new();
+        //let mut socket = WebSocketService::new();
         let message_callback = self.link.callback(|msg: Text| {
             let data = msg.ok()?;
             web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&data));
@@ -201,7 +204,7 @@ impl GroupFldrMsgBus {
                 WebSocketStatus::Error => GroupFldrAgentSocketMsg::ServerError("Socket Closed by Server".to_string()),
             }
         });
-        let socket_task = socket.connect_text(&url, message_callback, socket_notification_callback).map_err(|e| e.to_owned())?;
+        let socket_task = WebSocketService::connect_text(&url, message_callback, socket_notification_callback).map_err(|e| e.to_owned())?;
         self.web_socket = Some(socket_task);
 
         Ok(())
@@ -222,6 +225,11 @@ impl GroupFldrMsgBus {
             Some(socket) => socket.send(Ok(folder)),
             None => {}
         }
+    }
+
+    fn clear_group_folders(&self) {
+        let mut group = ChipLibrary::get_instance().group_folders.borrow_mut();
+        *group = HashMap::default()
     }
 
 }

@@ -78,6 +78,7 @@ impl Component for GroupFolderChipComponent {
                         type="checkbox"
                         class="centerInputBox"
                         checked={self.props.used}
+                        disabled=true
                     />
                 </div>
             </div>

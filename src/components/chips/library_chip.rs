@@ -77,7 +77,7 @@ impl Component for LibraryChip {
         
         html! {
             <div class=("row justify-content-center Chip noselect chipHover", chip_css) 
-                ondoubleclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} 
+                ondblclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} 
                 id={&self.id_str}
                 onmouseover={self.props.on_mouse_enter.clone()}>
                 <div class="col-4 nopadding" style="white-space: nowrap">

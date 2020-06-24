@@ -59,7 +59,7 @@ impl Component for PackChipComponent {
         };
         html!{
             <div class=("row justify-content-center noselect chipHover", chip_css) 
-                ondoubleclick={self.props.add_to_folder.clone()} 
+                ondblclick={self.props.add_to_folder.clone()} 
                 id={&self.id_str} 
                 onmouseover={self.props.on_mouse_enter.clone()}
                 >

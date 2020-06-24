@@ -16,7 +16,7 @@ pub(crate) struct GlobalMsgBus {
 }
 
 impl Agent for GlobalMsgBus {
-    type Reach = Context;
+    type Reach = Context<Self>;
     type Message = ();
     type Input = Request;
     type Output = Request;

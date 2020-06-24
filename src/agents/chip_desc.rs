@@ -14,7 +14,7 @@ pub(crate) struct ChipDescMsgBus {
 }
 
 impl Agent for ChipDescMsgBus {
-    type Reach = Context;
+    type Reach = Context<Self>;
     type Message = ();
     type Input = ChipDescMsg;
     type Output = ChipDescMsg;

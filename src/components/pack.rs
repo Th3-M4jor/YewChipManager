@@ -2,6 +2,7 @@ use crate::chip_library::{ChipLibrary, PackChip};
 use crate::components::{ChipSortOptions, chips::PackChipComponent, sort_box::ChipSortBox};
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
+use yewtil::function_component;
 use crate::agents::{global_msg::{GlobalMsgBus, Request as GlobalMsgReq}, chip_desc::{ChipDescMsg, ChipDescMsgBus}};
 use crate::util::alert;
 use yew::events::MouseEvent;
@@ -9,6 +10,29 @@ use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 
 use std::collections::HashMap;
 use unchecked_unwrap::UncheckedUnwrap;
+
+#[function_component(PackTopRow)]
+pub(crate) fn pack_top_row() -> Html {
+    html! {
+        <div class="row sticky-top justify-content-center noselect" style="background-color: gray; z-index: 1">
+            <div class="col-3 Chip nopadding" style="white-space: nowrap">
+                {"NAME"}
+            </div>
+            <div class="col-3 Chip nopadding">
+                {"SKILL"}
+            </div>
+            <div class="col-2 Chip nopadding">
+                {"ELEM"}
+            </div>
+            <div class="col-1 Chip nopadding">
+                {"O"}
+            </div>
+            <div class="col-1 Chip nopadding">
+                {"U"}
+            </div>
+        </div>
+    }
+}
 
 #[derive(Properties, Clone)]
 pub struct PackProps {
@@ -444,6 +468,7 @@ impl PackComponent {
 }
 
 
+/*
 pub struct PackTopRow;
 
 impl Component for PackTopRow {
@@ -486,3 +511,4 @@ impl Component for PackTopRow {
     }
 
 }
+*/

@@ -1,5 +1,6 @@
 use unchecked_unwrap::UncheckedUnwrap;
 use yew::{prelude::*, agent::{Dispatcher, Dispatched}};
+use yewtil::function_component;
 use crate::{
     components::{
         ChipSortOptions,
@@ -392,44 +393,26 @@ impl FolderComponent {
     }
 }
 
-pub(crate) struct FolderTopRow;
 
-impl Component for FolderTopRow {
-    type Properties = ();
-    type Message = ();
-
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self{}
-    }
-
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
-        html! {
-            <div class="row sticky-top justify-content-center" style="background-color: gray; z-index: 1">
-                <div class="col-1 Chip nopadding">
-                    {"#"}
-                </div>
-                <div class="col-3 Chip nopadding" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-3 Chip nopadding">
-                    {"SKILL"}
-                </div>
-                <div class="col-2 Chip nopadding">
-                    {"ELEM"}
-                </div>
-                <div class="col-1 Chip nopadding">
-                    {"U"}
-                </div>
+#[function_component(FolderTopRow)]
+pub(crate) fn folder_top_row() -> Html {
+    html! {
+        <div class="row sticky-top justify-content-center" style="background-color: gray; z-index: 1">
+            <div class="col-1 Chip nopadding">
+                {"#"}
             </div>
-        }
+            <div class="col-3 Chip nopadding" style="white-space: nowrap">
+                {"NAME"}
+            </div>
+            <div class="col-3 Chip nopadding">
+                {"SKILL"}
+            </div>
+            <div class="col-2 Chip nopadding">
+                {"ELEM"}
+            </div>
+            <div class="col-1 Chip nopadding">
+                {"U"}
+            </div>
+        </div>
     }
 }
-
