@@ -585,9 +585,12 @@ impl ChipLibrary {
         self.change_since_last_save.store(false, Ordering::Relaxed);
     }
 
-    pub(crate) fn serialize_folder(&self) -> String {
+    pub(crate) fn serialize_folder(&self) -> Vec<u8> {
         let folder = self.folder.borrow();
-        let folder_str = serde_json::to_string(&*folder).unwrap_or_else(|_|String::from("[]"));
+        let folder_str = bincode::serialize(&*folder).unwrap_or_else(|_| {
+            let chips: Vec<FolderChip> = vec![]; 
+            bincode::serialize(&chips).unwrap()
+        });
         self.change_since_last_group_post.store(false, Ordering::Relaxed);
         folder_str
     }

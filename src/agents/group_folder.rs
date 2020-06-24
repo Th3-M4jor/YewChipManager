@@ -3,7 +3,7 @@ use std::collections::{HashSet, HashMap};
 use std::time::Duration;
 use yew::worker::*;
 //use yew::prelude::*;
-use yew::format::Text;
+use yew::format::Binary;
 use yew::services::{
     websocket::{WebSocketService, WebSocketTask, WebSocketStatus},
     interval::{IntervalService, IntervalTask},
@@ -102,7 +102,7 @@ impl Agent for GroupFldrMsgBus {
                 let folder = ChipLibrary::get_instance().serialize_folder();
                 match &mut self.web_socket {
                     Some(socket) => {
-                        socket.send(Ok(folder));
+                        socket.send_binary(Ok(folder));
                         let handle = IntervalService::spawn(
                             Duration::from_secs(10),
                             self.link.callback(|_| GroupFldrAgentSocketMsg::CheckFolderUpdated)
@@ -173,10 +173,10 @@ impl GroupFldrMsgBus {
     fn join_group(&mut self, group_name: String, player_name: String) -> Result<(), String> {
         let url = String::from("wss://spartan364.hopto.org/join/") + &group_name + "/" + &player_name;
         //let mut socket = WebSocketService::new();
-        let message_callback = self.link.callback(|msg: Text| {
+        let message_callback = self.link.callback(|msg: Binary| {
             let data = msg.ok()?;
-            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&data));
-            let res  = serde_json::from_str::<SocketMsg>(&data).ok()?;
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&data));
+            let res  = bincode::deserialize::<SocketMsg>(&data).ok()?;
             match res {
                 SocketMsg::FoldersUpdated(folders) => {
                     //let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
@@ -204,7 +204,7 @@ impl GroupFldrMsgBus {
                 WebSocketStatus::Error => GroupFldrAgentSocketMsg::ServerError("Socket Closed by Server".to_string()),
             }
         });
-        let socket_task = WebSocketService::connect_text(&url, message_callback, socket_notification_callback).map_err(|e| e.to_owned())?;
+        let socket_task = WebSocketService::connect_binary(&url, message_callback, socket_notification_callback).map_err(|e| e.to_owned())?;
         self.web_socket = Some(socket_task);
 
         Ok(())
@@ -222,7 +222,7 @@ impl GroupFldrMsgBus {
         }
         let folder = library.serialize_folder();
         match &mut self.web_socket {
-            Some(socket) => socket.send(Ok(folder)),
+            Some(socket) => socket.send_binary(Ok(folder)),
             None => {}
         }
     }

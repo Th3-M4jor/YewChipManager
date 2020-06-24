@@ -23,6 +23,7 @@ wasm-logger = "^0.2.0"
 #wasm-bindgen-futures = "*"
 serde = {version = "*"}
 serde_json = "*"
+bincode = "*"
 once_cell = "*"
 unchecked_unwrap = {version = "*", features = ["debug_checks"]}
 js-sys = "*"
