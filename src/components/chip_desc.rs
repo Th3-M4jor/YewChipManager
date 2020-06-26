@@ -109,12 +109,12 @@ impl ChipDescComponent {
 
     fn no_chip(&self) -> Html {
         html!{
-            <div class="col-3 nopadding chipDescBackgroundStd"/>
+            <div class="right-panel nopadding chipDescBackgroundStd"/>
         }
     }
 
     fn with_chip(&self, chip: &BattleChip) -> Html {
-        let background = String::from("col-3 nopadding ") + chip.kind.to_background_css_class();
+        let background = String::from("right-panel nopadding ") + chip.kind.to_background_css_class();
         let chip_anim_class = if self.chip_anim_ct & 1 == 0 {
             "chipWindowOne chipDescText"
         } else {

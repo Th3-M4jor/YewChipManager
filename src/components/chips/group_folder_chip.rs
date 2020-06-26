@@ -56,23 +56,23 @@ impl Component for GroupFolderChipComponent {
         
         html!{
             <div
-                class=("row justify-content-center noselect chipHover", chip_css)
+                class=("chip-row noselect chipHover", chip_css)
                 id={&self.props.chip.name}
                 onmouseover={self.props.on_mouse_enter.clone()}
             >
-                <div class="col-1 nopadding">
+                <div class="chip-col-1 nopadding">
                     {self.props.idx + 1}
                 </div>
-                <div class="col-3 nopadding">
+                <div class="chip-col-3 nopadding">
                     {&self.props.chip.name}
                 </div>
-                <div class="col-3 nopadding">
+                <div class="chip-col-3 nopadding">
                     {self.props.chip.skill().as_str()}
                 </div>
-                <div class="col-2 nopadding">
+                <div class="chip-col-2 nopadding">
                     {generate_element_images(&self.props.chip.element)}
                 </div>
-                <div class="col-1 nopadding centercontent">
+                <div class="chip-col-1 nopadding centercontent">
                     <input
                         name="chipUsed"
                         type="checkbox"

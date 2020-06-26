@@ -39,7 +39,7 @@ impl Component for ChipSortBox {
         html!{
             <>
             <span unselectable="on" class="Chip noselect">{"Sort By"}</span>
-            <select value={&self.props.sort_by.as_str()} style="width: 95%" class="custom-select" onchange={self.props.sort_changed.clone()}>
+            <select value={&self.props.sort_by.as_str()} class="chip-sort-select" onchange={self.props.sort_changed.clone()}>
                 <option value="Name">{"Name"}</option>
                 <option value="Element">{"Element"}</option>
                 <option value="MaxDamage">{"MaxDamage"}</option>

@@ -15,14 +15,14 @@ use crate::agents::chip_desc::{ChipDescMsg, ChipDescMsgBus};
 #[function_component(LibraryTopRow)]
 pub(crate) fn library_top_row() -> Html {
     html! {
-        <div class="row sticky-top justify-content-center noselect" style="background-color: gray">
-            <div class="col-4 Chip nopadding" style="white-space: nowrap">
+        <div class="chip-top-row noselect">
+            <div class="chip-col-4 Chip nopadding" style="white-space: nowrap">
                 {"NAME"}
             </div>
-            <div class="col-3 Chip nopadding">
+            <div class="chip-col-3 Chip nopadding">
                 {"SKILL"}
             </div>
-            <div class="col-2 Chip nopadding">
+            <div class="chip-col-2 Chip nopadding">
                 {"ELEM"}
             </div>
         </div>
@@ -161,9 +161,9 @@ impl Component for LibraryComponent {
     fn view(&self) -> Html {
 
         let (col1_display, col2_display, library_containter_class) = if self.props.active {
-                ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+                ("left-panel nopadding", "middle-panel nopadding", "Folder activeFolder")
             } else {
-                ("inactiveTab", "inactiveTab", "container-fluid Folder")
+                ("inactiveTab", "inactiveTab", "Folder")
             };
 
         html! {
@@ -193,7 +193,7 @@ impl LibraryComponent {
             <>
             <br/>
             <span unselectable="on" class="Chip">{"Search"}</span>
-            <input type="text" class="form-control form-control-sm" value={&self.filter_by} oninput={text_changed} style="width: 95%"/>
+            <input type="text" class="chip-search-input" value={&self.filter_by} oninput={text_changed}/>
             </>
         }
     }

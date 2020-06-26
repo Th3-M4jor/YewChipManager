@@ -58,24 +58,24 @@ impl Component for PackChipComponent {
             self.props.chip.kind.to_css_class()
         };
         html!{
-            <div class=("row justify-content-center noselect chipHover", chip_css) 
+            <div class=("chip-row noselect chipHover", chip_css) 
                 ondblclick={self.props.add_to_folder.clone()} 
                 id={&self.id_str} 
                 onmouseover={self.props.on_mouse_enter.clone()}
                 >
-                <div class="col-3 nopadding" style="white-space: nowrap">
+                <div class="chip-col-3 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}
                 </div>
-                <div class="col-3 nopadding">
+                <div class="chip-col-3 nopadding">
                     {self.props.chip.skill().as_str()}
                 </div>
-                <div class="col-2 nopadding centercontent">
+                <div class="chip-col-2 nopadding centercontent">
                     {generate_element_images(&self.props.chip.element)}
                 </div>
-                <div class="col-1 nopadding">
+                <div class="chip-col-1 nopadding">
                     {self.props.owned}
                 </div>
-                <div class="col-1 nopadding">
+                <div class="chip-col-1 nopadding">
                     {self.props.used}
                 </div>
             </div>

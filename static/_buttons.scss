@@ -1,22 +1,84 @@
+%nav-tab {
+    display: inline-block;
+    font-weight: 400;
+    color: #212529;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    position: relative;
+    flex: 1 1 auto;
+    cursor: pointer;
+    margin: 0;
+    font-family: inherit;
+}
+
+%nav-tab:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+%nav-tab:not(:first-child) {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
 .activeNavTab {
-    background-color: grey !important;
-    color: white !important;
-    border-bottom: 0px !important;
+    @extend %nav-tab;
+    background-color: grey;
+    color: white;
+    border-bottom: 0px;
 }
 
 .inactiveNavTab {
-    background-color: white !important;
-    color: blue !important;
+    @extend %nav-tab;
+    background-color: white;
+    color: blue;
     border: 1px solid lightgray;
 }
 
+.ok-button {
+    @extend %nav-tab;
+    background-color: red;
+    color: white;
+}
+
+.nav-tab-group {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    padding-left: 125px;
+    transform: translate(0px, 6px);
+}
+
 .sideButtons {
+    display: inline-block;
     background-color: #78909c;
     margin: .375rem;
     text-transform: uppercase;
     word-wrap: break-word;
     white-space: normal;
     box-shadow: 0 2px 5px 0 rgba(0,0,0,.16),0 2px 10px 0 rgba(0,0,0,.12);
+    user-select: none;
+    vertical-align: middle;
+    text-align: center;
+    color: #212529;
+    font-weight: 400;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
 }
 
 .ripple {

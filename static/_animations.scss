@@ -1,29 +1,30 @@
-@keyframes chip-in-one {
-    from {
-        transform: rotateY(-90deg);
-    }
-    to {
-        transform: rotateY(0deg);
+@mixin chip-animation-frames($names...) {
+    @for $i from 0 to length($names) {
+        @keyframes #{nth($names, $i + 1)} {
+            from {
+                transform: rotateY(-90deg);
+            }
+            to {
+                transform: rotateY(0deg);
+            }
+        }
     }
 }
 
-@keyframes chip-in-two {
-    from {
-        transform: rotateY(-90deg);
-    }
-    to {
-        transform: rotateY(0deg);
-    }
+@include chip-animation-frames(chip-in-one, chip-in-two);
+
+
+@mixin chip-anim($name) {
+    animation-name: $name;
+    animation-duration: 0.3s;
+    animation-iteration-count: 1;
 }
 
 .chipWindowOne {
-    animation-name: chip-in-one;
-    animation-duration: 0.3s;
-    animation-iteration-count: 1;
+    @include chip-anim(chip-in-one);
 }
 
 .chipWindowTwo {
-    animation-name: chip-in-two;
-    animation-duration: 0.3s;
-    animation-iteration-count: 1;
+    @include chip-anim(chip-in-two);
 }
+

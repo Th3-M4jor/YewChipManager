@@ -110,7 +110,7 @@ impl Component for GroupFolderComponent {
 
     fn view(&self) -> Html {
         let (col1_display, col2_display, folder_containter_class) = if self.props.active {
-            ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+            ("left-panel nopadding", "middle-panel nopadding", "container-fluid Folder activeFolder")
         } else {
             ("inactiveTab", "inactiveTab", "container-fluid Folder")
         };

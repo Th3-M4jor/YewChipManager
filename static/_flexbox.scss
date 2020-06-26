@@ -1,0 +1,64 @@
+.main-container {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    padding-right: 0px;
+    padding-left: 0px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+//width is divided by 12 to determine size
+@mixin col($name, $width) {
+    .#{$name}{
+        $size: ($width / 12) * 100%;
+        flex: 0 0 $size;
+        max-width: $size;
+    }
+}
+
+@include col("left-panel", 2);
+@include col("middle-panel", 7);
+@include col("right-panel", 3);
+
+
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -15px;
+    margin-right: -15px;
+    justify-content: center !important;
+}
+
+.chip-top-row {
+    @extend .chip-row;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: gray;
+}
+
+@include col("chip-col-1", 1);
+@include col("chip-col-2", 2);
+@include col("chip-col-3", 3);
+@include col("chip-col-4", 4);
+
+
+
+
+/*
+.left-panel {
+    flex: 0 0 16.6666667%;
+    max-width: 16.666667%;
+}
+
+.middle-panel {
+    flex: 0 0 58.333%;
+    max-width: 58.3333%;
+}
+
+.right-panel {
+    flex:0 0 25%;
+    max-width: 25%;
+}
+*/

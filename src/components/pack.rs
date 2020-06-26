@@ -14,20 +14,20 @@ use unchecked_unwrap::UncheckedUnwrap;
 #[function_component(PackTopRow)]
 pub(crate) fn pack_top_row() -> Html {
     html! {
-        <div class="row sticky-top justify-content-center noselect" style="background-color: gray; z-index: 1">
-            <div class="col-3 Chip nopadding" style="white-space: nowrap">
+        <div class="chip-top-row noselect">
+            <div class="chip-col-3 Chip nopadding" style="white-space: nowrap">
                 {"NAME"}
             </div>
-            <div class="col-3 Chip nopadding">
+            <div class="chip-col-3 Chip nopadding">
                 {"SKILL"}
             </div>
-            <div class="col-2 Chip nopadding">
+            <div class="chip-col-2 Chip nopadding">
                 {"ELEM"}
             </div>
-            <div class="col-1 Chip nopadding">
+            <div class="chip-col-1 Chip nopadding">
                 {"O"}
             </div>
-            <div class="col-1 Chip nopadding">
+            <div class="chip-col-1 Chip nopadding">
                 {"U"}
             </div>
         </div>
@@ -258,9 +258,9 @@ impl Component for PackComponent {
     fn view(&self) -> Html {
 
         let (col1_display, col2_display, pack_containter_class) = if self.props.active {
-            ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+            ("left-panel nopadding", "middle-panel nopadding", "Folder activeFolder")
         } else {
-            ("inactiveTab", "inactiveTab", "container-fluid Folder")
+            ("inactiveTab", "inactiveTab", "Folder")
         };
 
         html!{
@@ -351,23 +351,23 @@ impl PackComponent {
         
         html!{
             <div class="centercontent">
-                <button class="btn sideButtons ripple" onclick={self.jack_out_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.jack_out_callback.clone()}>
                     <span class="Chip">{"Jack Out"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={self.export_json_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.export_json_callback.clone()}>
                     <span class="Chip">{"Export JSON"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={self.export_txt_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.export_txt_callback.clone()}>
                     <span class="Chip">{"Export Txt"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={self.erase_data_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.erase_data_callback.clone()}>
                     <span class="Chip">{"Erase Data"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={self.import_data_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.import_data_callback.clone()}>
                     <span class="Chip">{"Import Data"}</span>
                 </button>
             </div>

@@ -261,7 +261,7 @@ impl Component for FolderComponent {
         //let (folder_containter_class, outer_container_class) = if self.props.active {("container-fluid Folder activeFolder", "container-fluid")} else {("container-fluid Folder", "inactiveTab")};
 
         let (col1_display, col2_display, folder_containter_class) = if self.props.active {
-            ("col-2 nopadding", "col-7 nopadding", "container-fluid Folder activeFolder")
+            ("left-panel nopadding", "middle-panel nopadding", "container-fluid Folder activeFolder")
         } else {
             ("inactiveTab", "inactiveTab", "container-fluid Folder")
         };
@@ -274,11 +274,11 @@ impl Component for FolderComponent {
             <div class={col1_display}>
                 <span unselectable="on" class="Chip noselect">{"Chip Limit:"}</span>
                 <input 
-                    type="number" class="form-control"
+                    type="number" class="chip-search-input"
                     min={min_val} max="45"
                     value={&chip_limit_val} 
                     onchange={self.chip_limit_change.clone()}
-                    style="width: 95%"
+                    style="height: calc(1.5em + .75rem + 2px); font-size: 1rem"
                 />
                 <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
                 <br/>
@@ -376,15 +376,15 @@ impl FolderComponent {
 
         html!{
             <div class="centercontent">
-                <button class="btn sideButtons ripple" onclick={self.jack_out_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.jack_out_callback.clone()}>
                     <span class="Chip">{"Jack Out"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={self.clear_folder_callback.clone()}>
+                <button class="sideButtons ripple" onclick={self.clear_folder_callback.clone()}>
                     <span class="Chip">{"Clear Folder"}</span>
                 </button>
                 <br/>
-                <button class="btn sideButtons ripple" onclick={join_or_leave_callback}>
+                <button class="sideButtons ripple" onclick={join_or_leave_callback}>
                     <span class="Chip">{join_or_leave_text}</span>
                 </button>
                 <br/>
@@ -397,20 +397,20 @@ impl FolderComponent {
 #[function_component(FolderTopRow)]
 pub(crate) fn folder_top_row() -> Html {
     html! {
-        <div class="row sticky-top justify-content-center" style="background-color: gray; z-index: 1">
-            <div class="col-1 Chip nopadding">
+        <div class="chip-top-row">
+            <div class="chip-col-1 Chip nopadding">
                 {"#"}
             </div>
-            <div class="col-3 Chip nopadding" style="white-space: nowrap">
+            <div class="chip-col-3 Chip nopadding" style="white-space: nowrap">
                 {"NAME"}
             </div>
-            <div class="col-3 Chip nopadding">
+            <div class="chip-col-3 Chip nopadding">
                 {"SKILL"}
             </div>
-            <div class="col-2 Chip nopadding">
+            <div class="chip-col-2 Chip nopadding">
                 {"ELEM"}
             </div>
-            <div class="col-1 Chip nopadding">
+            <div class="chip-col-1 Chip nopadding">
                 {"U"}
             </div>
         </div>
