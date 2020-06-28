@@ -1,0 +1,40 @@
+%chipImg {
+    height: 100%;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    transform: scale(1.25);
+    vertical-align: middle;
+}
+
+@mixin chipimg($name, $content) {
+    .#{$name}Chip {
+        @extend %chipImg;
+        content: url($content);
+    }
+}
+
+%battlechip {
+    background: transparent;
+    text-align: Center; 
+    padding-left: 0px; 
+    padding-right: 0px; 
+    font-family: "Lucida Console";
+    font-weight: bold; 
+    font-size: 15px;
+    margin-bottom: 0px;
+    text-shadow:1px 1px grey;
+}
+
+@mixin chipClass($name, $color) {
+    .#{$name} {
+        @extend %battlechip;
+        color: $color;
+    }
+}
+
+%chipDescBox {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}

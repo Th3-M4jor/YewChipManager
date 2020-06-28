@@ -18,6 +18,7 @@ pub(crate) enum Elements {
 
 
 //encoded each png in base64 since they are rather small
+/*
 const FIRE_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAABVQTFRFKCgoeHB4oDBIsKio6DBI+JgA////esoD/wAAAE1JREFUCB0FwQENwjAUBcDrWwWM1MDPHIAlDCNgWeaAKijctfcHNk+okZ9IzRAHoVJ0KYhDiaQQifZA2O1kwZJ1T/PS26nOe/RXfMfY/nf4D6En5pTGAAAAAElFTkSuQmCC";
 const AQUA_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAFRJREFUKJFj+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGLKRTT8QBPBrhSojiilEHWYqilTSqwDMFXARVCUYhqGLIJQiulENBGylBLrAGIjlvjkAgAWUOd9VSCMVAAAAABJRU5ErkJggg==";
 const ELEC_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAABJQTFRFKCgoeHB4sKio+JgA+PAo////RbdwrwAAAEZJREFUCB0VwQENhEAMBMBJ+wpQsJDg4AVcSBXgXwy5Ge+13U56OUQPJT2LktkeoWdK6Fkl/EYJ/6WEoYRFiUY5bYf32u4PMa4I9zsAdFQAAAAASUVORK5CYII=";
@@ -30,9 +31,10 @@ const RECOVERY_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAA
 const INVIS_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAFFJREFUKJFj+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlKJJrGD4AURoguhK0VQgc7GbihWgKMW0FFmQXFNp41Y0k9BsoKm3IBGLx1RoxBKfXACrMsNFvVcK4wAAAABJRU5ErkJggg==";
 const OBJECT_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAEpJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAdCVHsiwwERYlGJVt8DAA4vSHzMY0BBQ3TBVijNcCUcBsRFLfHIBADJ27qX4xuXwAAAAAElFTkSuQmCC";
 const NULL_URL: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAADVJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAQapUoiXqa10UIcAsRFLfHIBANLVuTXoUOn7AAAAAElFTkSuQmCC";
-
+*/
 
 impl Elements {
+    /*
     pub(crate) fn to_img_url(&self) -> &'static str {
         match self {
             Elements::Fire => FIRE_URL,
@@ -49,8 +51,27 @@ impl Elements {
             Elements::Null => NULL_URL,
         }
     }
+    */
 
-    /// fn to intern urls in JS as copying from rust is expensive
+    pub(crate) fn to_css_class(&self) -> &'static str {
+        match self {
+            Elements::Fire => "fireChip",
+            Elements::Aqua => "aquaChip",
+            Elements::Elec => "elecChip",
+            Elements::Wood => "woodChip",
+            Elements::Wind => "windChip",
+            Elements::Sword => "swordChip",
+            Elements::Break => "breakChip",
+            Elements::Cursor => "cursorChip",
+            Elements::Recovery => "recovChip",
+            Elements::Invis => "invisChip",
+            Elements::Object => "objectChip",
+            Elements::Null => "nullChip",
+        }
+    }
+
+    // fn to intern urls in JS as copying from rust is expensive
+    /*
     pub(crate) fn intern_urls() {
         wasm_bindgen::intern(FIRE_URL);
         wasm_bindgen::intern(AQUA_URL);
@@ -65,4 +86,5 @@ impl Elements {
         wasm_bindgen::intern(OBJECT_URL);
         wasm_bindgen::intern(NULL_URL);
     }
+    */
 }

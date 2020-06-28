@@ -1,86 +1,19 @@
-%battlechip {
-    background: transparent;
-    text-align: Center; 
-    padding-left: 0px; 
-    padding-right: 0px; 
-    font-family: "Lucida Console";
-    font-weight: bold; 
-    font-size: 15px;
-    margin-bottom: 0px;
-    text-shadow:1px 1px grey;
-}
+@use 'mixins';
 
-.Chip {
-    @extend %battlechip;
-    color: white;
-}
+@include mixins.chipClass("Chip", white);
+@include mixins.chipClass("Mega", #90f8f8);
+@include mixins.chipClass("Giga", #f8c8d8);
+@include mixins.chipClass("SupportChip", #53f04d);
 
-.Mega {
-    @extend %battlechip;
-    color: #90f8f8;
-}
-
-.Giga {
-    @extend %battlechip;
-    color: #f8c8d8;
-}
-
-.SupportChip {
-    @extend %battlechip;
-    color: #53f04d;
-}
-
-.UsedChip {
-    @extend %battlechip;
-    color: grey;
-}
-
-.chipDescText{
-    @extend %battlechip;
-    color: black;
-}
-
-.unknownChip {
-    @extend %battlechip;
-    color: purple;
-}
 
 .chipHover:hover {
     background-color: rgb(132, 180, 36);
-}
-
-%chipDescBox {
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
 }
 
 .chipDescBackgroundStd {
     @extend %chipDescBox;
     background-image: url("img/chip-background.png");
     background-size: cover;
-}
-
-.chipDescBackgroundSupprt {
-    @extend %chipDescBox;
-    background-size: cover;
-    background-image: url("img/chip-background-support.png");
-}
-
-.chipDescBackgroundMega {
-    @extend %chipDescBox;
-    background-size: cover;
-    background-image: url("img/chip-background-mega.png");
-}
-
-.chipDescBackgroundGiga {
-    @extend %chipDescBox;
-    background-size: cover;
-    background-image: url("img/chip-background-giga.png");
-}
-
-.chipDescBackgroundDark {
-    @extend %chipDescBox;
-    background-color: purple;
 }
 
 .chipDescDiv {
@@ -93,3 +26,16 @@
 .chipDescDiv::-webkit-scrollbar {
     display: none;
 }
+
+@include mixins.chipimg("fire", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAABVQTFRFKCgoeHB4oDBIsKio6DBI+JgA////esoD/wAAAE1JREFUCB0FwQENwjAUBcDrWwWM1MDPHIAlDCNgWeaAKijctfcHNk+okZ9IzRAHoVJ0KYhDiaQQifZA2O1kwZJ1T/PS26nOe/RXfMfY/nf4D6En5pTGAAAAAElFTkSuQmCC");
+@include mixins.chipimg("aqua", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAFRJREFUKJFj+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGLKRTT8QBPBrhSojiilEHWYqilTSqwDMFXARVCUYhqGLIJQiulENBGylBLrAGIjlvjkAgAWUOd9VSCMVAAAAABJRU5ErkJggg==");
+@include mixins.chipimg("elec", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAABJQTFRFKCgoeHB4sKio+JgA+PAo////RbdwrwAAAEZJREFUCB0VwQENhEAMBMBJ+wpQsJDg4AVcSBXgXwy5Ge+13U56OUQPJT2LktkeoWdK6Fkl/EYJ/6WEoYRFiUY5bYf32u4PMa4I9zsAdFQAAAAASUVORK5CYII=");
+@include mixins.chipimg("wood", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAAA9QTFRFKCgoMMhYeHB4sKio////UNJopAAAAERJREFUCNc1zbERwDAIxVBxLODPBjgLcCEbZP+dUuBUr5N4u7v74QbgosC0ncIUcgopx9CYWk4RGlPCKQNwah0Z/+75fLv0B4IMG42/AAAAAElFTkSuQmCC");
+@include mixins.chipimg("wind", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAAA9QTFRFKCgoeHB4sKio6Oj4////wq8ncQAAAEZJREFUCNc9jcENhAAMw6yyARPkUgZAzQbsPxSfHq9Iluzw2LYvfgCciI4odCShUJKocKZzF52e3eWd6UEZ96yn+jr/7v68j7ELsbTr2fEAAAAASUVORK5CYII=");
+@include mixins.chipimg("sword", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAABGdBTUEAALGPC/xhBQAAAA9QTFRFAOD4KCgoeHB4sKio////lIUzwwAAAD1JREFUCB0FwQERwwAIBLA8hwA6S/OvYRKKA5bku5B+f/Dpg7cKjoKNwhmFDe0YSjYoZ1A2i2ag8sD0E8gf39UOUJ0nXL4AAAAASUVORK5CYII=");
+@include mixins.chipimg("break", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAFFJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAbAoBRoAR/iUIqtDU42iFCL34sUPIMJUTZlSXG4gVykJ3iItsAhHAbERS3xyAQCqnefV7r0a1gAAAABJRU5ErkJggg==");
+@include mixins.chipimg("cursor", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAEtJREFUKM9j+P///4YVKwgioDIGIFVRUaGBFwAVAJWBlEL4HzoYIAgrF6EULoGpFCKCrhTTasqUEgRkKaWNW0kILGKjgNiIJT65AACsmN81zVCWHQAAAABJRU5ErkJggg==");
+@include mixins.chipimg("recov", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAGJJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAXAqfWHgAUTIDOxKIdJoCKH0R8YKIIIzFuBSCpFGQwvIU4pwK36l6CGApg7uP+yBhaaOQLjiUodQSmzEEp9cAE4xAlRqvKO9AAAAAElFTkSuQmCC");
+@include mixins.chipimg("invis", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAFFJREFUKJFj+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlKJJrGD4AURoguhK0VQgc7GbihWgKMW0FFmQXFNp41Y0k9BsoKm3IBGLx1RoxBKfXACrMsNFvVcK4wAAAABJRU5ErkJggg==");
+@include mixins.chipimg("object", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAEpJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAdCVHsiwwERYlGJVt8DAA4vSHzMY0BBQ3TBVijNcCUcBsRFLfHIBADJ27qX4xuXwAAAAAElFTkSuQmCC");
+@include mixins.chipimg("null", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAIAAACQKrqGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAADVJREFUKM9j+P///4YVKwgioDIGIFVRUKGBFwAVAJWBlGoQAQapUoiXqa10UIcAsRFLfHIBANLVuTXoUOn7AAAAAElFTkSuQmCC");

@@ -50,7 +50,7 @@ pub fn run(data: &str) -> Result<(), JsValue> {
     ChipLibrary::init(data);
     
     //fn to cache base64 values to improve performance potentially at the cost of memory usage
-    chip_library::Elements::intern_urls();
+    //chip_library::Elements::intern_urls();
     yew::start_app::<App>();
     Ok(())
 }

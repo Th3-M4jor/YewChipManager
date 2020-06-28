@@ -8,10 +8,15 @@ pub(crate) fn generate_element_images(elem: &[Elements]) -> Html {
     
     html!{
 
-        <span style="white-space: nowrap; display: inline-block">
+        <span class="chipImgBox">
         {
+            /*
             elem.iter().map(|element| html!{ 
                 <img src={element.to_img_url()} alt="" class="chipImg"/>
+            }).collect::<Html>()
+            */
+            elem.iter().map(|element| html!{ 
+                <span class={element.to_css_class()}/>
             }).collect::<Html>()
         }
         </span>

@@ -1,0 +1,31 @@
+@use 'menu';
+@use 'animations';
+@use 'modal';
+@use 'mixins';
+
+@include mixins.chipClass("unknownChip", purple);
+@include mixins.chipClass("UsedChip", grey);
+@include mixins.chipClass("chipDescText", black);
+
+.chipDescBackgroundSupprt {
+    @extend %chipDescBox;
+    background-size: cover;
+    background-image: url("img/chip-background-support.png");
+}
+
+.chipDescBackgroundMega {
+    @extend %chipDescBox;
+    background-size: cover;
+    background-image: url("img/chip-background-mega.png");
+}
+
+.chipDescBackgroundGiga {
+    @extend %chipDescBox;
+    background-size: cover;
+    background-image: url("img/chip-background-giga.png");
+}
+
+.chipDescBackgroundDark {
+    @extend %chipDescBox;
+    background-color: purple;
+}
