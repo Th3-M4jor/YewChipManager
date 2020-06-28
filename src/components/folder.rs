@@ -30,12 +30,12 @@ use wasm_bindgen::JsCast;
 use std::rc::Rc;
 use std::sync::atomic::Ordering;
 #[derive(Properties, Clone)]
-pub struct FolderProps {
+pub(crate) struct FolderProps {
     pub active: bool,
     pub in_folder_group: bool,
 }
 
-pub enum FolderMsg {
+pub(crate) enum FolderMsg {
     ChangeSort(ChipSortOptions),
     ChangeUsed(usize),
     ReturnToPack(usize),
@@ -74,7 +74,7 @@ impl std::ops::Try for FolderMsg {
     
 }
 
-pub struct FolderComponent {
+pub(crate) struct FolderComponent {
     props: FolderProps,
     _link: ComponentLink<Self>,
     sort_by: ChipSortOptions,

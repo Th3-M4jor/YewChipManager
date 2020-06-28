@@ -26,7 +26,7 @@ use wasm_bindgen::JsCast;
 
 
 #[derive(PartialEq, Eq, Clone)]
-pub enum Tabs {
+pub(crate) enum Tabs {
     Library,
     Pack,
     Folder,
@@ -34,7 +34,7 @@ pub enum Tabs {
 }
 
 impl Tabs {
-    pub fn shorten_string(&self) -> Cow<'static, str> {
+    pub(crate) fn shorten_string(&self) -> Cow<'static, str> {
         match self {
             Tabs::Library => Cow::Borrowed("Lib"),
             Tabs::Pack => Cow::Borrowed("Pck"),
@@ -48,7 +48,7 @@ impl Tabs {
         }
     }
 
-    pub fn to_display_text(&self) -> Cow<str> {
+    pub(crate) fn to_display_text(&self) -> Cow<str> {
         match self {
             Tabs::Library => Cow::Borrowed("Library"),
             Tabs::Pack => Cow::Borrowed("Pack"),
@@ -82,7 +82,7 @@ impl PartialEq<str> for Tabs {
 }
 
 #[derive(Clone)]
-pub enum TopLevelMsg {
+pub(crate) enum TopLevelMsg {
     ChangeTab(Tabs),
     SetMsg(String),
     JoinGroupData{group_name: String, player_name: String},
@@ -162,7 +162,7 @@ impl From<GroupFldrAgentOutMsg> for TopLevelMsg {
 
 
 #[derive(PartialEq)]
-pub enum ModalStatus {
+pub(crate) enum ModalStatus {
     JoinGroup,
     EraseData,
     ImportData,
@@ -170,7 +170,7 @@ pub enum ModalStatus {
 }
 
 /// Root component
-pub struct App
+pub(crate) struct App
 {
     active_tab: Tabs,
     link: ComponentLink<Self>,

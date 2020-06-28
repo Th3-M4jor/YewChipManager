@@ -30,11 +30,11 @@ pub(crate) fn library_top_row() -> Html {
 }
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct LibraryProps {
+pub(crate) struct LibraryProps {
     pub active: bool,
 }
 
-pub enum LibraryMessage {
+pub(crate) enum LibraryMessage {
     ChangeSort(ChipSortOptions),
     ChangeFilter(String),
     SetHighlightedChip(String),
@@ -81,7 +81,7 @@ fn handle_mouseover_event(e: MouseEvent) -> LibraryMessage {
     LibraryMessage::SetHighlightedChip(name)
 }
 
-pub struct LibraryComponent{
+pub(crate) struct LibraryComponent{
     props: LibraryProps,
     _link: ComponentLink<Self>,
     sort_by: ChipSortOptions,

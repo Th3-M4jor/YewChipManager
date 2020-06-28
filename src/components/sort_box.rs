@@ -3,13 +3,13 @@ use yew::prelude::*;
 use crate::components::ChipSortOptions;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct ChipSortBoxProps {
+pub(crate) struct ChipSortBoxProps {
     pub sort_by: ChipSortOptions,
     pub include_owned: bool,
     pub sort_changed: Callback<ChangeData>,
 }
 
-pub struct ChipSortBox {
+pub(crate) struct ChipSortBox {
     pub props: ChipSortBoxProps,
 }
 

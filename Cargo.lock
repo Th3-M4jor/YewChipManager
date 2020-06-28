@@ -57,9 +57,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.54"
+version = "1.0.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bbb73db36c1246e9034e307d0fba23f9a2e251faa47ade70c1bd252220c8311"
+checksum = "b1be3409f94d7bdceeb5f5fac551039d9b3f00e25da7a74fc4d33400a0d96368"
 
 [[package]]
 name = "cfg-if"
@@ -593,9 +593,9 @@ dependencies = [
 
 [[package]]
 name = "winapi"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8093091eeb260906a183e6ae1abdba2ef5ef2257a21801128899c3fc699229c6"
+checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
 dependencies = [
  "winapi-i686-pc-windows-gnu",
  "winapi-x86_64-pc-windows-gnu",
@@ -616,7 +616,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "yew"
 version = "0.16.2"
-source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+source = "git+https://github.com/yewstack/yew.git#7ce0bd8d3aa8f218cc6da74fad1ece25cfd27cba"
 dependencies = [
  "anyhow",
  "anymap",
@@ -664,7 +664,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.16.1"
-source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+source = "git+https://github.com/yewstack/yew.git#7ce0bd8d3aa8f218cc6da74fad1ece25cfd27cba"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -677,7 +677,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.2.0"
-source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+source = "git+https://github.com/yewstack/yew.git#7ce0bd8d3aa8f218cc6da74fad1ece25cfd27cba"
 dependencies = [
  "futures",
  "log",
@@ -690,7 +690,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.1.0"
-source = "git+https://github.com/yewstack/yew.git#09ffbb9e91fe57adc61c9fcf584681d056bfa595"
+source = "git+https://github.com/yewstack/yew.git#7ce0bd8d3aa8f218cc6da74fad1ece25cfd27cba"
 dependencies = [
  "proc-macro2",
  "quote",

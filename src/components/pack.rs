@@ -35,11 +35,11 @@ pub(crate) fn pack_top_row() -> Html {
 }
 
 #[derive(Properties, Clone)]
-pub struct PackProps {
+pub(crate) struct PackProps {
     pub active: bool,
 }
 
-pub enum PackMsg {
+pub(crate) enum PackMsg {
     ChangeSort(ChipSortOptions),
     MoveToFolder(String),
     SetHighlightedChip(String),
@@ -81,7 +81,7 @@ impl std::ops::Try for PackMsg {
     
 }
 
-pub struct PackComponent {
+pub(crate) struct PackComponent {
     props: PackProps,
     sort_by: ChipSortOptions,
     _link: ComponentLink<Self>,
@@ -466,49 +466,3 @@ impl PackComponent {
         
     }
 }
-
-
-/*
-pub struct PackTopRow;
-
-impl Component for PackTopRow {
-    
-    type Message = ();
-    type Properties = ();
-    
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self{}
-    }
-
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-    
-    fn view(&self) -> Html {
-        html! {
-            <div class="row sticky-top justify-content-center noselect" style="background-color: gray; z-index: 1">
-                <div class="col-3 Chip nopadding" style="white-space: nowrap">
-                    {"NAME"}
-                </div>
-                <div class="col-3 Chip nopadding">
-                    {"SKILL"}
-                </div>
-                <div class="col-2 Chip nopadding">
-                    {"ELEM"}
-                </div>
-                <div class="col-1 Chip nopadding">
-                    {"O"}
-                </div>
-                <div class="col-1 Chip nopadding">
-                    {"U"}
-                </div>
-            </div>
-        }
-    }
-
-}
-*/
