@@ -518,7 +518,7 @@ impl App {
         let callback = self.link.callback(|e: FileData|{
             TopLevelMsg::LoadFile(e.content)
         });
-        let handle = match ReaderService::new().read_file(file, callback) {
+        let handle = match ReaderService::read_file(file, callback) {
             Ok(handle) => handle,
             Err(why) => {
                 unsafe{alert(&why.to_string())};
