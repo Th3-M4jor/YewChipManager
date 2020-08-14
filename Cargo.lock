@@ -231,9 +231,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34f595585f103464d8d2f6e9864682d74c1601fed5e07d62b1c9058dba8246fb"
+checksum = "e91b62f79061a0bc2e046024cb7ba44b08419ed238ecbd9adbd787434b9e8c25"
 dependencies = [
  "autocfg",
 ]
@@ -251,9 +251,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b88cd59ee5f71fea89a62248fc8f387d44400cefe05ef548466d61ced9029a7"
+checksum = "86b45e59b16c76b11bf9738fd5d38879d3bd28ad292d7b313608becb17ae2df9"
 dependencies = [
  "autocfg",
  "hashbrown",
@@ -365,18 +365,18 @@ checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 
 [[package]]
 name = "serde"
-version = "1.0.114"
+version = "1.0.115"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5317f7588f0a5078ee60ef675ef96735a1442132dc645eb1d12c018620ed8cd3"
+checksum = "e54c9a88f2da7238af84b5101443f0c0d0a3bbdc455e34a5c9497b1903ed55d5"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.114"
+version = "1.0.115"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a0be94b04690fbaed37cddffc5c134bf537c8e3329d53e982fe04c374978f8e"
+checksum = "609feed1d0a73cc36a0182a840a9b37b4a82f0b1150369f0536a9e3f2a31dc48"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -402,9 +402,9 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "syn"
-version = "1.0.36"
+version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cdb98bcb1f9d81d07b536179c269ea15999b5d14ea958196413869445bb5250"
+checksum = "e69abc24912995b3038597a7a593be5053eb0fb44f3cc5beec0deb421790c1f4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -535,7 +535,7 @@ dependencies = [
 [[package]]
 name = "yew"
 version = "0.17.2"
-source = "git+https://github.com/yewstack/yew.git?branch=master#71344ed18424b1e768e5d40454c0aebc2241688e"
+source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
 dependencies = [
  "anyhow",
  "anymap",
@@ -583,7 +583,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#71344ed18424b1e768e5d40454c0aebc2241688e"
+source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -596,7 +596,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.3.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#71344ed18424b1e768e5d40454c0aebc2241688e"
+source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
 dependencies = [
  "futures",
  "log",
@@ -609,7 +609,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.1.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#71344ed18424b1e768e5d40454c0aebc2241688e"
+source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
 dependencies = [
  "proc-macro2",
  "quote",
