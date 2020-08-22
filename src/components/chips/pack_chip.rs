@@ -59,9 +59,9 @@ impl Component for PackChipComponent {
         };
         html!{
             <div class=("chip-row noselect chipHover", chip_css) 
-                ondblclick={self.props.add_to_folder.clone()} 
-                id={&self.id_str} 
-                onmouseover={self.props.on_mouse_enter.clone()}
+                ondblclick=self.props.add_to_folder.clone() 
+                id=&self.id_str 
+                onmouseover=self.props.on_mouse_enter.clone()
                 >
                 <div class="chip-col-3 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}

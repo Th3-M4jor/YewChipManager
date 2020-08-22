@@ -116,9 +116,9 @@ impl ChipDescComponent {
     fn with_chip(&self, chip: &BattleChip) -> Html {
         let background = String::from("right-panel nopadding ") + chip.kind.to_background_css_class();
         let chip_anim_class = if self.chip_anim_ct & 1 == 0 {
-            "chipWindowOne chipDescText"
+            "chipWindowOne chipDescText chipDescPadding"
         } else {
-            "chipWindowTwo chipDescText"
+            "chipWindowTwo chipDescText chipDescPadding"
         };
         let font_style = if chip.description.len() > 700 {
             "font-size: 12px; text-align: left"
@@ -129,8 +129,8 @@ impl ChipDescComponent {
         };
 
         html!{
-            <div class={background}>
-                <div class={chip_anim_class} style="padding: 3px">
+            <div class=background>
+                <div class=chip_anim_class style="padding: 3px">
                     {chip.damage_span()}
                     {chip.range_span()}
                     {chip.hits_span()}

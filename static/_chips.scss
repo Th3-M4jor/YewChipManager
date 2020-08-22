@@ -3,11 +3,11 @@
 @include mixins.chipClass("Chip", white);
 @include mixins.chipClass("Mega", #90f8f8);
 @include mixins.chipClass("Giga", #f8c8d8);
-@include mixins.chipClass("SupportChip", #53f04d);
+@include mixins.chipClass("SupportChip", #86d3a7);
 
 
 .chipHover:hover {
-    background-color: rgb(132, 180, 36);
+    background-color: rgb(172, 124, 36);
 }
 
 .chipDescBackgroundStd {
@@ -17,10 +17,11 @@
 }
 
 .chipDescDiv {
-    max-height: 650px;
+    max-height: 81vh;
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .chipDescDiv::-webkit-scrollbar {

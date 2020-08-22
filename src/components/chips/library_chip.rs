@@ -48,7 +48,7 @@ impl Component for LibraryChip {
                 let library = ChipLibrary::get_instance();
                 match library.add_copy_to_pack(&self.props.chip.name) {
                     Some(num) => {
-                        let middle_text = if num == 1 {" copy of "} else {" copppies of "};
+                        let middle_text = if num == 1 {" copy of "} else {" coppies of "};
                         let msg = String::from("You now own ") + &num.to_string() + middle_text + &self.props.chip.name;
                         self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                     },
@@ -77,9 +77,9 @@ impl Component for LibraryChip {
         
         html! {
             <div class=("chip-row Chip noselect chipHover", chip_css) 
-                ondblclick={self.link.callback(|_| LibraryChipMsg::DoubleClick)} 
-                id={&self.id_str}
-                onmouseover={self.props.on_mouse_enter.clone()}>
+                ondblclick=self.link.callback(|_| LibraryChipMsg::DoubleClick) 
+                id=&self.id_str
+                onmouseover=self.props.on_mouse_enter.clone()>
                 <div class="chip-col-4 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}
                 </div>

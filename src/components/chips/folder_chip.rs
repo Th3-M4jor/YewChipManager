@@ -83,9 +83,9 @@ impl Component for FolderChipComponent {
         html!{
             <div
                 class=("chip-row noselect chipHover", chip_css)
-                ondblclick={self.props.return_to_pack_callback.clone()}
-                id={&self.id_1}
-                onmouseover={self.props.on_mouse_enter.clone()}
+                ondblclick=self.props.return_to_pack_callback.clone()
+                id=&self.id_1
+                onmouseover=self.props.on_mouse_enter.clone()
             >
                 <div class="chip-col-1 nopadding">
                     {self.props.idx + 1}
@@ -99,14 +99,14 @@ impl Component for FolderChipComponent {
                 <div class="chip-col-2 nopadding">
                     {generate_element_images(&self.props.chip.element)}
                 </div>
-                <div class="chip-col-1 nopadding centercontent" ondblclick={self.link.callback(|e:MouseEvent| e.stop_propagation())}>
+                <div class="chip-col-1 nopadding centercontent" ondblclick=self.link.callback(|e:MouseEvent| e.stop_propagation())>
                     <input
                         name="chipUsed"
                         type="checkbox"
                         class="centerInputBox"
-                        checked={self.props.used}
-                        onclick={self.props.swap_used.clone()}
-                        id={&self.id_2}
+                        checked=self.props.used
+                        onclick=self.props.swap_used.clone()
+                        id=&self.id_2
                     />
                 </div>
             </div>

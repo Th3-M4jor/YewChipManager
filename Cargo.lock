@@ -14,9 +14,9 @@ checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
 
 [[package]]
 name = "autocfg"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8aac770f1885fd7e387acedd76065302551364496e46b3dd00860b2f8359b9d"
+checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "bincode"
@@ -297,9 +297,15 @@ checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
 name = "once_cell"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b631f7e854af39a1739f401cf34a8a013dfe09eac4fa4dba91e9768bd28168d"
+checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
+
+[[package]]
+name = "percent-encoding"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pin-project"
@@ -402,9 +408,9 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "syn"
-version = "1.0.38"
+version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e69abc24912995b3038597a7a593be5053eb0fb44f3cc5beec0deb421790c1f4"
+checksum = "891d8d6567fe7c7f8835a3a98af4208f3846fba258c1bc3c31d6e506239f11f9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -534,8 +540,8 @@ dependencies = [
 
 [[package]]
 name = "yew"
-version = "0.17.2"
-source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
+version = "0.17.3"
+source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
 dependencies = [
  "anyhow",
  "anymap",
@@ -549,8 +555,6 @@ dependencies = [
  "indexmap",
  "js-sys",
  "log",
- "proc-macro-hack",
- "proc-macro-nested",
  "ryu",
  "serde",
  "serde_json",
@@ -570,6 +574,7 @@ dependencies = [
  "js-sys",
  "log",
  "once_cell",
+ "percent-encoding",
  "serde",
  "serde_json",
  "unchecked_unwrap",
@@ -583,11 +588,10 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
+source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
 dependencies = [
  "boolinator",
  "lazy_static",
- "proc-macro-hack",
  "proc-macro2",
  "quote",
  "syn",
@@ -595,8 +599,8 @@ dependencies = [
 
 [[package]]
 name = "yewtil"
-version = "0.3.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
+version = "0.3.1"
+source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
 dependencies = [
  "futures",
  "log",
@@ -609,7 +613,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.1.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#b8996ae6789df94716ed460bd1ebe71388ba1341"
+source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
 dependencies = [
  "proc-macro2",
  "quote",

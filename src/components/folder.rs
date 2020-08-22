@@ -271,22 +271,22 @@ impl Component for FolderComponent {
         
         html!{
             <>
-            <div class={col1_display}>
+            <div class=col1_display>
                 <span unselectable="on" class="Chip noselect">{"Chip Limit:"}</span>
                 <input 
                     type="number" class="chip-search-input"
-                    min={min_val} max="45"
-                    value={&chip_limit_val} 
-                    onchange={self.chip_limit_change.clone()}
+                    min=min_val max="45"
+                    value=&chip_limit_val 
+                    onchange=self.chip_limit_change.clone()
                     style="height: calc(1.5em + .75rem + 2px); font-size: 1rem"
                 />
-                <ChipSortBox sort_by={self.sort_by} include_owned={false} sort_changed={self.sort_change_callback.clone()}/>
+                <ChipSortBox sort_by=self.sort_by include_owned=false sort_changed=self.sort_change_callback.clone()/>
                 <br/>
                 <br/>
                 {self.generate_buttons()}
             </div>
-            <div class={col2_display}>
-                <div class={folder_containter_class}>
+            <div class=col2_display>
+                <div class=folder_containter_class>
                     <FolderTopRow />
                     {self.build_folder()}
                 </div>

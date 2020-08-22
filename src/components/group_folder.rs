@@ -117,9 +117,9 @@ impl Component for GroupFolderComponent {
         
         html!{
             <>
-            <div class={col1_display}/>
-            <div class={col2_display}>
-                <div class={folder_containter_class}>
+            <div class=col1_display/>
+            <div class=col2_display>
+                <div class=folder_containter_class>
                     <FolderTopRow />
                     {self.build_folder()}
                 </div>

@@ -8,6 +8,8 @@ use yew::services::{
     websocket::{WebSocketService, WebSocketTask, WebSocketStatus},
     interval::{IntervalService, IntervalTask},
 };
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+
 //use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 //use web_sys::WebSocket;
 
@@ -171,7 +173,9 @@ impl Agent for GroupFldrMsgBus {
 impl GroupFldrMsgBus {
 
     fn join_group(&mut self, group_name: String, player_name: String) -> Result<(), String> {
-        let url = String::from("wss://spartan364.hopto.org/join/") + &group_name + "/" + &player_name;
+        let encoded_group = utf8_percent_encode(&group_name, NON_ALPHANUMERIC).to_string();
+        let encoded_player = utf8_percent_encode(&player_name, NON_ALPHANUMERIC).to_string();
+        let url = String::from("wss://spartan364.hopto.org/join/") + &encoded_group + "/" + &encoded_player;
         //let mut socket = WebSocketService::new();
         let message_callback = self.link.callback(|msg: Binary| {
             let data = msg.ok()?;

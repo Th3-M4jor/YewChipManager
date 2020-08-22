@@ -16,7 +16,7 @@ pub(crate) fn generate_element_images(elem: &[Elements]) -> Html {
             }).collect::<Html>()
             */
             elem.iter().map(|element| html!{ 
-                <span class={element.to_css_class()}/>
+                <span class=element.to_css_class()/>
             }).collect::<Html>()
         }
         </span>

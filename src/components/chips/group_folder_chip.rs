@@ -58,7 +58,7 @@ impl Component for GroupFolderChipComponent {
             <div
                 class=("chip-row noselect chipHover", chip_css)
                 id={&self.props.chip.name}
-                onmouseover={self.props.on_mouse_enter.clone()}
+                onmouseover=self.props.on_mouse_enter.clone()
             >
                 <div class="chip-col-1 nopadding">
                     {self.props.idx + 1}
@@ -77,7 +77,7 @@ impl Component for GroupFolderChipComponent {
                         name="chipUsed"
                         type="checkbox"
                         class="centerInputBox"
-                        checked={self.props.used}
+                        checked=self.props.used
                         disabled=true
                     />
                 </div>
