@@ -376,15 +376,15 @@ impl FolderComponent {
 
         html!{
             <div class="centercontent">
-                <button class="sideButtons ripple" onclick={self.jack_out_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.jack_out_callback.clone()>
                     <span class="Chip">{"Jack Out"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={self.clear_folder_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.clear_folder_callback.clone()>
                     <span class="Chip">{"Clear Folder"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={join_or_leave_callback}>
+                <button class="sideButtons ripple" onclick=join_or_leave_callback>
                     <span class="Chip">{join_or_leave_text}</span>
                 </button>
                 <br/>

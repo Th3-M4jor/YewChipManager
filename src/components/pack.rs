@@ -265,14 +265,14 @@ impl Component for PackComponent {
 
         html!{
             <>
-            <div class={col1_display}>
+            <div class=col1_display>
                 <ChipSortBox include_owned={true} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                 <br/>
                 <br/>
                 {self.generate_buttons()}
             </div>
-            <div class={col2_display}>
-                <div class={pack_containter_class} oncontextmenu={self.open_context_menu_callback.clone()}>
+            <div class=col2_display>
+                <div class=pack_containter_class oncontextmenu=self.open_context_menu_callback.clone()>
                     <PackTopRow />
                     {self.build_pack_chips()}
                 </div>
@@ -351,23 +351,23 @@ impl PackComponent {
         
         html!{
             <div class="centercontent">
-                <button class="sideButtons ripple" onclick={self.jack_out_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.jack_out_callback.clone()>
                     <span class="Chip">{"Jack Out"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={self.export_json_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.export_json_callback.clone()>
                     <span class="Chip">{"Export JSON"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={self.export_txt_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.export_txt_callback.clone()>
                     <span class="Chip">{"Export Txt"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={self.erase_data_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.erase_data_callback.clone()>
                     <span class="Chip">{"Erase Data"}</span>
                 </button>
                 <br/>
-                <button class="sideButtons ripple" onclick={self.import_data_callback.clone()}>
+                <button class="sideButtons ripple" onclick=self.import_data_callback.clone()>
                     <span class="Chip">{"Import Data"}</span>
                 </button>
             </div>
@@ -458,8 +458,8 @@ impl PackComponent {
         html!{
             <div class="menu" style={style}>
                 <ul class="menu-options">
-                    <li class="menu-option noselect" onclick={remove_chip}>{"Remove from pack"}</li>
-                    <li class="menu-option noselect" onclick={mark_unused}>{"Mark copy unused"}</li>
+                    <li class="menu-option noselect" onclick=remove_chip>{"Remove from pack"}</li>
+                    <li class="menu-option noselect" onclick=mark_unused>{"Mark copy unused"}</li>
                 </ul>
             </div>
         }

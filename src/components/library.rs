@@ -168,12 +168,12 @@ impl Component for LibraryComponent {
 
         html! {
             <>
-            <div class={col1_display}>
+            <div class=col1_display>
                 <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                 {self.build_search_box()}
             </div>
-            <div class={col2_display}>
-                <div class={library_containter_class}>
+            <div class=col2_display>
+                <div class=library_containter_class>
                     <LibraryTopRow/>
                     {self.build_library_chips()}
                  </div>
@@ -193,7 +193,7 @@ impl LibraryComponent {
             <>
             <br/>
             <span unselectable="on" class="Chip">{"Search"}</span>
-            <input type="text" class="chip-search-input" value={&self.filter_by} oninput={text_changed}/>
+            <input type="text" class="chip-search-input" value={&self.filter_by} oninput=text_changed/>
             </>
         }
     }

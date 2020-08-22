@@ -285,7 +285,7 @@ impl App {
                 ("inactiveNavTab", self.link.callback_once(|_: MouseEvent| TopLevelMsg::ChangeTab(tab)))
             };
             html!{
-                <button class={button_class} onclick={callback}>{btn_text}</button>
+                <button class=button_class onclick=callback>{btn_text}</button>
             }
         }).collect::<Html>();
 
@@ -338,9 +338,9 @@ impl App {
 
         html!{
             <div class="nav-tab-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                <button class={folder_class} onclick={folder_callback}>{Tabs::Folder.shorten_string()}</button>
-                <button class={pack_class} onclick={pack_callback}>{Tabs::Pack.shorten_string()}</button>
-                <button class={library_class} onclick={library_callback}>{Tabs::Library.shorten_string()}</button>
+                <button class=folder_class onclick=folder_callback>{Tabs::Folder.shorten_string()}</button>
+                <button class=pack_class onclick=pack_callback>{Tabs::Pack.shorten_string()}</button>
+                <button class=library_class onclick=library_callback>{Tabs::Library.shorten_string()}</button>
                 {player_tabs}
             </div>
         }
@@ -390,9 +390,9 @@ impl App {
 
         html! {
             <div class="nav-tab-group" role="tabs">
-                <button class={folder_class} onclick={folder_callback}>{"Folder"}</button>
-                <button class={pack_class} onclick={pack_callback}>{"Pack"}</button>
-                <button class={library_class} onclick={library_callback}>{"Library"}</button>
+                <button class=folder_class onclick=folder_callback>{"Folder"}</button>
+                <button class=pack_class onclick=pack_callback>{"Pack"}</button>
+                <button class=library_class onclick=library_callback>{"Library"}</button>
             </div>
         }
     }
@@ -432,10 +432,10 @@ impl App {
                     </div>
                     <div class="yew-modal-footer">
                         <span style="padding-left: 5px">
-                            <button class="ok-button" onclick={ok_callback}>{"Ok"}</button>
+                            <button class="ok-button" onclick=ok_callback>{"Ok"}</button>
                         </span>
                         <span style="float: right">
-                            <button class="inactiveNavTab" onclick={cancel_callback}>{"Cancel"}</button>
+                            <button class="inactiveNavTab" onclick=cancel_callback>{"Cancel"}</button>
                         </span>
                     </div>
                 </div>
@@ -459,10 +459,10 @@ impl App {
                     </div>
                     <div class="yew-modal-footer">
                         <span style="padding-left: 5px">
-                            <button class="ok-button" onclick={ok_callback}>{"Ok"}</button>
+                            <button class="ok-button" onclick=ok_callback>{"Ok"}</button>
                         </span>
                         <span style="float: right">
-                            <button class="inactiveNavTab" onclick={cancel_callback}>{"Cancel"}</button>
+                            <button class="inactiveNavTab" onclick=cancel_callback>{"Cancel"}</button>
                         </span>
                     </div>
                 </div>
@@ -554,7 +554,7 @@ impl App {
             let player_key = name.clone();
             let active = self.active_tab == *name.as_str();
             html!{
-                <GroupFolder player_name={name} active={active} key={player_key}/>
+                <GroupFolder player_name={name} active={active} key=player_key/>
             }
         }).collect::<Html>()
 
@@ -682,16 +682,16 @@ impl Component for App {
                 <div style="background-color: #4abdb5; padding: 10px;">
                     {self.gen_nav_tabs()}
                     <div class="main-container">
-                        <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()} key={"Folder".to_owned()}/>
-                        <Pack active={self.active_tab == Tabs::Pack} key={"Pack".to_owned()}/>
-                        <Library active={self.active_tab == Tabs::Library} key={"Library".to_owned()}/>
+                        <Folder active={self.active_tab == Tabs::Folder} in_folder_group={self.player_name.is_some()} key="Folder".to_owned()/>
+                        <Pack active={self.active_tab == Tabs::Pack} key="Pack".to_owned()/>
+                        <Library active={self.active_tab == Tabs::Library} key="Library".to_owned()/>
                         {self.gen_group_folders()}
-                        <ChipDescBox key={"ChipDescBox".to_owned()}/>
+                        <ChipDescBox key="ChipDescBox".to_owned()/>
                     </div>
                 </div>
             </div>
             {self.build_modal()}
-            <input id="jsonFile" type="file" style="display: none" accept=".json" onchange={self.load_file_callback.clone()} ref={self.file_input_ref.clone()}/>
+            <input id="jsonFile" type="file" style="display: none" accept=".json" onchange=self.load_file_callback.clone() ref=self.file_input_ref.clone()/>
             </>
         }
 
