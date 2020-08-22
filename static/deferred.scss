@@ -9,19 +9,16 @@
 
 .chipDescBackgroundSupprt {
     @extend %chipDescBox;
-    background-size: cover;
     background-image: url("img/chip-background-support.png");
 }
 
 .chipDescBackgroundMega {
     @extend %chipDescBox;
-    background-size: cover;
     background-image: url("img/chip-background-mega.png");
 }
 
 .chipDescBackgroundGiga {
     @extend %chipDescBox;
-    background-size: cover;
     background-image: url("img/chip-background-giga.png");
 }
 

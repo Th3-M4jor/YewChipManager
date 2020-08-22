@@ -13,11 +13,10 @@
 .chipDescBackgroundStd {
     @extend %chipDescBox;
     background-image: url("img/chip-background.png");
-    background-size: cover;
 }
 
 .chipDescDiv {
-    max-height: 81vh;
+    max-height: 70vh;
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: none;
