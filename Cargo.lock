@@ -541,7 +541,7 @@ dependencies = [
 [[package]]
 name = "yew"
 version = "0.17.3"
-source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
+source = "git+https://github.com/yewstack/yew.git?branch=master#4710a382f2ae379ccd0931e75a2e912dcc676a91"
 dependencies = [
  "anyhow",
  "anymap",
@@ -588,7 +588,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
+source = "git+https://github.com/yewstack/yew.git?branch=master#4710a382f2ae379ccd0931e75a2e912dcc676a91"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -600,7 +600,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.3.1"
-source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
+source = "git+https://github.com/yewstack/yew.git?branch=master#4710a382f2ae379ccd0931e75a2e912dcc676a91"
 dependencies = [
  "futures",
  "log",
@@ -613,7 +613,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.1.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#1e3f4e54d34d4f75dc3386d9de300728a2050b33"
+source = "git+https://github.com/yewstack/yew.git?branch=master#4710a382f2ae379ccd0931e75a2e912dcc676a91"
 dependencies = [
  "proc-macro2",
  "quote",
