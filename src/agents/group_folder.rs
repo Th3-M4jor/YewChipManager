@@ -189,6 +189,7 @@ impl GroupFldrMsgBus {
                     //let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
                     let mut group = ChipLibrary::get_instance().group_folders.borrow_mut();
                     *group = folders;
+                    drop(group);
                     GroupFldrAgentSocketMsg::GroupUpdated
                 }
                 SocketMsg::Error(why) => {
