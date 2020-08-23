@@ -121,11 +121,11 @@ impl ChipDescComponent {
             "chipWindowTwo chipDescText chipDescPadding"
         };
         let font_style = if chip.description.len() > 700 {
-            "font-size: 12px; text-align: left"
+            "font-size: 12px; text-align: left; border-top: 1px solid black;"
         } else if chip.description.len() > 450 {
-            "font-size: 14px; text-align: left"
+            "font-size: 14px; text-align: left; border-top: 1px solid black;"
         } else {
-            "font-size: 16px; text-align: left"
+            "font-size: 16px; text-align: left; border-top: 1px solid black;"
         };
 
         html!{
