@@ -17,7 +17,7 @@ impl Ranges {
             Ranges::Close => "Close",
             Ranges::Near => "Near",
             Ranges::Far => "Far",
-            Ranges::Varies => "Varies",
+            Ranges::Varies => "Var.",
         }
     }
 }
