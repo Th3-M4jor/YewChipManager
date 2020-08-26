@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
 pub(crate) enum Ranges {
+    Varies,
     Far,
     Near,
     Close,
@@ -16,6 +17,7 @@ impl Ranges {
             Ranges::Close => "Close",
             Ranges::Near => "Near",
             Ranges::Far => "Far",
+            Ranges::Varies => "Varies",
         }
     }
 }
