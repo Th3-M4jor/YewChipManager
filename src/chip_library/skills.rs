@@ -2,14 +2,14 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 pub(crate) enum Skills {
-    Sense,
+    Perception,
     Info,
-    Coding,
+    Tech,
     Strength,
-    Speed,
-    Stamina,
+    Agility,
+    Endurance,
     Charm,
-    Bravery,
+    Valor,
     Affinity,
     None,
     Varies,
@@ -18,17 +18,17 @@ pub(crate) enum Skills {
 impl Skills {
     pub(crate) fn as_str(&self) -> &'static str {
         match self {
-            Skills::Sense => "Sense",
-            Skills::Info => "Info",
-            Skills::Coding => "Coding",
-            Skills::Strength => "Strength",
-            Skills::Speed => "Speed",
-            Skills::Stamina => "Stamina",
-            Skills::Charm => "Charm",
-            Skills::Bravery => "Bravery",
-            Skills::Affinity => "Affinity",
+            Skills::Perception => "PER",
+            Skills::Info => "INF",
+            Skills::Tech => "TCH",
+            Skills::Strength => "STR",
+            Skills::Agility => "AGI",
+            Skills::Endurance => "END",
+            Skills::Charm => "CHM",
+            Skills::Valor => "VLR",
+            Skills::Affinity => "AFF",
             Skills::None => "--",
-            Skills::Varies => "Varies",
+            Skills::Varies => "VAR",
         }
     }
 }
