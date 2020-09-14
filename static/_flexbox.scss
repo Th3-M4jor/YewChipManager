@@ -11,15 +11,15 @@
 //width is divided by 12 to determine size
 @mixin col($name, $width) {
     .#{$name}{
-        $size: ($width / 12) * 100%;
+        $size: ($width / 24) * 100%;
         flex: 0 0 $size;
         max-width: $size;
     }
 }
 
-@include col("left-panel", 2);
-@include col("middle-panel", 7);
-@include col("right-panel", 3);
+@include col("left-panel", 4);
+@include col("middle-panel", 14);
+@include col("right-panel", 6);
 
 
 .chip-row {
@@ -38,10 +38,11 @@
     background-color: gray;
 }
 
-@include col("chip-col-1", 1);
-@include col("chip-col-2", 2);
-@include col("chip-col-3", 3);
-@include col("chip-col-4", 4);
+@include col("chip-col-1", 2);
+@include col("chip-col-1-5", 3);
+@include col("chip-col-2", 4);
+@include col("chip-col-3", 6);
+@include col("chip-col-4", 8);
 
 
 
