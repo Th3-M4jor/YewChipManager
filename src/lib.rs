@@ -15,8 +15,8 @@ use chip_library::ChipLibrary;
 use app::App;
 
 // Use `wee_alloc` as the global allocator.
-//#[global_allocator]
-//static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 // This is the entry point for the web app
 /*
