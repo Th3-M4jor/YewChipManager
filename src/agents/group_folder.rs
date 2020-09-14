@@ -187,9 +187,13 @@ impl GroupFldrMsgBus {
             match res {
                 SocketMsg::FoldersUpdated(folders) => {
                     //let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
+                    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folders updated"));
+                    folders_updated(folders);
+                    /*
                     let mut group = ChipLibrary::get_instance().group_folders.borrow_mut();
                     *group = folders;
                     drop(group);
+                    */
                     GroupFldrAgentSocketMsg::GroupUpdated
                 }
                 SocketMsg::Error(why) => {
@@ -236,8 +240,21 @@ impl GroupFldrMsgBus {
     }
 
     fn clear_group_folders(&self) {
-        let mut group = ChipLibrary::get_instance().group_folders.borrow_mut();
-        *group = HashMap::default()
+        folders_updated(HashMap::default());
     }
 
+}
+
+fn folders_updated(new_folders: HashMap<String, Vec<GroupFolderChip>>) -> bool {
+    let mut folders = match ChipLibrary::get_instance().group_folders.try_borrow_mut() {
+        Ok(folders) => folders,
+        Err(_) => {
+            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folder update failed"));
+            return false;
+        },
+    };
+
+    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folders updated"));
+    *folders = new_folders;
+    return true;
 }

@@ -133,7 +133,10 @@ impl Component for GroupFolderComponent {
 impl GroupFolderComponent {
     fn build_folder(&self) -> Html {
         let library = ChipLibrary::get_instance();
-        let group = library.group_folders.borrow();
+        let group = match library.group_folders.try_borrow() {
+            Ok(group) => group,
+            Err(_) => return html!{},
+        };
         let folder = match group.get(&self.props.player_name) {
             Some(folder) => folder,
             None => return html!{},
