@@ -66,8 +66,11 @@ impl Component for GroupFolderChipComponent {
                 <div class="chip-col-3 nopadding">
                     {&self.props.chip.name}
                 </div>
-                <div class="chip-col-3 nopadding">
+                <div class="chip-col-1-5 nopadding">
                     {self.props.chip.skill().as_str()}
+                </div>
+                <div class="chip-col-1-5 nopadding">
+                    {self.props.chip.damage.as_str()}
                 </div>
                 <div class="chip-col-2 nopadding">
                     {generate_element_images(&self.props.chip.element)}

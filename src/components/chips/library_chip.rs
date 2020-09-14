@@ -83,8 +83,11 @@ impl Component for LibraryChip {
                 <div class="chip-col-4 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}
                 </div>
-                <div class="chip-col-3 nopadding">
+                <div class="chip-col-1-5 nopadding">
                     {self.props.chip.skill().as_str()}
+                </div>
+                <div class="chip-col-1-5 nopadding">
+                    {self.props.chip.damage.as_str()}
                 </div>
                 <div class="chip-col-2 nopadding centercontent">
                     {generate_element_images(&self.props.chip.element)}

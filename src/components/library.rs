@@ -19,8 +19,11 @@ pub(crate) fn library_top_row() -> Html {
             <div class="chip-col-4 Chip nopadding" style="white-space: nowrap">
                 {"NAME"}
             </div>
-            <div class="chip-col-3 Chip nopadding">
+            <div class="chip-col-1-5 Chip nopadding">
                 {"SKILL"}
+            </div>
+            <div class="chip-col-1-5 Chip nopadding">
+                {"DMG"}
             </div>
             <div class="chip-col-2 Chip nopadding">
                 {"ELEM"}
