@@ -48,7 +48,7 @@ impl Component for LibraryChip {
                 let library = ChipLibrary::get_instance();
                 match library.add_copy_to_pack(&self.props.chip.name) {
                     Some(num) => {
-                        let middle_text = if num == 1 {" copy of "} else {" coppies of "};
+                        let middle_text = if num == 1 {" copy of "} else {" copies of "};
                         let msg = String::from("You now own ") + &num.to_string() + middle_text + &self.props.chip.name;
                         self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                     },
