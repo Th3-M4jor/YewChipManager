@@ -130,7 +130,7 @@ impl ChipDescComponent {
 
         html!{
             <div class=background>
-                <div class=chip_anim_class style="padding: 3px">
+                <div class=chip_anim_class style="padding: 3px; font-size: 14px;">
                     {chip.damage_span()}
                     {chip.range_span()}
                     {chip.hits_span()}
