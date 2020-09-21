@@ -216,7 +216,7 @@ impl GroupFldrMsgBus {
                 WebSocketStatus::Error => GroupFldrAgentSocketMsg::ServerError("Socket Closed by Server".to_string()),
             }
         });
-        let socket_task = WebSocketService::connect_binary(&url, message_callback, socket_notification_callback).map_err(|e| e.to_owned())?;
+        let socket_task = WebSocketService::connect_binary(&url, message_callback, socket_notification_callback).map_err(|e| e.to_string())?;
         self.web_socket = Some(socket_task);
 
         Ok(())
