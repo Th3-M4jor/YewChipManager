@@ -135,7 +135,10 @@ impl GroupFolderComponent {
         let library = ChipLibrary::get_instance();
         let group = match library.group_folders.try_borrow() {
             Ok(group) => group,
-            Err(_) => return html!{},
+            Err(_) => {
+                web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Failed to immutably borrow group folders"));
+                return html!{};
+            },
         };
         let folder = match group.get(&self.props.player_name) {
             Some(folder) => folder,
