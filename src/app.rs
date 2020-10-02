@@ -41,9 +41,14 @@ impl Tabs {
             Tabs::Folder => Cow::Borrowed("Fldr"),
             Tabs::GroupFolder(grp_fldr) => {
                 let mut text = String::new();
-                text.push_str(&grp_fldr[..=4]);
-                text.push_str("...");
-                Cow::Owned(text)
+                if grp_fldr.len() > 5 {
+                    text.push_str(&grp_fldr[..=4]);
+                    text.push_str("...");
+                    Cow::Owned(text)
+                } else {
+                    text.push_str(&grp_fldr);
+                    Cow::Owned(text)
+                }
             }
         }
     }
