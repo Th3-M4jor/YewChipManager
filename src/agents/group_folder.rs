@@ -254,7 +254,7 @@ fn folders_updated(new_folders: HashMap<String, Vec<GroupFolderChip>>) -> bool {
         },
     };
 
-    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folders updated"));
+    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folders updated"));
     *folders = new_folders;
     return true;
 }
