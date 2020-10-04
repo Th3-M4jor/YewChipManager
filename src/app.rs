@@ -41,7 +41,7 @@ impl Tabs {
             Tabs::Folder => Cow::Borrowed("Fldr"),
             Tabs::GroupFolder(grp_fldr) => {
                 let mut text = String::new();
-                if grp_fldr.len() > 5 {
+                if grp_fldr.len() > 7 {
                     text.push_str(&grp_fldr[..=4]);
                     text.push_str("...");
                     Cow::Owned(text)
@@ -277,7 +277,7 @@ impl App {
         players.sort_unstable();
         
         let player_tabs = players.iter().map(|player| {
-            if self.player_name.contains(*player) {
+            if self.player_name.contains(*player) || folders[*player].is_empty() {
                 return html!{};
             }
             //else is not the current player
@@ -663,7 +663,7 @@ impl Component for App {
             },
             TopLevelMsg::GroupsUpdated => {
                 if let Tabs::GroupFolder(name) = &self.active_tab {
-                    if !ChipLibrary::get_instance().group_folders.borrow().contains_key(name.as_str()) {
+                    if ChipLibrary::get_instance().not_in_group_or_empty_fldr(name) {
                         // player left
                         self.active_tab = Tabs::Library;
                     }

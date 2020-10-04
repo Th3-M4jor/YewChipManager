@@ -601,4 +601,13 @@ impl ChipLibrary {
     pub(crate) fn folder_changed(&self) -> bool {
         self.change_since_last_group_post.load(Ordering::Relaxed)
     }
+
+    pub(crate) fn not_in_group_or_empty_fldr(&self, name: &str) -> bool {
+        let folders = self.group_folders.borrow();
+        let player_folder = match folders.get(name) {
+            Some(folder) => folder,
+            None => return true,
+        };
+        player_folder.is_empty()
+    }
 }
