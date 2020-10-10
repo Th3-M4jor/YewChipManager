@@ -116,26 +116,27 @@ impl ChipDescComponent {
     fn with_chip(&self, chip: &BattleChip) -> Html {
         let background = String::from("right-panel nopadding ") + chip.kind.to_background_css_class();
         let chip_anim_class = if self.chip_anim_ct & 1 == 0 {
-            "chipWindowOne chipDescText chipDescPadding"
+            "chipWindowOne"
         } else {
-            "chipWindowTwo chipDescText chipDescPadding"
+            "chipWindowTwo"
         };
+
         let font_style = if chip.description.len() > 700 {
-            "font-size: 12px; text-align: left; border-top: 1px solid black;"
+            "chipDescSm" //"font-size: 12px; text-align: left; border-top: 1px solid black;"
         } else if chip.description.len() > 450 {
-            "font-size: 14px; text-align: left; border-top: 1px solid black;"
+            "chipDescMd" //"font-size: 14px; text-align: left; border-top: 1px solid black;"
         } else {
-            "font-size: 16px; text-align: left; border-top: 1px solid black;"
+            "chipDescLg" //"font-size: 16px; text-align: left; border-top: 1px solid black;"
         };
 
         html!{
             <div class=background>
-                <div class=chip_anim_class style="padding: 3px; font-size: 14px;">
+                <div class=(chip_anim_class, "chipDescText chipDescPadding") style="padding: 3px; font-size: 14px;">
                     {chip.damage_span()}
                     {chip.range_span()}
                     {chip.hits_span()}
                     <br/>
-                    <div style={font_style} class="chipDescDiv" id="ScrollTextDiv">
+                    <div class=(font_style, "chipDescDiv") id="ScrollTextDiv">
                         {&chip.description}
                     </div>
                 </div>
