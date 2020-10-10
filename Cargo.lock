@@ -59,6 +59,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
+name = "cfg-if"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
 name = "cfg-match"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -70,7 +76,7 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8d976903543e0c48546a91908f21588a680a8c8f984df9a5d69feccb2b2a211"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "wasm-bindgen",
 ]
 
@@ -194,7 +200,7 @@ version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
 ]
 
 [[package]]
@@ -278,9 +284,9 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "syn"
-version = "1.0.42"
+version = "1.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c51d92969d209b54a98397e1b91c8ae82d8c87a7bb87df0b29aa2ad81454228"
+checksum = "1e2e59c50ed8f6b050b071aa7b6865293957a9af6b58b94f97c1c9434ad440ea"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -325,7 +331,7 @@ version = "0.2.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ac64ead5ea5f05873d7c12b545865ca2b8d28adfc50a49b84770a3a97265d42"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "serde",
  "serde_json",
  "wasm-bindgen-macro",
@@ -352,7 +358,7 @@ version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7866cab0aa01de1edf8b5d7936938a7e397ee50ce24119aef3e1eaa3b6171da"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "js-sys",
  "wasm-bindgen",
  "web-sys",
@@ -414,7 +420,7 @@ version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbb3b5a6b2bb17cb6ad44a2e68a43e8d2722c997da10e928665c72ec6c0a0b8e"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "libc",
  "memory_units",
  "winapi",
@@ -445,12 +451,12 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "yew"
 version = "0.17.3"
-source = "git+https://github.com/yewstack/yew.git?branch=master#7e6d6c43f0aa98d78ae34654d49e1cf84d252cce"
+source = "git+https://github.com/yewstack/yew.git?branch=master#7fc5fc602a8df527fce01141160a7651b5819d73"
 dependencies = [
  "anyhow",
  "anymap",
  "bincode",
- "cfg-if",
+ "cfg-if 1.0.0",
  "cfg-match",
  "console_error_panic_hook",
  "gloo",
@@ -492,7 +498,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#7e6d6c43f0aa98d78ae34654d49e1cf84d252cce"
+source = "git+https://github.com/yewstack/yew.git?branch=master#7fc5fc602a8df527fce01141160a7651b5819d73"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -504,7 +510,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.3.2"
-source = "git+https://github.com/yewstack/yew.git?branch=master#7e6d6c43f0aa98d78ae34654d49e1cf84d252cce"
+source = "git+https://github.com/yewstack/yew.git?branch=master#7fc5fc602a8df527fce01141160a7651b5819d73"
 dependencies = [
  "log",
  "wasm-bindgen",
@@ -517,7 +523,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.2.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#7e6d6c43f0aa98d78ae34654d49e1cf84d252cce"
+source = "git+https://github.com/yewstack/yew.git?branch=master#7fc5fc602a8df527fce01141160a7651b5819d73"
 dependencies = [
  "proc-macro2",
  "quote",
