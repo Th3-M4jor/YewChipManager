@@ -77,7 +77,7 @@ fn handle_mouseover_event(e: MouseEvent) -> LibraryMessage {
 
     let id = div.id();
 
-    let name = id[2..].to_owned();
+    let name = id.get(2..)?.to_owned();
 
     //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
 

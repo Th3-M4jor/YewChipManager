@@ -1,5 +1,6 @@
 use crate::chip_library::{elements::Elements, skills::Skills, chip_type::ChipType, ranges::Ranges};
 use serde::Deserialize;
+use unchecked_unwrap::UncheckedUnwrap;
 use std::cell::UnsafeCell;
 use std::cmp::{Ord, Ordering};
 use yew::prelude::*;
@@ -67,7 +68,7 @@ impl BattleChip {
         if self.skills.len() > 1 {
             return Skills::Varies;
         }
-        self.skills[0]
+        unsafe{self.skills.get(0).unchecked_unwrap()}.to_owned()
     }
 
     pub(crate) fn avg_dmg(&self) -> f32 {
@@ -96,8 +97,8 @@ impl BattleChip {
         let (max, avg) = if res.len() != 2 {
             (0, 0.0)
         } else {
-            let num_dice = res[0].parse::<u32>().unwrap_or(0);
-            let die_size = res[1].parse::<u32>().unwrap_or(0);
+            let num_dice = unsafe{res.get_unchecked(0)}.parse::<u32>().unwrap_or(0);
+            let die_size = unsafe{res.get_unchecked(1)}.parse::<u32>().unwrap_or(0);
 
             let avg = ((die_size as f32 / 2.0) + 0.5) * (num_dice as f32);
             let max = num_dice * die_size;

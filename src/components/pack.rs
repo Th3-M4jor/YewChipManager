@@ -110,7 +110,7 @@ fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
 
     let id = div.id();
-    let val = id[2..].to_owned();
+    let val = id.get(2..)?.to_owned();
     PackMsg::MoveToFolder(val)
 }
 
@@ -121,7 +121,7 @@ fn handle_mouseover_event(e: MouseEvent) -> PackMsg {
 
     let id = div.id();
 
-    let name = id[2..].to_owned();
+    let name = id.get(2..)?.to_owned();
 
     //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
 
@@ -135,7 +135,7 @@ fn open_ctx_menu(e: MouseEvent) -> PackMsg {
     let document = window.document()?;
     let target = document.query_selector(".chipHover:hover").ok().flatten()?;
     let id = target.id();
-    let name = id[2..].to_owned();
+    let name = id.get(2..)?.to_owned();
     let x = e.client_x();
     let y = e.client_y();
 

@@ -42,7 +42,8 @@ impl Tabs {
             Tabs::GroupFolder(grp_fldr) => {
                 let mut text = String::new();
                 if grp_fldr.len() > 7 {
-                    text.push_str(&grp_fldr[..=4]);
+                    let shortened_text = unsafe{grp_fldr.get_unchecked(..=4)};
+                    text.push_str(shortened_text);
                     text.push_str("...");
                     Cow::Owned(text)
                 } else {
@@ -60,7 +61,8 @@ impl Tabs {
             Tabs::Folder => Cow::Borrowed("Library"),
             Tabs::GroupFolder(grp_fldr) => {
                 if grp_fldr.len() > 15 {
-                    let mut text = String::from(&grp_fldr[..=12]);
+                    let shortened_text = unsafe{grp_fldr.get_unchecked(..=12)};
+                    let mut text = String::from(shortened_text);
                     text.push_str("'s folder");
                     Cow::Owned(text)
                 } else {
@@ -277,9 +279,20 @@ impl App {
         players.sort_unstable();
         
         let player_tabs = players.iter().map(|player| {
-            if self.player_name.contains(*player) || folders[*player].is_empty() {
+            
+            let folder_empty = match folders.get(*player) {
+                Some(folder) => {
+                    folder.is_empty()      
+                }
+                None => true //assume empty folder in this edge case
+            };
+            
+            if folder_empty || self.player_name.contains(*player) {
                 return html!{};
             }
+
+            
+
             //else is not the current player
             let tab = Tabs::GroupFolder((*player).clone());
             let btn_text = tab.shorten_string();

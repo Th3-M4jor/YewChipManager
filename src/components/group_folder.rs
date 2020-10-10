@@ -148,6 +148,9 @@ impl GroupFolderComponent {
             None => return html!{},
         };
 
+        //currently empty group folders are not shown
+        
+        /*
         if folder.len() == 0 {
             return html!{
                 <span class="noselect Chip">
@@ -155,6 +158,7 @@ impl GroupFolderComponent {
                 </span>
             }
         }
+        */
 
         let folder_len = folder.len();
         folder.iter().zip(0..folder_len).map(|(chip, index)|{

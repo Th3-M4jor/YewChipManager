@@ -95,7 +95,7 @@ fn return_pack_callback(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
     let id: String = div.id();
-    let index = id[3..].parse::<usize>().ok()?;
+    let index = id.get(3..)?.parse::<usize>().ok()?;
     FolderMsg::ReturnToPack(index)
 }
 
@@ -103,7 +103,7 @@ fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
     let id: String = div.id();
-    let index = id[3..].parse::<usize>().ok()?;
+    let index = id.get(3..)?.parse::<usize>().ok()?;
     FolderMsg::ChangeUsed(index)
 }
 
@@ -111,7 +111,7 @@ fn handle_mouseover_event(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
     let id: String = div.id();
-    let index = id[3..].parse::<usize>().ok()?;
+    let index = id.get(3..)?.parse::<usize>().ok()?;
     FolderMsg::SetHighlightedChip(index)
 }
 
