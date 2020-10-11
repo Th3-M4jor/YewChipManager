@@ -195,7 +195,7 @@ pub(crate) struct App
 }
 
 fn save_interval_callback(_:()) -> TopLevelMsg {
-    ChipLibrary::get_instance().save_data();
+    let _ = ChipLibrary::get_instance().save_data();
     TopLevelMsg::DoNothing
 }
 

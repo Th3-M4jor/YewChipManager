@@ -57,6 +57,5 @@ pub fn run(data: &str) -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub fn save_before_exit() -> Result<(), JsValue> {
-    ChipLibrary::get_instance().save_data();
-    Ok(())
+    ChipLibrary::get_instance().save_data().map_err(|s| wasm_bindgen::JsValue::from_str(s))
 }

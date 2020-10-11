@@ -185,7 +185,7 @@ impl GroupFolderComponent {
             if folder.1.is_empty() {
                 
                 let name = if folder.0.len() > 7 {
-                    let mut to_ret = String::from(&folder.0[..=4]);
+                    let mut to_ret = String::from(unsafe{folder.0.get_unchecked(..=4)});
                     to_ret.push_str("...");
                     to_ret
                 } else {

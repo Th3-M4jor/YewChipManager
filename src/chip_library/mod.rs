@@ -72,7 +72,14 @@ impl ChipLibrary {
     }
 
     fn import_local(data: &str) -> ChipLibrary {
-        let mut chip_list: Vec<BattleChip> = serde_json::from_str::<Vec<BattleChip>>(data).expect("Failed to deserialize library");
+        let mut chip_list: Vec<BattleChip> = match serde_json::from_str::<Vec<BattleChip>>(data) {
+            Ok(chip_list) => chip_list,
+            Err(e) => {
+                let msg = e.to_string();
+                unsafe{util::alert(&msg)};
+                std::process::abort();
+            }
+        };
         let mut library: HashMap<String, Rc<BattleChip>> = HashMap::with_capacity(chip_list.len());
         for chip in chip_list.drain(..) {
             library.insert(chip.name.clone(), Rc::new(chip));
@@ -84,7 +91,7 @@ impl ChipLibrary {
         }
         */
 
-        let window = web_sys::window().expect("Could not get window");
+        let window = unsafe{web_sys::window().unchecked_unwrap()};
         let storage = match window.local_storage().ok().flatten() {
             Some(storage) => storage,
             None => {
@@ -177,7 +184,6 @@ impl ChipLibrary {
 
     fn warn_missing_pack(name: &str, owned: u32, used: u32) {
 
-        let window = web_sys::window().expect("Could not get window");
         let mut msg = String::from("Your pack had a chip named \"");
         msg.push_str(name);
         msg.push_str("\", this no longer exists in the library, you owned ");
@@ -185,19 +191,16 @@ impl ChipLibrary {
         msg.push_str(" (of which ");
         msg.push_str(&used.to_string());
         msg.push_str(" were used)");
-
-
-        let _ = window.alert_with_message(&msg);
+        unsafe{util::alert(&msg)};
     }
 
     fn warn_missing_fldr(name: &str, used: bool) {
-        let window = web_sys::window().expect("Could not get window");
         let used_unused = if used {"used"} else {"unused"};
         let mut msg = String::from("Your folder had a chip named \"");
         msg.push_str(name);
         msg.push_str("\", this no longer exists in the library, you had it marked as: ");
         msg.push_str(used_unused);
-        let _ = window.alert_with_message(&msg);
+        unsafe{util::alert(&msg)};
     }
 
     /// add a copy of a chip to the pack
@@ -482,18 +485,18 @@ impl ChipLibrary {
         Ok(())
     }
 
-    pub(crate) fn save_data(&self) {
+    pub(crate) fn save_data(&self) -> Result<(), &'static str> {
         if self.change_since_last_save.load(Ordering::Relaxed) == false {
-            return;
+            return Ok(());
         }
         
-        let window = web_sys::window().expect("Could not get window");
+        let window = web_sys::window().ok_or("failed to get window")?;
         let storage = match window.local_storage().ok().flatten() {
             Some(storage) => storage,
-            None => return,
+            None => return Err("could not get storage"),
         };
         let pack = self.pack.borrow();
-        let pack_text = serde_json::to_string(&*pack).expect("Failed to serialize pack");
+        let pack_text = serde_json::to_string(&*pack).map_err(|_|"Failed to serialize pack")?;
         storage.set_item("pack", &pack_text).unwrap();
         // no longer needed, free memory
         drop(pack_text);
@@ -502,7 +505,7 @@ impl ChipLibrary {
         let folder = self.folder.borrow();
 
         //have to deref then borrow to coerce to a reference from a std::cell::Ref
-        let folder_text = serde_json::to_string(&*folder).expect("Failed to serialize folder");
+        let folder_text = serde_json::to_string(&*folder).map_err(|_| "Failed to serialize folder")?;
 
         storage.set_item("folder", &folder_text).unwrap();
 
@@ -513,6 +516,7 @@ impl ChipLibrary {
         storage.set_item("chip_limit", &chip_limit).unwrap();
 
         self.change_since_last_save.store(false, Ordering::Relaxed);
+        Ok(())
     }
 
     pub(crate) fn export_txt(&self) {
@@ -573,10 +577,13 @@ impl ChipLibrary {
         drop(folder);
         drop(pack);
 
-        let window = web_sys::window().expect("Could not get window");
+        let window = match web_sys::window() {
+            Some(window) => window,
+            None => return
+        };
         let storage = match window.local_storage().ok().flatten() {
             Some(storage) => storage,
-            None => {return;}
+            None => return
         };
         
         let _ = storage.remove_item("folder");
