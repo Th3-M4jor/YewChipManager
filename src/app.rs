@@ -209,11 +209,10 @@ fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
     let group_name_input = group_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
     let player_name_input = player_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
 
-    let group_name = group_name_input.value();
-    let player_name = player_name_input.value();
+    let group_name : String = group_name_input.value();
+    let player_name : String = player_name_input.value();
 
-    TopLevelMsg::JoinGroupData{player_name, group_name}
-
+        TopLevelMsg::JoinGroupData{player_name, group_name}
 }
 
 fn load_file_callback(e: ChangeData) -> TopLevelMsg {
@@ -661,6 +660,9 @@ impl Component for App {
                 let player_name = player_name.trim().to_owned();
                 if player_name.is_empty() || group_name.is_empty() {
                     unsafe{alert("Cannot have an empty player or group name")};
+                    return true;
+                } else if !group_name.is_ascii() || !player_name.is_ascii() {
+                    unsafe{alert("Illegal symbol used, try again")};
                     return true;
                 }
                 let player_name2 = player_name.clone();
