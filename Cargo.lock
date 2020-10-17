@@ -247,18 +247,18 @@ checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 
 [[package]]
 name = "serde"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96fe57af81d28386a513cbc6858332abc6117cfdb5999647c6444b8f43a370a5"
+checksum = "b88fa983de7720629c9387e9f517353ed404164b1e482c970a90c1a4aaf7dc1a"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.116"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f630a6370fd8e457873b4bd2ffdae75408bc291ba72be773772a4c2a065d9ae8"
+checksum = "cbd1ae72adb44aab48f325a02444a5fc079349a8d804c1fc922aed3f7454c74e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -267,9 +267,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.58"
+version = "1.0.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a230ea9107ca2220eea9d46de97eddcb04cd00e92d13dda78e478dd33fa82bd4"
+checksum = "dcac07dbffa1c65e7f816ab9eba78eb142c6d44410f4eeba1e26e4f5dfa56b95"
 dependencies = [
  "itoa",
  "ryu",
@@ -451,7 +451,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "yew"
 version = "0.17.3"
-source = "git+https://github.com/yewstack/yew.git?branch=master#a959796794917e9d2ddeb8b62002f68913861502"
+source = "git+https://github.com/yewstack/yew.git?branch=master#cbf6a13ac22a17af16b9ce400237455a02e9352d"
 dependencies = [
  "anyhow",
  "anymap",
@@ -498,7 +498,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#a959796794917e9d2ddeb8b62002f68913861502"
+source = "git+https://github.com/yewstack/yew.git?branch=master#cbf6a13ac22a17af16b9ce400237455a02e9352d"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -510,7 +510,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.3.2"
-source = "git+https://github.com/yewstack/yew.git?branch=master#a959796794917e9d2ddeb8b62002f68913861502"
+source = "git+https://github.com/yewstack/yew.git?branch=master#cbf6a13ac22a17af16b9ce400237455a02e9352d"
 dependencies = [
  "log",
  "wasm-bindgen",
@@ -523,7 +523,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.2.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#a959796794917e9d2ddeb8b62002f68913861502"
+source = "git+https://github.com/yewstack/yew.git?branch=master#cbf6a13ac22a17af16b9ce400237455a02e9352d"
 dependencies = [
  "proc-macro2",
  "quote",
