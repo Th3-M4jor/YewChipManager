@@ -4,7 +4,7 @@ use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
 use yewtil::function_component;
 use crate::agents::{global_msg::{GlobalMsgBus, Request as GlobalMsgReq}, chip_desc::{ChipDescMsg, ChipDescMsgBus}};
-use crate::util::alert;
+use crate::util::{alert, list_spectators};
 use yew::events::MouseEvent;
 use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 
@@ -273,6 +273,8 @@ impl Component for PackComponent {
                 <br/>
                 <br/>
                 {self.generate_buttons()}
+                <br/>
+                {list_spectators()}
             </div>
             <div class=col2_display>
                 <div class=pack_containter_class oncontextmenu=self.open_context_menu_callback.clone()>

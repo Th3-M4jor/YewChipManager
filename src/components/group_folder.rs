@@ -9,6 +9,7 @@ use crate::agents::{
 };
 use crate::components::{folder::FolderTopRow, chips::GroupFolderChip};
 use crate::chip_library::{ChipLibrary, BattleChip};
+use crate::util::list_spectators;
 
 
 #[derive(Properties, PartialEq, Clone)]
@@ -118,8 +119,7 @@ impl Component for GroupFolderComponent {
         html!{
             <>
             <div class=col1_display>
-                <div class="Chip noselect" style="text-decoration: underline;">{"Spectators"}</div>
-                {self.list_spectators()}
+                {list_spectators()}
             </div>
             <div class=col2_display>
                 <div class=folder_containter_class>
@@ -173,30 +173,6 @@ impl GroupFolderComponent {
                     chip={battlechip}
                     on_mouse_enter={self.chip_mouseover.clone()}
                 />
-            }
-        }).collect::<Html>()
-
-    }
-
-    fn list_spectators(&self) -> Html {
-        let folders = ChipLibrary::get_instance().group_folders.borrow();
-        
-        folders.iter().map(|folder| {
-            if folder.1.is_empty() {
-                
-                let name = if folder.0.len() > 7 {
-                    let mut to_ret = String::from(unsafe{folder.0.get_unchecked(..=4)});
-                    to_ret.push_str("...");
-                    to_ret
-                } else {
-                    folder.0.to_owned()
-                };
-                
-                html!{
-                    <div class="Chip">{name}</div>
-                }
-            } else {
-                html!{}
             }
         }).collect::<Html>()
 

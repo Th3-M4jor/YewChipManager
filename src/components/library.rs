@@ -9,6 +9,7 @@ use wasm_bindgen::JsCast;
 use crate::components::{ChipSortOptions, chips::LibraryChip, sort_box::ChipSortBox};
 use crate::chip_library::{BattleChip, ChipLibrary};
 use crate::agents::chip_desc::{ChipDescMsg, ChipDescMsgBus};
+use crate::util::list_spectators;
 
 
 
@@ -174,6 +175,8 @@ impl Component for LibraryComponent {
             <div class=col1_display>
                 <ChipSortBox include_owned={false} sort_by={self.sort_by} sort_changed={self.sort_changed.clone()}/>
                 {self.build_search_box()}
+                <br/>
+                {list_spectators()}
             </div>
             <div class=col2_display>
                 <div class=library_containter_class>

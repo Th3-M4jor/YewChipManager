@@ -22,7 +22,7 @@ use crate::{
             GroupFldrAgentReq,
         },
     },
-    util::alert
+    util::{alert, list_spectators}
 };
 
 use web_sys::MouseEvent;
@@ -284,6 +284,8 @@ impl Component for FolderComponent {
                 <br/>
                 <br/>
                 {self.generate_buttons()}
+                <br/>
+                {list_spectators()}
             </div>
             <div class=col2_display>
                 <div class=folder_containter_class>
