@@ -16,7 +16,7 @@ impl std::default::Default for ChipType {
 }
 
 impl ChipType {
-    #[inline]
+
     fn to_num(&self) -> u32 {
         match self {
             ChipType::Standard | ChipType::Support => 0,
@@ -26,7 +26,6 @@ impl ChipType {
         }
     }
 
-    #[inline]
     pub(crate) fn to_css_class(&self) -> &'static str {
         match self {
             ChipType::Standard => {"Chip"}
@@ -37,7 +36,6 @@ impl ChipType {
         }
     }
 
-    #[inline]
     pub(crate) fn to_background_css_class(&self) -> &'static str {
         match self {
             ChipType::Standard => {"chipDescBackgroundStd"}

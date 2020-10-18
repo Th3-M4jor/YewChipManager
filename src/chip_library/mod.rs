@@ -58,6 +58,7 @@ static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
 
 impl ChipLibrary {
 
+    #[inline]
     pub(crate) fn init(data: &str) {
          //initialize library
         INSTANCE.get_or_init(|| {
@@ -65,7 +66,7 @@ impl ChipLibrary {
         });
     }
 
-    // undefined behavior if init has yet to be called
+    /// undefined behavior if init has yet to be called
     #[inline]
     pub(crate) fn get_instance() -> &'static ChipLibrary {
         unsafe { INSTANCE.get().unchecked_unwrap() }
@@ -128,7 +129,7 @@ impl ChipLibrary {
 
     /// load the pack from local storage
     fn load_pack(storage: &web_sys::Storage, library: &HashMap<String, Rc<BattleChip>>) -> Option<HashMap<String, PackChip>> {
-        let pack_str: String = storage.get_item("pack").ok().flatten()?;
+        let pack_str: String = storage.get_item("pack").ok().flatten()?; //flatten an Option<Option<String>> into Option<String>
         //let mut map = serde_json::from_str::<HashMap<String, (u8,u8)>>(&pack_str).ok()?;
         let json = serde_json::from_str::<serde_json::Value>(&pack_str).ok()?;
         let map = json.as_object()?;
@@ -154,7 +155,7 @@ impl ChipLibrary {
 
     /// load the folder from local storage
     fn load_folder(storage: &web_sys::Storage, library: &HashMap<String, Rc<BattleChip>>) -> Option<Vec<FolderChip>> {
-        let folder_str: String = storage.get_item("folder").ok().flatten()?;
+        let folder_str: String = storage.get_item("folder").ok().flatten()?; //flatten an Option<Option<String>> into Option<String>
         let json = serde_json::from_str::<serde_json::Value>(&folder_str).ok()?;
         let fldr = json.as_array()?;
         let mut to_ret: Vec<FolderChip> = Vec::new();
@@ -232,13 +233,13 @@ impl ChipLibrary {
         }
 
         let chip = self.library.get(name).ok_or("No chip with that name exists")?;
-        let pack_chip = pack.get_mut(name).ok_or("There are no coppies of that chip in your pack")?;
+        let pack_chip = pack.get_mut(name).ok_or("There are no copies of that chip in your pack")?;
 
         if pack_chip.used >= pack_chip.owned {
-            return Err("You do not have any unused coppies of that chip");
+            return Err("You do not have any unused copies of that chip");
         }
 
-        // find out how many coppies of that chip are in their folder
+        // find out how many copies of that chip are in their folder
         let mut count = 0u8;
 
         for chip in folder.iter() {
@@ -250,7 +251,7 @@ impl ChipLibrary {
 
         // is it greater than the limit for that type of chip?
         if count >= pack_chip.chip.kind.max_in_folder() {
-            return Err("You cannot add any more coppies of that chip to your folder");
+            return Err("You cannot add any more copies of that chip to your folder");
         }
 
         pack_chip.owned -= 1;
@@ -304,7 +305,7 @@ impl ChipLibrary {
         let mut pack = self.pack.borrow_mut();
         let chip = pack.get_mut(name).ok_or("No copy of that chip in your pack")?;
         if chip.used == 0 {
-            return Err("No used coppies of that chip in you pack");
+            return Err("No used copies of that chip in you pack");
         }
         chip.used -= 1;
         self.change_since_last_save.store(true, Ordering::Relaxed);

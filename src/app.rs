@@ -402,7 +402,12 @@ impl App {
                 let folder_class = "activeNavTab";
                 (pack_callback, folder_callback, library_callback, pack_class, library_class, folder_class)
             }
-            Tabs::GroupFolder(_) => {unreachable!()}
+            Tabs::GroupFolder(_) => {
+                #[cfg(debug_assertions)]
+                unreachable!();
+                #[cfg(not(debug_assertions))]
+                unsafe{core::hint::unreachable_unchecked()};
+            }
         };
 
         html! {
@@ -695,8 +700,8 @@ impl Component for App {
         
         html!{
             <>
-            <div style="background-color: #00637b; padding: 5px; max-width: 720px; margin: auto;">
-                <div style="background-color: #ffbd18; font-family: Lucida Console; margin: 5px; color: #FFFFFF; font-weight: bold">
+            <div class="outermostDiv">
+                <div class="topStatusBar">
                     <span style="padding-left: 5px">{self.active_tab.to_display_text()}</span><span style="float: right; color: red">{&self.message_txt}</span>
                 </div>
                 <div style="background-color: #4abdb5; padding: 10px;">

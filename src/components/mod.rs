@@ -41,7 +41,12 @@ impl From<&str> for ChipSortOptions {
             "Skill" => ChipSortOptions::Skill,
             "Range" => ChipSortOptions::Range,
             "Owned" => ChipSortOptions::Owned,
-            _ => unreachable!(),
+            _ => {
+                #[cfg(debug_assertions)]
+                unreachable!();
+                #[cfg(not(debug_assertions))]
+                unsafe{core::hint::unreachable_unchecked()};
+            },
         }
     }
 }

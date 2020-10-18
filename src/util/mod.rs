@@ -32,7 +32,7 @@ pub(crate) fn list_spectators() -> Html {
         return html!{};
     }
 
-    let spectators = folders.iter().map(|folder| {
+    let spectators = folders.iter().filter_map(|folder| {
         if folder.1.is_empty() {
         
             let name = if folder.0.len() > 7 {
@@ -42,12 +42,13 @@ pub(crate) fn list_spectators() -> Html {
             } else {
                 folder.0.to_owned()
             };
-        
-            html!{
-                <div class="Chip">{name}</div>
-            }
+            Some(
+                html!{
+                    <div class="Chip">{name}</div>
+                }
+            )
         } else {
-            html!{}
+            None
         }
     }).collect::<Html>();
 

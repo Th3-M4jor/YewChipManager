@@ -147,7 +147,7 @@ impl BattleChip {
 
     pub(crate) fn hits_span(&self) -> Html {
         //else it's a range so we'll set it to a value that isn't 1 or 0, which are special cases
-        let count = self.hits.parse::<isize>().unwrap_or(-1); 
+        let count = self.hits.parse::<i32>().unwrap_or(-1);
 
         if count == 0 {
             html!{}
