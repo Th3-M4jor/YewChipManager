@@ -50,12 +50,27 @@ body {
   text-align: center !important;
 }
 
+.outermostDiv {
+  background-color: #00637b;
+  padding: 5px;
+  max-width: 720px;
+  margin: auto;
+}
+
+.topStatusBar {
+  background-color: #ffbd18;
+  font-family: Lucida Console;
+  margin: 5px;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
 .noselect {
-  -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Old versions of Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
+  //-webkit-touch-callout: none; /* iOS Safari */
+  //  -webkit-user-select: none; /* Safari */
+  //   -khtml-user-select: none; /* Konqueror HTML */
+  //     -moz-user-select: none; /* Old versions of Firefox */
+  //      -ms-user-select: none; /* Internet Explorer/Edge */
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Opera and Firefox */
 }
