@@ -32,30 +32,29 @@ pub(crate) fn list_spectators() -> Html {
         return html!{};
     }
 
+    let spectators = folders.iter().map(|folder| {
+        if folder.1.is_empty() {
+        
+            let name = if folder.0.len() > 7 {
+                let mut to_ret = String::from(unsafe{folder.0.get_unchecked(..=4)});
+                to_ret.push_str("...");
+                to_ret
+            } else {
+                folder.0.to_owned()
+            };
+        
+            html!{
+                <div class="Chip">{name}</div>
+            }
+        } else {
+            html!{}
+        }
+    }).collect::<Html>();
 
     html!{
         <>
-        <div class="Chip noselect" style="text-decoration: underline;">{"Spectators"}</div>
-        {
-        folders.iter().map(|folder| {
-            if folder.1.is_empty() {
-            
-                let name = if folder.0.len() > 7 {
-                    let mut to_ret = String::from(unsafe{folder.0.get_unchecked(..=4)});
-                    to_ret.push_str("...");
-                    to_ret
-                } else {
-                    folder.0.to_owned()
-                };
-            
-                html!{
-                    <div class="Chip">{name}</div>
-                }
-            } else {
-                html!{}
-            }
-        }).collect::<Html>()
-        }
+            <div class="Chip noselect" style="text-decoration: underline;">{"Spectators"}</div>
+            {spectators}
         </>
     }
 
