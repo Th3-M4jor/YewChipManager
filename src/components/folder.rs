@@ -200,7 +200,7 @@ impl Component for FolderComponent {
 
             FolderMsg::ReturnToPack(idx) => {
                 let chip_library = ChipLibrary::get_instance();
-                let folder = chip_library.folder.borrow();
+                let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
                 let name = unsafe{folder.get(idx).unchecked_unwrap().name.as_str()};
                 let msg = String::from("A copy of ") + name + " has been returned to your pack";
                 
@@ -218,7 +218,7 @@ impl Component for FolderComponent {
             },
             FolderMsg::SetHighlightedChip(idx) => {
                 let chip_library = ChipLibrary::get_instance();
-                let folder = chip_library.folder.borrow();
+                let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
                 let name = match folder.get(idx) {
                     Some(chip) => chip.name.clone(),
                     None => return false,
@@ -267,7 +267,7 @@ impl Component for FolderComponent {
         };
         let lib_instance = ChipLibrary::get_instance();
         let chip_limit_val = lib_instance.chip_limit.load(Ordering::Relaxed).to_string();
-        let min_val = lib_instance.folder.borrow().len().to_string();
+        let min_val = unsafe{lib_instance.folder.try_borrow().unchecked_unwrap()}.len().to_string();
         
         html!{
             <>
@@ -303,7 +303,7 @@ impl Component for FolderComponent {
 impl FolderComponent {
 
     fn build_folder(&self) -> Html {
-        let mut folder = ChipLibrary::get_instance().folder.borrow_mut();
+        let mut folder = unsafe{ChipLibrary::get_instance().folder.try_borrow_mut().unchecked_unwrap()};
         if folder.len() == 0 {
             return html!{
                 <span class="noselect Chip">

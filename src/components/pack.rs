@@ -292,7 +292,7 @@ impl PackComponent {
 
     fn build_pack_chips(&self) -> Html {
         let lib = ChipLibrary::get_instance();
-        let pack = lib.pack.borrow();
+        let pack = unsafe{lib.pack.try_borrow().unchecked_unwrap()};
         if pack.len() == 0 {
            return html!{ 
                 <span class="noselect Chip">

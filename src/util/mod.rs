@@ -27,7 +27,12 @@ pub(crate) fn generate_element_images(elem: &[Elements]) -> Html {
 pub(crate) fn list_spectators() -> Html {
 
 
-    let folders = ChipLibrary::get_instance().group_folders.borrow();
+    let folders = ChipLibrary::get_instance().group_folders.try_borrow();
+    let folders = match folders {
+        Ok(folders) => folders,
+        Err(_) => return html!{},
+    };
+
     if folders.is_empty() {
         return html!{};
     }
@@ -44,7 +49,7 @@ pub(crate) fn list_spectators() -> Html {
             };
             Some(
                 html!{
-                    <div class="Chip">{name}</div>
+                    <div class="Chip noselect">{name}</div>
                 }
             )
         } else {

@@ -207,7 +207,7 @@ impl ChipLibrary {
     /// add a copy of a chip to the pack
     pub(crate) fn add_copy_to_pack(&self, name: &str) -> Option<u32> {
         
-        let mut pack = self.pack.borrow_mut();
+        let mut pack = self.pack.try_borrow_mut().ok()?;
 
         if let Some(chip) = pack.get_mut(name) {
             chip.owned += 1;
@@ -226,8 +226,12 @@ impl ChipLibrary {
 
     /// returned bool indicates if it was the last chip of that kind in the pack
     pub(crate) fn move_to_folder(&self, name: &str) -> Result<bool, &'static str> {
-        let mut folder = self.folder.borrow_mut();
-        let mut pack = self.pack.borrow_mut();
+        let folder = self.folder.try_borrow_mut();
+        let pack = self.pack.try_borrow_mut();
+        let (mut folder, mut pack) = match (folder,pack) {
+            (Ok(folder), Ok(pack)) => (folder,pack),
+            _ => {return Err("failed to borrow folder or pack, inform Major")}
+        };
         if self.chip_limit.load(Ordering::Relaxed) <= folder.len() {
             return Err("Your folder is full");
         }
@@ -275,7 +279,10 @@ impl ChipLibrary {
     }
 
     pub(crate) fn flip_used_folder(&self, idx: usize) {
-        let mut folder = self.folder.borrow_mut();
+        let mut folder = match self.folder.try_borrow_mut() {
+            Ok(folder) => folder,
+            Err(_) => return,
+        };
         let chip = match folder.get_mut(idx) {
             Some(chip) => chip,
             None => return,
@@ -287,7 +294,10 @@ impl ChipLibrary {
 
     /// returned bool indicates if it was the last chip of that kind in the pack
     pub(crate) fn remove_from_pack(&self, name:&str) -> Result<bool, &'static str> {
-        let mut pack = self.pack.borrow_mut();
+        let mut pack = match self.pack.try_borrow_mut() {
+            Ok(pack) => pack,
+            Err(_) => return Err("Failed to borrow pack mutably, inform Major"),
+        };
         let pack_chip = pack.get_mut(name).ok_or("No chip with that name in the pack")?;
         pack_chip.owned -= 1;
         if pack_chip.owned != 0 {
@@ -302,7 +312,10 @@ impl ChipLibrary {
     }
 
     pub(crate) fn mark_pack_copy_unused(&self, name: &str) -> Result<u32, &'static str> {
-        let mut pack = self.pack.borrow_mut();
+        let mut pack = match self.pack.try_borrow_mut() {
+            Ok(pack) => pack,
+            Err(_) => return Err("Failed to borrow pack mutably, inform Major"),
+        };
         let chip = pack.get_mut(name).ok_or("No copy of that chip in your pack")?;
         if chip.used == 0 {
             return Err("No used copies of that chip in you pack");
@@ -313,12 +326,19 @@ impl ChipLibrary {
     }
     /// returned bool indicates if it was used or not
     pub(crate) fn return_fldr_chip_to_pack(&self, index: usize) -> Result<bool, &'static str> {
-        let mut folder = self.folder.borrow_mut();
+        let pack = self.pack.try_borrow_mut();
+        let folder = self.folder.try_borrow_mut();
+
+        let (mut folder, mut pack) = match (folder,pack) {
+            (Ok(folder), Ok(pack)) => (folder,pack),
+            _ => {return Err("failed to borrow folder or pack, inform Major")}
+        };
+
         if folder.len() <= index {
             return Err("Index was out of bounds");
         }
+
         let fldr_chip = folder.remove(index);
-        let mut pack = self.pack.borrow_mut();
         let used_incr = if fldr_chip.used {1} else {0};
         if let Some(pack_chip) = pack.get_mut(&fldr_chip.name) {
             pack_chip.owned += 1;
@@ -338,8 +358,13 @@ impl ChipLibrary {
     }
 
     pub(crate) fn clear_folder(&self) -> usize {
-        let mut folder = self.folder.borrow_mut();
-        let mut pack = self.pack.borrow_mut();
+        let pack = self.pack.try_borrow_mut();
+        let folder = self.folder.try_borrow_mut();
+
+        let (mut folder, mut pack) = match (folder,pack) {
+            (Ok(folder), Ok(pack)) => (folder,pack),
+            _ => return 0,
+        };
         let returned_count = folder.len();
         for fldr_chip in folder.drain(..) {
             
@@ -370,7 +395,14 @@ impl ChipLibrary {
 
     pub(crate) fn jack_out(&self) -> u32 {
         let mut accumulator: u32 = 0;
-        let mut folder = self.folder.borrow_mut();
+        let mut folder = match self.folder.try_borrow_mut() {
+            Ok(folder) => folder,
+            Err(_) => {
+                unsafe{util::alert("failed to borrow folder mutably, inform Major")};
+                return 0;
+            }
+        };
+
         for chip in folder.iter_mut() {
             if chip.used {
                 accumulator += 1;
@@ -378,7 +410,13 @@ impl ChipLibrary {
             }
         }
         drop(folder);
-        let mut pack = self.pack.borrow_mut();
+        let mut pack = match self.pack.try_borrow_mut() {
+            Ok(pack) => pack,
+            Err(_) => {
+                unsafe{util::alert("failed to borrow pack mutably, inform Major")};
+                return 0;
+            }
+        };
         for (_, chip) in pack.iter_mut() {
             accumulator += chip.used as u32;
             chip.used = 0;
@@ -394,7 +432,14 @@ impl ChipLibrary {
 
     /// update the chip limit, returns true if the value changed
     pub(crate) fn update_chip_limit(&self, new_limit: usize) -> Result<bool, &'static str> {
-        if new_limit < self.folder.borrow().len() {
+        
+        let folder = match self.folder.try_borrow() {
+            Ok(folder) => folder,
+            Err(_) => return Err("failed to borrow folder, inform Major"),
+        };
+
+        
+        if new_limit < folder.len() {
             return Err("You must remove chips from your folder first");
         }
 
@@ -409,8 +454,8 @@ impl ChipLibrary {
 
     pub(crate) fn export_json(&self) {
         let (folder, pack) = unsafe {
-            let folder = self.folder.try_borrow_unguarded().unwrap();
-            let pack = self.pack.try_borrow_unguarded().unwrap();
+            let folder = self.folder.try_borrow_unguarded().unchecked_unwrap();
+            let pack = self.pack.try_borrow_unguarded().unchecked_unwrap();
             (folder, pack)
         };
         let limit = self.chip_limit.load(Ordering::Relaxed);
@@ -442,7 +487,11 @@ impl ChipLibrary {
     }
 
     fn parse_pack(&self, data: &serde_json::Map<String, Value>) -> Result<(), &'static str> {
-        let mut pack = self.pack.borrow_mut();
+        let mut pack = match self.pack.try_borrow_mut() {
+            Ok(pack) => pack,
+            Err(_) => return Err("failed to borrow pack mutably, inform Major"),
+        };
+
         for (name, chip) in data.iter() {
             let owned = chip["owned"].as_u64().ok_or("Ill formed save data")?;
             let used = chip["used"].as_u64().ok_or("Ill formed save data")?;
@@ -465,10 +514,15 @@ impl ChipLibrary {
     }
 
     fn parse_folder(&self, data: &Vec<serde_json::Value>) -> Result<(), &'static str> {
-        let mut folder = self.folder.borrow_mut();
+        let mut folder = match self.folder.try_borrow_mut() {
+            Ok(folder) => folder,
+            Err(_) => return Err("Failed to borrow folder mutably, inform Major"),
+        };
+
         if data.len() > self.chip_limit.load(Ordering::Relaxed) as usize {
             return Err("Chip limit was set lower than the actual folder size");
         }
+
         for chip in data.iter() {
             let name = chip["name"].as_str().ok_or("Ill formed save data")?;
             let used = chip["used"].as_bool().ok_or("Ill formed save data")?;
@@ -496,17 +550,28 @@ impl ChipLibrary {
             Some(storage) => storage,
             None => return Err("could not get storage"),
         };
-        let pack = self.pack.borrow();
+
+        let pack = match self.pack.try_borrow() {
+            Ok(pack) => pack,
+            Err(_) => return Err("Failed to borrow pack, inform Major"),
+        };
+
         let pack_text = serde_json::to_string(&*pack).map_err(|_|"Failed to serialize pack")?;
         storage.set_item("pack", &pack_text).unwrap();
         // no longer needed, free memory
         drop(pack_text);
         drop(pack);
 
-        let folder = self.folder.borrow();
+        let folder = match self.folder.try_borrow() {
+            Ok(folder) => folder,
+            Err(_) => return Err("Failed to borrow folder, inform Major"),
+        };
 
         //have to deref then borrow to coerce to a reference from a std::cell::Ref
-        let folder_text = serde_json::to_string(&*folder).map_err(|_| "Failed to serialize folder")?;
+        let folder_text = match serde_json::to_string(&*folder) {
+            Ok(folder_text) => folder_text,
+            Err(_) => return Err("Failed to serialize folder"),
+        };//.map_err(|_| "Failed to serialize folder")?;
 
         storage.set_item("folder", &folder_text).unwrap();
 
@@ -521,8 +586,17 @@ impl ChipLibrary {
     }
 
     pub(crate) fn export_txt(&self) {
-        let folder = self.folder.borrow();
-        let pack = self.pack.borrow();
+        let folder = self.folder.try_borrow();
+        let pack = self.pack.try_borrow();
+
+        let (folder, pack) = match (folder, pack) {
+            (Ok(folder), Ok(pack)) => (folder, pack),
+            _ => {
+                unsafe{util::alert("failed to borrow folder or pack, inform Major")};
+                return;
+            }
+        };
+
         //let mut to_save_text = String::with_capacity(100);
         let folder_text_vec = folder.iter().map(|chip| {
             let mut to_ret = String::from(&chip.name);
@@ -571,8 +645,17 @@ impl ChipLibrary {
 
     pub(crate) fn erase_data(&self) {
         self.chip_limit.store(12, Ordering::Relaxed);
-        let mut folder = self.folder.borrow_mut();
-        let mut pack = self.pack.borrow_mut();
+        let folder = self.folder.try_borrow_mut();
+        let pack = self.pack.try_borrow_mut();
+
+        let (mut folder, mut pack) = match (folder, pack) {
+            (Ok(folder), Ok(pack)) => (folder, pack),
+            _ => {
+                unsafe{util::alert("failed to borrow folder or pack, inform Major")};
+                return;
+            }
+        };
+
         folder.clear();
         pack.clear();
         drop(folder);
@@ -594,7 +677,7 @@ impl ChipLibrary {
     }
 
     pub(crate) fn serialize_folder(&self) -> Vec<u8> {
-        let folder = self.folder.borrow();
+        let folder = unsafe{self.folder.try_borrow().unchecked_unwrap()};
         let folder_str = bincode::serialize(&*folder).unwrap_or_else(|_| {
             let chips: Vec<FolderChip> = vec![]; 
             bincode::serialize(&chips).unwrap()
@@ -611,7 +694,10 @@ impl ChipLibrary {
     }
 
     pub(crate) fn not_in_group_or_empty_fldr(&self, name: &str) -> bool {
-        let folders = self.group_folders.borrow();
+        let folders = match self.group_folders.try_borrow() {
+            Ok(folders) => folders,
+            Err(_) => return true,
+        };
         let player_folder = match folders.get(name) {
             Some(folder) => folder,
             None => return true,
