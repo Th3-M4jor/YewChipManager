@@ -4,8 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "rm dist/*; WASM_PACK_PROFILE=release parcel build static/manager.html --no-source-maps  --public-url ./",
-    "start": "WASM_PACK_PROFILE=dev parcel static/manager.html -p 8000 --open",
-    "test": "wasm-pack test --headless --chrome"
+    "start": "WASM_PACK_PROFILE=dev parcel static/manager.html -p 8000 --open"
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
