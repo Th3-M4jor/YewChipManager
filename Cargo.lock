@@ -211,9 +211,9 @@ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
 name = "once_cell"
-version = "1.4.1"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
+checksum = "f53cef67919d7d247eb9a2f128ca9e522789967ef1eb4ccd8c71a95a8aedf596"
 
 [[package]]
 name = "percent-encoding"
@@ -451,7 +451,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "yew"
 version = "0.17.4"
-source = "git+https://github.com/yewstack/yew.git?branch=master#e0508cf225d05507c7c88ec030a25407b5da4a61"
+source = "git+https://github.com/yewstack/yew.git?branch=master#23a166b5d92a706965c04f154c3b6c23d46f1a97"
 dependencies = [
  "anyhow",
  "anymap",
@@ -498,7 +498,7 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.17.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#e0508cf225d05507c7c88ec030a25407b5da4a61"
+source = "git+https://github.com/yewstack/yew.git?branch=master#23a166b5d92a706965c04f154c3b6c23d46f1a97"
 dependencies = [
  "boolinator",
  "lazy_static",
@@ -510,7 +510,7 @@ dependencies = [
 [[package]]
 name = "yewtil"
 version = "0.3.2"
-source = "git+https://github.com/yewstack/yew.git?branch=master#e0508cf225d05507c7c88ec030a25407b5da4a61"
+source = "git+https://github.com/yewstack/yew.git?branch=master#23a166b5d92a706965c04f154c3b6c23d46f1a97"
 dependencies = [
  "log",
  "wasm-bindgen",
@@ -523,7 +523,7 @@ dependencies = [
 [[package]]
 name = "yewtil-macro"
 version = "0.2.0"
-source = "git+https://github.com/yewstack/yew.git?branch=master#e0508cf225d05507c7c88ec030a25407b5da4a61"
+source = "git+https://github.com/yewstack/yew.git?branch=master#23a166b5d92a706965c04f154c3b6c23d46f1a97"
 dependencies = [
  "proc-macro2",
  "quote",
