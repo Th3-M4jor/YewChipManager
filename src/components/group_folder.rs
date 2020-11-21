@@ -1,5 +1,6 @@
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
+use yew::services::ConsoleService;
 use web_sys::MouseEvent;
 use wasm_bindgen::JsCast;
 use std::rc::Rc;
@@ -139,7 +140,8 @@ impl GroupFolderComponent {
         let group = match library.group_folders.try_borrow() {
             Ok(group) => group,
             Err(_) => {
-                web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Failed to immutably borrow group folders"));
+                //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Failed to immutably borrow group folders"));
+                ConsoleService::log("Failed to immutably borrow group folders");
                 return html!{};
             },
         };

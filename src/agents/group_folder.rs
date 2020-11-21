@@ -7,6 +7,7 @@ use yew::format::Binary;
 use yew::services::{
     websocket::{WebSocketService, WebSocketTask, WebSocketStatus},
     interval::{IntervalService, IntervalTask},
+    ConsoleService,
 };
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b':').add(b'/').add(b'?').add(b'#').add(b'[')
@@ -249,7 +250,8 @@ fn folders_updated(new_folders: HashMap<String, Vec<GroupFolderChip>>) -> bool {
     let mut folders = match ChipLibrary::get_instance().group_folders.try_borrow_mut() {
         Ok(folders) => folders,
         Err(_) => {
-            web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folder update failed"));
+            //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folder update failed"));
+            ConsoleService::log("Folder update failed");
             return false;
         },
     };
