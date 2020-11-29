@@ -53,10 +53,12 @@ impl Component for GroupFolderChipComponent {
         } else {
             self.props.chip.kind.to_css_class()
         };
+
+        let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);
         
         html!{
             <div
-                class=("chip-row noselect chipHover", chip_css)
+                class=outer_class
                 id={&self.props.chip.name}
                 onmouseover=self.props.on_mouse_enter.clone()
             >

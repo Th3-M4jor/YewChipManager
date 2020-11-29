@@ -57,8 +57,11 @@ impl Component for PackChipComponent {
         } else {
             self.props.chip.kind.to_css_class()
         };
+
+        let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);
+
         html!{
-            <div class=("chip-row noselect chipHover", chip_css) 
+            <div class=outer_class 
                 ondblclick=self.props.add_to_folder.clone() 
                 id=&self.id_str 
                 onmouseover=self.props.on_mouse_enter.clone()

@@ -79,10 +79,12 @@ impl Component for FolderChipComponent {
         } else {
             self.props.chip.kind.to_css_class()
         };
+
+        let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);
         
         html!{
             <div
-                class=("chip-row noselect chipHover", chip_css)
+                class=outer_class
                 ondblclick=self.props.return_to_pack_callback.clone()
                 id=&self.id_1
                 onmouseover=self.props.on_mouse_enter.clone()

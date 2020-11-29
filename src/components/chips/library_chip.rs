@@ -74,9 +74,11 @@ impl Component for LibraryChip {
         //let chip = ChipLibrary::get_chip_unchecked(&self.props.name);
 
         let chip_css = self.props.chip.kind.to_css_class();
+
+        let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);
         
         html! {
-            <div class=("chip-row Chip noselect chipHover", chip_css) 
+            <div class=outer_class 
                 ondblclick=self.link.callback(|_| LibraryChipMsg::DoubleClick) 
                 id=&self.id_str
                 onmouseover=self.props.on_mouse_enter.clone()>

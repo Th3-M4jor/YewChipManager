@@ -129,14 +129,17 @@ impl ChipDescComponent {
             "chipDescLg" //"font-size: 16px; text-align: left; border-top: 1px solid black;"
         };
 
+        let outer_chip_class = classes!("chipDescText", "chipDescPadding", chip_anim_class);
+        let inner_chip_class = classes!(font_style, "chipDescDiv");
+
         html!{
             <div class=background>
-                <div class=(chip_anim_class, "chipDescText chipDescPadding") style="padding: 3px; font-size: 14px;">
+                <div class=outer_chip_class style="padding: 3px; font-size: 14px;">
                     {chip.damage_span()}
                     {chip.range_span()}
                     {chip.hits_span()}
                     <br/>
-                    <div class=(font_style, "chipDescDiv") id="ScrollTextDiv">
+                    <div class=inner_chip_class id="ScrollTextDiv">
                         {&chip.description}
                     </div>
                 </div>
