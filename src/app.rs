@@ -92,7 +92,7 @@ impl PartialEq<str> for Tabs {
 pub(crate) enum TopLevelMsg {
     ChangeTab(Tabs),
     SetMsg(String),
-    JoinGroupData{group_name: String, player_name: String},
+    JoinGroupData{group_name: String, player_name: String, spectator: bool},
     JoinGroup,
     LeftGroup,
     GroupsUpdated,
@@ -205,14 +205,17 @@ fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
 
     let group_name_element = document.get_element_by_id("group_name")?;
     let player_name_element = document.get_element_by_id("player_name")?;
+    let spectator_checkbox_element = document.get_element_by_id("spectator_checkbox")?;
 
     let group_name_input = group_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
     let player_name_input = player_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
+    let spectator_input = spectator_checkbox_element.dyn_ref::<web_sys::HtmlInputElement>()?;
 
     let group_name : String = group_name_input.value();
     let player_name : String = player_name_input.value();
+    let spectator : bool = spectator_input.checked();
 
-        TopLevelMsg::JoinGroupData{player_name, group_name}
+        TopLevelMsg::JoinGroupData{player_name, group_name, spectator}
 }
 
 fn load_file_callback(e: ChangeData) -> TopLevelMsg {
@@ -451,6 +454,9 @@ impl App {
                         <input type="text" placeholder="group name" id="group_name"/>
                         <br/>
                         <input type="text" placeholder="player name" id="player_name"/>
+                        <br/>
+                        <label for="spectator">{"Join as spectator"}</label>
+                        <input type="checkbox" id="spectator_checkbox"/>
                     </div>
                     <div class="yew-modal-footer">
                         <span style="padding-left: 5px">
@@ -659,7 +665,7 @@ impl Component for App {
             TopLevelMsg::ModalOk => {
                 self.modal_ok()
             }
-            TopLevelMsg::JoinGroupData{group_name, player_name} => {
+            TopLevelMsg::JoinGroupData{group_name, player_name, spectator} => {
                 self.modal_status = ModalStatus::Closed;
                 let group_name = group_name.trim().to_owned();
                 let player_name = player_name.trim().to_owned();
@@ -671,7 +677,7 @@ impl Component for App {
                     return true;
                 }
                 let player_name2 = player_name.clone();
-                self.group_folder.send(GroupFldrAgentReq::JoinGroup{group_name, player_name});
+                self.group_folder.send(GroupFldrAgentReq::JoinGroup{group_name, player_name, spectator});
                 self.player_name = Some(player_name2);
                 true
             }

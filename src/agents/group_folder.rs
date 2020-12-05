@@ -10,6 +10,7 @@ use yew::services::{
     ConsoleService,
 };
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
+use unchecked_unwrap::UncheckedUnwrap;
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b':').add(b'/').add(b'?').add(b'#').add(b'[')
                                         .add(b']').add(b'@').add(b'!').add(b'$').add(b'&').add(b'\'')
                                         .add(b'(').add(b')').add(b'*').add(b'+').add(b',').add(b';')
@@ -66,7 +67,7 @@ pub(crate) enum GroupFldrAgentOutMsg {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) enum GroupFldrAgentReq {
-    JoinGroup{player_name: String, group_name: String},
+    JoinGroup{player_name: String, group_name: String, spectator: bool},
     LeaveGroup,
 }
 
@@ -82,6 +83,7 @@ pub(crate) struct GroupFldrMsgBus {
     subs: HashSet<HandlerId>,
     web_socket: Option<WebSocketTask>,
     socket_update_interval: Option<IntervalTask>,
+    spectator: bool
 
 }
 
@@ -99,21 +101,28 @@ impl Agent for GroupFldrMsgBus {
             subs: HashSet::new(),
             web_socket: None,
             socket_update_interval: None,
+            spectator: false,
         }
     }
 
     fn update(&mut self, msg: Self::Message) {
         let response = match msg {
             GroupFldrAgentSocketMsg::JoinedGroup => {
-                let folder = ChipLibrary::get_instance().serialize_folder();
+                let folder = if self.spectator {
+                    let fake_fldr: Vec<GroupFolderChip> = Vec::new();
+                    unsafe{bincode::serialize(&fake_fldr).unchecked_unwrap()}
+                } else {
+                    let handle = IntervalService::spawn(
+                        Duration::from_secs(10),
+                        self.link.callback(|_| GroupFldrAgentSocketMsg::CheckFolderUpdated)
+                    );
+                    self.socket_update_interval = Some(handle);
+                    ChipLibrary::get_instance().serialize_folder()
+                };
+
                 match &mut self.web_socket {
                     Some(socket) => {
                         socket.send_binary(Ok(folder));
-                        let handle = IntervalService::spawn(
-                            Duration::from_secs(10),
-                            self.link.callback(|_| GroupFldrAgentSocketMsg::CheckFolderUpdated)
-                        );
-                        self.socket_update_interval = Some(handle);
                     },
                     None => {}
                 }
@@ -124,6 +133,7 @@ impl Agent for GroupFldrMsgBus {
                 self.web_socket.take();
                 self.socket_update_interval.take();
                 self.clear_group_folders();
+                self.spectator = false;
                 GroupFldrAgentOutMsg::LeftGroup
             }
             GroupFldrAgentSocketMsg::GroupUpdated => {
@@ -132,6 +142,7 @@ impl Agent for GroupFldrMsgBus {
             GroupFldrAgentSocketMsg::ServerError(why) => {
                 unsafe{alert(&why)};
                 self.web_socket.take();
+                self.spectator = false;
                 self.socket_update_interval.take();
                 self.clear_group_folders();
                 GroupFldrAgentOutMsg::LeftGroup
@@ -150,8 +161,8 @@ impl Agent for GroupFldrMsgBus {
 
     fn handle_input(&mut self, msg: Self::Input, _id: HandlerId) {
         match msg {
-            GroupFldrAgentReq::JoinGroup { player_name, group_name } => {
-                if let Err(why) = self.join_group(group_name, player_name) {
+            GroupFldrAgentReq::JoinGroup { player_name, group_name, spectator } => {
+                if let Err(why) = self.join_group(group_name, player_name, spectator) {
                     unsafe{alert(&why)};
                 }
             }
@@ -176,7 +187,7 @@ impl Agent for GroupFldrMsgBus {
 
 impl GroupFldrMsgBus {
 
-    fn join_group(&mut self, group_name: String, player_name: String) -> Result<(), String> {
+    fn join_group(&mut self, group_name: String, player_name: String, spectator: bool) -> Result<(), String> {
         let encoded_group = utf8_percent_encode(&group_name, FRAGMENT).to_string();
         let encoded_player = utf8_percent_encode(&player_name, FRAGMENT).to_string();
         let url = String::from("wss://spartan364.hopto.org/join/") + &encoded_group + "/" + &encoded_player;
@@ -219,7 +230,7 @@ impl GroupFldrMsgBus {
         });
         let socket_task = WebSocketService::connect_binary(&url, message_callback, socket_notification_callback).map_err(|e| e.to_string())?;
         self.web_socket = Some(socket_task);
-
+        self.spectator = spectator;
         Ok(())
     }
 

@@ -679,8 +679,8 @@ impl ChipLibrary {
     pub(crate) fn serialize_folder(&self) -> Vec<u8> {
         let folder = unsafe{self.folder.try_borrow().unchecked_unwrap()};
         let folder_str = bincode::serialize(&*folder).unwrap_or_else(|_| {
-            let chips: Vec<FolderChip> = vec![]; 
-            bincode::serialize(&chips).unwrap()
+            let chips: Vec<FolderChip> = Vec::new();
+            unsafe{bincode::serialize(&chips).unchecked_unwrap()}
         });
         self.change_since_last_group_post.store(false, Ordering::Relaxed);
         folder_str
