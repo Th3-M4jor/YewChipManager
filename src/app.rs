@@ -34,24 +34,41 @@ pub(crate) enum Tabs {
 }
 
 impl Tabs {
-    pub(crate) fn shorten_string(&self) -> Cow<'static, str> {
-        match self {
-            Tabs::Library => Cow::Borrowed("Lib"),
-            Tabs::Pack => Cow::Borrowed("Pck"),
-            Tabs::Folder => Cow::Borrowed("Fldr"),
-            Tabs::GroupFolder(grp_fldr) => {
-                let mut text = String::new();
-                if grp_fldr.len() > 7 {
-                    let shortened_text = unsafe{grp_fldr.get_unchecked(..=4)};
-                    text.push_str(shortened_text);
-                    text.push_str("...");
-                    Cow::Owned(text)
-                } else {
-                    text.push_str(&grp_fldr);
-                    Cow::Owned(text)
+    pub(crate) fn shorten_string(&self, num_players: Option<usize>) -> Cow<'static, str> {
+        
+        let players_ct = num_players.unwrap_or(0);
+        
+        if players_ct > 4 {
+            match self {
+                Tabs::Library => Cow::Borrowed("Lb"),
+                Tabs::Pack => Cow::Borrowed("Pk"),
+                Tabs::Folder => Cow::Borrowed("Fl"),
+                Tabs::GroupFolder(grp_fldr) => {
+                    let text = if grp_fldr.len() > 1 {
+                        unsafe{grp_fldr.get_unchecked(..=1)}
+                    } else {
+                        &grp_fldr
+                    };
+                    Cow::Owned(String::from(text))
+                }
+            }
+        } else {
+            match self {
+                Tabs::Library => Cow::Borrowed("Lib"),
+                Tabs::Pack => Cow::Borrowed("Pck"),
+                Tabs::Folder => Cow::Borrowed("Fldr"),
+                Tabs::GroupFolder(grp_fldr) => {
+                    let text = if grp_fldr.len() > 5 {
+                        unsafe{grp_fldr.get_unchecked(..=5)}
+                    } else {
+                        &grp_fldr
+                    };
+                    Cow::Owned(String::from(text))
                 }
             }
         }
+
+        
     }
 
     pub(crate) fn to_display_text(&self) -> Cow<str> {
@@ -279,6 +296,7 @@ impl App {
         let mut players = folders.keys().collect::<Vec<&String>>();
 
         players.sort_unstable();
+        let player_ct = players.len();
         
         let player_tabs = players.iter().map(|player| {
             
@@ -297,7 +315,7 @@ impl App {
 
             //else is not the current player
             let tab = Tabs::GroupFolder((*player).clone());
-            let btn_text = tab.shorten_string();
+            let btn_text = tab.shorten_string(Some(player_ct));
             let (button_class, callback) = if self.active_tab == *player.as_str() {
                 //is active tab
                 ("activeNavTab", Callback::noop())
@@ -358,9 +376,9 @@ impl App {
 
         html!{
             <div class="nav-tab-group" role="tabs" style="padding-left: 125px; transform: translate(0px,6px)">
-                <button class=folder_class onclick=folder_callback>{Tabs::Folder.shorten_string()}</button>
-                <button class=pack_class onclick=pack_callback>{Tabs::Pack.shorten_string()}</button>
-                <button class=library_class onclick=library_callback>{Tabs::Library.shorten_string()}</button>
+                <button class=folder_class onclick=folder_callback>{Tabs::Folder.shorten_string(Some(player_ct))}</button>
+                <button class=pack_class onclick=pack_callback>{Tabs::Pack.shorten_string(Some(player_ct))}</button>
+                <button class=library_class onclick=library_callback>{Tabs::Library.shorten_string(Some(player_ct))}</button>
                 {player_tabs}
             </div>
         }

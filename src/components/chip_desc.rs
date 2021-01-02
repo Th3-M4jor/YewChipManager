@@ -82,8 +82,6 @@ impl Component for ChipDescComponent {
         }
 
     }
-
-
     
 }
 
