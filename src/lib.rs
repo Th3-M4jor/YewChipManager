@@ -47,7 +47,9 @@ pub fn run(data: &str) -> Result<(), JsValue> {
     wasm_logger::init(wasm_logger::Config::default());
     #[cfg(not(debug_assertions))]
     wasm_logger::init(wasm_logger::Config::new(log::Level::Error));
-    ChipLibrary::init(data);
+    if let Err(why) = ChipLibrary::init(data) {
+        return Err(wasm_bindgen::JsValue::from_str(&why));
+    }
     
     //fn to cache base64 values to improve performance potentially at the cost of memory usage
     //chip_library::Elements::intern_urls();

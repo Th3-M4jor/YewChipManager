@@ -13,7 +13,6 @@ use crate::util;
 use std::collections::hash_map::HashMap;
 use std::cell::RefCell;
 use serde::{Serialize, Deserialize};
-use once_cell::sync::OnceCell;
 use unchecked_unwrap::UncheckedUnwrap;
 use serde_json::{Value, json};
 use std::sync::atomic::{Ordering, AtomicUsize, AtomicBool};
@@ -54,31 +53,34 @@ pub(crate) struct ChipLibrary {
 unsafe impl Send for ChipLibrary{}
 unsafe impl Sync for ChipLibrary{}
 
-static INSTANCE: OnceCell<ChipLibrary> = OnceCell::new();
+static mut INSTANCE: Option<ChipLibrary> = None;
 
 impl ChipLibrary {
 
-    #[inline]
-    pub(crate) fn init(data: &str) {
-         //initialize library
-        INSTANCE.get_or_init(|| {
-            ChipLibrary::import_local(&data)
-        });
+    pub(crate) fn init(data: &str) -> Result<(), String> {
+        //initialize library
+        
+        let library = ChipLibrary::import_local(data)?;
+
+        unsafe {
+            INSTANCE = Some(library);
+        };
+        Ok(())
     }
 
     /// undefined behavior if init has yet to be called
     #[inline]
     pub(crate) fn get_instance() -> &'static ChipLibrary {
-        unsafe { INSTANCE.get().unchecked_unwrap() }
+        unsafe { INSTANCE.as_ref().unchecked_unwrap() }
     }
 
-    fn import_local(data: &str) -> ChipLibrary {
+    fn import_local(data: &str) -> Result<ChipLibrary, String> {
         let mut chip_list: Vec<BattleChip> = match serde_json::from_str::<Vec<BattleChip>>(data) {
             Ok(chip_list) => chip_list,
             Err(e) => {
                 let msg = e.to_string();
                 unsafe{util::alert(&msg)};
-                std::process::abort();
+                return Err(msg)
             }
         };
         let mut library: HashMap<String, Rc<BattleChip>> = HashMap::with_capacity(chip_list.len());
@@ -97,7 +99,7 @@ impl ChipLibrary {
             Some(storage) => storage,
             None => {
                 unsafe{util::alert("Local storage is not available, it is used to backup your folder and pack periodically")};
-                return ChipLibrary {
+                return Ok(ChipLibrary {
                     library,
                     pack: RefCell::new(HashMap::new()),
                     folder: RefCell::new(Vec::new()),
@@ -105,7 +107,7 @@ impl ChipLibrary {
                     group_folders: RefCell::new(HashMap::new()),
                     change_since_last_save: AtomicBool::new(false),
                     change_since_last_group_post: AtomicBool::new(false),
-                };
+                });
             }
         };
 
@@ -113,9 +115,7 @@ impl ChipLibrary {
         let folder = RefCell::new(ChipLibrary::load_folder(&storage, &library).unwrap_or_default());
         let chip_limit = AtomicUsize::new(ChipLibrary::load_chip_limit(&storage).unwrap_or(12));
 
-
-
-        ChipLibrary {
+        Ok(ChipLibrary {
             library,
             pack,
             folder,
@@ -123,7 +123,7 @@ impl ChipLibrary {
             group_folders: RefCell::new(HashMap::new()),
             change_since_last_save: AtomicBool::new(false),
             change_since_last_group_post: AtomicBool::new(false),
-        }
+        })
         
     }
 
