@@ -25,6 +25,7 @@ use crate::chip_library::ChipLibrary;
 use wasm_bindgen::JsCast;
 
 
+/// The different tabs that can be open
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) enum Tabs {
     Library,
@@ -34,6 +35,9 @@ pub(crate) enum Tabs {
 }
 
 impl Tabs {
+    /// Shorten a string for the tab's display text, allows for more players without overflowing tabs
+    ///
+    /// Cow is a type that allows for avoiding cloning if possible
     pub(crate) fn shorten_string(&self, num_players: Option<usize>) -> Cow<'static, str> {
         
         let players_ct = num_players.unwrap_or(0);
@@ -71,6 +75,7 @@ impl Tabs {
         
     }
 
+    /// The text that appears at the top of the screen to show where you are
     pub(crate) fn to_display_text(&self) -> Cow<str> {
         match self {
             Tabs::Library => Cow::Borrowed("Library"),
@@ -105,6 +110,7 @@ impl PartialEq<str> for Tabs {
     }
 }
 
+/// The different messages that can be sent to the main app
 #[derive(Clone)]
 pub(crate) enum TopLevelMsg {
     ChangeTab(Tabs),
@@ -122,10 +128,14 @@ pub(crate) enum TopLevelMsg {
     DoNothing,
 }
 
+
 impl From<std::option::NoneError> for TopLevelMsg {
+    
+    /// implementation detail for the `Try` operator
     fn from(_: std::option::NoneError) -> Self {
         TopLevelMsg::DoNothing
     }
+
 }
 
 impl std::ops::Try for TopLevelMsg {
@@ -149,6 +159,9 @@ impl std::ops::Try for TopLevelMsg {
 }
 
 impl From<GlobalReq> for TopLevelMsg {
+
+    /// Conversion to allow messages to be sent to the top level
+    /// from any other part of the app
     fn from(msg: GlobalReq) -> Self {
         match msg {
             GlobalReq::SetHeaderMsg(msg) => {
@@ -168,6 +181,7 @@ impl From<GlobalReq> for TopLevelMsg {
 }
 
 impl From<GroupFldrAgentOutMsg> for TopLevelMsg {
+    /// Conversion for messages sent from the group folder handler
     fn from(msg: GroupFldrAgentOutMsg) -> Self {
         match msg {
             GroupFldrAgentOutMsg::JoinedGroup => {
@@ -211,8 +225,11 @@ pub(crate) struct App
     _save_interval_handle: Option<IntervalTask>,
 }
 
+// the interval for ensuring that the data gets saved
 fn save_interval_callback(_:()) -> TopLevelMsg {
-    let _ = ChipLibrary::get_instance().save_data();
+    if let Err(why) = ChipLibrary::get_instance().save_data() {
+        web_sys::console::error_1(&wasm_bindgen::JsValue::from_str(why));
+    }
     TopLevelMsg::DoNothing
 }
 
@@ -220,6 +237,7 @@ fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
     let window = web_sys::window()?;
     let document = window.document()?;
 
+    // get the web-elements and check what their values are
     let group_name_element = document.get_element_by_id("group_name")?;
     let player_name_element = document.get_element_by_id("player_name")?;
     let spectator_checkbox_element = document.get_element_by_id("spectator_checkbox")?;

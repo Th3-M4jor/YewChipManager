@@ -18,41 +18,25 @@ use app::App;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-// This is the entry point for the web app
-/*
-#[wasm_bindgen]
-pub async fn run() -> Result<(), JsValue> {
-    #[cfg(debug_assertions)]
-    wasm_logger::init(wasm_logger::Config::default());
-    #[cfg(not(debug_assertions))]
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Error));
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::Cors);
-    let url = "https://spartan364.hopto.org/chips.json";
-    let request = Request::new_with_str_and_init(&url, &opts).unwrap();
-    let window = web_sys::window().unwrap();
-    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
-    let resp: Response = resp_value.dyn_into().unwrap();
-    let data = JsFuture::from(resp.text()?).await.unwrap().as_string().unwrap();
-    ChipLibrary::init(data);
-    yew::start_app::<App>();
-    Ok(())
-}
-*/
-
+/// The entrypoint for the webapp
+///
+/// data is assumed to be the chips.json file's text
 #[wasm_bindgen]
 pub fn run(data: &str) -> Result<(), JsValue> {
+    
+    // Use a higher log level on debug
     #[cfg(debug_assertions)]
     wasm_logger::init(wasm_logger::Config::default());
+
+    // only log errors on release builds
     #[cfg(not(debug_assertions))]
     wasm_logger::init(wasm_logger::Config::new(log::Level::Error));
+
+    // deserialize the chip library before starting
     if let Err(why) = ChipLibrary::init(data) {
         return Err(wasm_bindgen::JsValue::from_str(&why));
     }
     
-    //fn to cache base64 values to improve performance potentially at the cost of memory usage
-    //chip_library::Elements::intern_urls();
     yew::start_app::<App>();
     Ok(())
 }
