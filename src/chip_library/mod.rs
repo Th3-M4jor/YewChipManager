@@ -10,7 +10,7 @@ pub(crate) use self::elements::Elements;
 
 
 use crate::util;
-use std::collections::hash_map::HashMap;
+use std::{collections::hash_map::HashMap, ptr};
 use std::cell::RefCell;
 use serde::{Serialize, Deserialize};
 use unchecked_unwrap::UncheckedUnwrap;
@@ -53,25 +53,24 @@ pub(crate) struct ChipLibrary {
 unsafe impl Send for ChipLibrary{}
 unsafe impl Sync for ChipLibrary{}
 
-static mut INSTANCE: Option<ChipLibrary> = None;
+// using a ptr and allocating at runtime instead of an Option to reduce executable size
+static mut INSTANCE: *const ChipLibrary = ptr::null();
 
 impl ChipLibrary {
 
     pub(crate) fn init(data: &str) -> Result<(), String> {
-        //initialize library
-        
-        let library = ChipLibrary::import_local(data)?;
+        //initialize library, and allocate
+        let library = Box::new(ChipLibrary::import_local(data)?);
 
         unsafe {
-            INSTANCE = Some(library);
+            INSTANCE = Box::into_raw(library); //convert to raw ptr, don't have to worry about deallocating later since it's basically static
         };
         Ok(())
     }
 
     /// undefined behavior if init has yet to be called
-    #[inline]
     pub(crate) fn get_instance() -> &'static ChipLibrary {
-        unsafe { INSTANCE.as_ref().unchecked_unwrap() }
+        unsafe { &*INSTANCE }
     }
 
     fn import_local(data: &str) -> Result<ChipLibrary, String> {

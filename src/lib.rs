@@ -1,7 +1,7 @@
 #![recursion_limit = "1024"]
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::eval_order_dependence)]
-#![feature(try_trait, option_result_contains)]
+#![feature(try_trait, option_result_contains, try_blocks)]
 
 pub mod app;
 mod components;

@@ -236,8 +236,10 @@ impl Component for PackComponent {
             PackMsg::HideContextMenu => {
                 self.context_menu.take();
                 if let Some(close_function) = self.context_menu_close_wrapper.take() {
-                    let window = web_sys::window().unwrap();
-                    window.remove_event_listener_with_callback("click", &close_function).unwrap();
+                    unsafe{
+                        let window = web_sys::window().unchecked_unwrap();
+                       window.remove_event_listener_with_callback("click", &close_function).unchecked_unwrap();
+                    }
                 }
                 true
             }
@@ -421,8 +423,8 @@ impl PackComponent {
         if let Some(js_function) = self.context_menu_close_wrapper.take() {
             //calling it just because if it never is called, it's a memory leak
             js_function.call0(&JsValue::NULL).unwrap();
-            let window = web_sys::window().unwrap();
-            window.remove_event_listener_with_callback("click", &js_function).unwrap();
+            let window = unsafe{web_sys::window().unchecked_unwrap()};
+            unsafe{window.remove_event_listener_with_callback("click", &js_function).unchecked_unwrap()};
         }
         
         let close_menu_link = self._link.callback_once(|e:JsValue| {
@@ -433,12 +435,20 @@ impl PackComponent {
                 PackMsg::DoNothing
             }
         });
-        let close_menu_wrapper: js_sys::Function = Closure::once_into_js(move |e: JsValue| {
+
+        let close_menu_wrapper_res = Closure::once_into_js(move |e: JsValue| {
             //let event = e.dyn_into::<MouseEvent>().unwrap();
             close_menu_link.emit(e);
-        }).dyn_into::<js_sys::Function>().unwrap();
-        let window = web_sys::window().unwrap();
-        window.add_event_listener_with_callback("click", &close_menu_wrapper).unwrap();
+        }).dyn_into::<js_sys::Function>();
+        let close_menu_wrapper = match close_menu_wrapper_res {
+            Ok(val) => val,
+            Err(_) => {
+                log::error!("Failed to cast to js function");
+                return false;
+            }
+        };
+        let window = unsafe{web_sys::window().unchecked_unwrap()};
+        unsafe{window.add_event_listener_with_callback("click", &close_menu_wrapper).unchecked_unwrap()};
         self.context_menu = Some((name, x, y));
         self.context_menu_close_wrapper = Some(close_menu_wrapper);
         true

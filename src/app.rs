@@ -228,7 +228,7 @@ pub(crate) struct App
 // the interval for ensuring that the data gets saved
 fn save_interval_callback(_:()) -> TopLevelMsg {
     if let Err(why) = ChipLibrary::get_instance().save_data() {
-        web_sys::console::error_1(&wasm_bindgen::JsValue::from_str(why));
+        log::error!("Error on saving backup: {:?}", why);
     }
     TopLevelMsg::DoNothing
 }

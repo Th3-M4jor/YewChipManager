@@ -18,9 +18,9 @@ pub(crate) struct BattleChip {
     pub hits: String,
     pub description: String,
     #[serde(skip, default = "default_dmg_cell_float")]
-    avg_dmg: UnsafeCell<Option<f32>>,
+    avg_dmg: UnsafeCell<f32>,
     #[serde(skip, default = "default_dmg_cell_int")]
-    max_dmg: UnsafeCell<Option<u32>>,
+    max_dmg: UnsafeCell<i32>,
 }
 
 // using Unsafe cell because shouldn't need to be a mutex
@@ -35,8 +35,8 @@ impl Clone for BattleChip {
             range: self.range.clone(),
             hits: self.hits.clone(),
             description: self.description.clone(),
-            avg_dmg: UnsafeCell::new(None),
-            max_dmg: UnsafeCell::new(None),
+            avg_dmg: UnsafeCell::new(f32::NAN),
+            max_dmg: UnsafeCell::new(-1),
         }
     }
 }
@@ -72,33 +72,37 @@ impl BattleChip {
     }
 
     pub(crate) fn avg_dmg(&self) -> f32 {
-        let val = unsafe {&*self.avg_dmg.get()};
-        if let Some(avg) = val {
-            return *avg;
+        let val = unsafe {*self.avg_dmg.get()};
+        if !val.is_nan() {
+            return val;
         }
         //else
-        drop(val);
         self.load_dmg().0
     }
 
-    pub(crate) fn max_dmg(&self) -> u32 {
-        let val = unsafe {&*self.max_dmg.get()};
-        if let Some(max) = val {
-            return *max;
+    pub(crate) fn max_dmg(&self) -> i32 {
+        let val = unsafe {*self.max_dmg.get()};
+        if val != -1 {
+            return val;
         }
         //else
-        drop(val);
         self.load_dmg().1
     }
 
-    fn load_dmg(&self) -> (f32, u32) {
+    fn load_dmg(&self) -> (f32, i32) {
         
         let res = self.damage.split('d').collect::<Vec<&str>>();
         let (max, avg) = if res.len() != 2 {
             (0, 0.0)
         } else {
-            let num_dice = unsafe{res.get_unchecked(0)}.parse::<u32>().unwrap_or(0);
-            let die_size = unsafe{res.get_unchecked(1)}.parse::<u32>().unwrap_or(0);
+
+            let dice_res: Option<(i32, i32)> = try {
+                let num_dice = res.get(0)?.parse::<i32>().ok()?;
+                let die_size = res.get(1)?.parse::<i32>().ok()?;
+                (num_dice, die_size)
+            };
+
+            let (num_dice, die_size) = dice_res.unwrap_or((0,0));
 
             let avg = ((die_size as f32 / 2.0) + 0.5) * (num_dice as f32);
             let max = num_dice * die_size;
@@ -107,8 +111,8 @@ impl BattleChip {
 
         let (avg_ptr, max_ptr) = unsafe{(&mut *self.avg_dmg.get(), &mut *self.max_dmg.get())};
 
-        *avg_ptr = Some(avg);
-        *max_ptr = Some(max);
+        *avg_ptr = avg;
+        *max_ptr = max;
 
         (avg, max)
     }
@@ -123,8 +127,8 @@ impl BattleChip {
             range: Ranges::Itself,
             hits: "--".to_string(),
             description: "Unknown Chip".to_owned(),
-            avg_dmg: UnsafeCell::new(None),
-            max_dmg: UnsafeCell::new(None),
+            avg_dmg: UnsafeCell::new(f32::NAN),
+            max_dmg: UnsafeCell::new(-1),
         }
     }
 
@@ -166,10 +170,10 @@ impl BattleChip {
 
 }
 
-fn default_dmg_cell_float() -> UnsafeCell<Option<f32>> {
-    UnsafeCell::new(None)
+fn default_dmg_cell_float() -> UnsafeCell<f32> {
+    UnsafeCell::new(f32::NAN)
 }
 
-fn default_dmg_cell_int() -> UnsafeCell<Option<u32>> {
-    UnsafeCell::new(None)
+fn default_dmg_cell_int() -> UnsafeCell<i32> {
+    UnsafeCell::new(-1)
 }
