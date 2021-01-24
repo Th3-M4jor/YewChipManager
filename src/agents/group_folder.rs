@@ -4,7 +4,7 @@ use std::time::Duration;
 use yew::worker::*;
 //use yew::prelude::*;
 use yew::format::Binary;
-use yew::services::{
+use yew_services::{
     websocket::{WebSocketService, WebSocketTask, WebSocketStatus},
     interval::{IntervalService, IntervalTask},
     ConsoleService,

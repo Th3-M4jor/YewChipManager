@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 log = "^0.4"
 yew = {git = "https://github.com/yewstack/yew.git", branch = "master"}
 yewtil = {git = "https://github.com/yewstack/yew.git", branch = "master", features=["pure"]}
+yew-services = {git = "https://github.com/yewstack/yew.git", branch = "master"}
 #yew = {version = "0.17.4"}
 #yewtil = {version = "0.3.2", features = ["pure"]}
 wasm-bindgen = {version = "^0.2", features=["nightly"]}

@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use yew::services::interval::{IntervalService, IntervalTask};
+use yew_services::interval::{IntervalService, IntervalTask};
 
 use crate::chip_library::{ChipLibrary, BattleChip};
 use crate::agents::chip_desc::{ChipDescMsgBus, ChipDescMsg};
