@@ -15,6 +15,8 @@ use std::cell::RefCell;
 use serde::{Serialize, Deserialize};
 use unchecked_unwrap::UncheckedUnwrap;
 use serde_json::{Value, json};
+use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
+use web_sys::BeforeUnloadEvent;
 use std::sync::atomic::{Ordering, AtomicUsize, AtomicBool};
 use std::rc::Rc;
 
@@ -46,6 +48,7 @@ pub(crate) struct ChipLibrary {
     pub folder: RefCell<Vec<FolderChip>>,
     pub group_folders: RefCell<HashMap<String, Vec<GroupFolderChip>>>,
     pub chip_limit: AtomicUsize,
+    pub close_event_handler: Option<Closure<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>>>,
     change_since_last_save: AtomicBool,
     change_since_last_group_post: AtomicBool,
 }
@@ -54,7 +57,7 @@ unsafe impl Send for ChipLibrary{}
 unsafe impl Sync for ChipLibrary{}
 
 // using a ptr and allocating at runtime instead of an Option to reduce executable size
-static mut INSTANCE: *const ChipLibrary = ptr::null();
+static mut INSTANCE: *mut ChipLibrary = ptr::null_mut();
 
 impl ChipLibrary {
 
@@ -71,6 +74,25 @@ impl ChipLibrary {
     /// undefined behavior if init has yet to be called
     pub(crate) fn get_instance() -> &'static ChipLibrary {
         unsafe { &*INSTANCE }
+    }
+
+    pub(crate) fn set_close_event_handler() {
+        let handler: Closure<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>> = Closure::wrap(Box::new(|e: BeforeUnloadEvent| {
+            ChipLibrary::get_instance().save_data().map_err(|s| wasm_bindgen::JsValue::from_str(s))?;
+            Ok(wasm_bindgen::JsValue::from_str("Progress might be lost if you leave without saving an export."))
+        }) as Box<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>>);
+
+        let window = match web_sys::window() {
+            Some(window) => window,
+            None => return,
+        };
+
+        window.set_onbeforeunload(Some(handler.as_ref().unchecked_ref()));
+
+        unsafe {
+            (*INSTANCE).close_event_handler = Some(handler);
+        }
+
     }
 
     fn import_local(data: &str) -> Result<ChipLibrary, String> {
@@ -106,6 +128,7 @@ impl ChipLibrary {
                     group_folders: RefCell::new(HashMap::new()),
                     change_since_last_save: AtomicBool::new(false),
                     change_since_last_group_post: AtomicBool::new(false),
+                    close_event_handler: None,
                 });
             }
         };
@@ -122,6 +145,7 @@ impl ChipLibrary {
             group_folders: RefCell::new(HashMap::new()),
             change_since_last_save: AtomicBool::new(false),
             change_since_last_group_post: AtomicBool::new(false),
+            close_event_handler: None,
         })
         
     }
