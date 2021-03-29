@@ -3,7 +3,14 @@ use crate::components::{ChipSortOptions, chips::PackChipComponent, sort_box::Chi
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
 use yewtil::function_component;
-use crate::agents::{global_msg::{GlobalMsgBus, Request as GlobalMsgReq}, chip_desc::{ChipDescMsg, ChipDescMsgBus}};
+use crate::agents::{
+    global_msg::{GlobalMsgBus, Request as GlobalMsgReq},
+    chip_desc::{ChipDescMsg, ChipDescMsgBus},
+    group_folder::{
+        GroupFldrMsgBus,
+        GroupFldrAgentReq,
+    }
+};
 use crate::util::{alert, list_spectators};
 use yew::events::MouseEvent;
 use wasm_bindgen::{JsCast, JsValue, closure::Closure};
@@ -389,6 +396,7 @@ impl PackComponent {
                 let msg = String::from("A copy of ") + name + " has been added to your folder";
                 self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
                 if last_chip {self.set_desc_bus.send(ChipDescMsg::ClearDesc);}
+                GroupFldrMsgBus::dispatcher().send(GroupFldrAgentReq::UpdateFolder);
             }
             Err(msg) => {
              unsafe{alert(msg)};

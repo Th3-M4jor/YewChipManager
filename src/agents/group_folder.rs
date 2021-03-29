@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, HashMap};
 use std::time::Duration;
-use yew::worker::*;
+use yew::{Callback, worker::*};
 //use yew::prelude::*;
 use yew::format::Binary;
 use yew_services::{
     websocket::{WebSocketService, WebSocketTask, WebSocketStatus},
-    interval::{IntervalService, IntervalTask},
+    timeout::{TimeoutService, TimeoutTask},
     ConsoleService,
 };
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
@@ -68,6 +68,7 @@ pub(crate) enum GroupFldrAgentOutMsg {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) enum GroupFldrAgentReq {
     JoinGroup{player_name: String, group_name: String, spectator: bool},
+    UpdateFolder,
     LeaveGroup,
 }
 
@@ -82,9 +83,9 @@ pub(crate) struct GroupFldrMsgBus {
     link: AgentLink<Self>,
     subs: HashSet<HandlerId>,
     web_socket: Option<WebSocketTask>,
-    socket_update_interval: Option<IntervalTask>,
+    socket_update_timeout: Option<TimeoutTask>,
+    timeout_callback: Callback<()>,
     spectator: bool
-
 }
 
 //static GroupMsgCallbackLink: Lazy<RwLock<Option<Callback<GroupFldrAgentMsg>>>> = Lazy::new(|| RwLock::new(None));
@@ -96,11 +97,15 @@ impl Agent for GroupFldrMsgBus {
     type Output = GroupFldrAgentOutMsg;
 
     fn create(link: AgentLink<Self>) -> Self {
+        let callback = link.callback(|()| {
+            GroupFldrAgentSocketMsg::CheckFolderUpdated   
+        });
         Self {
             link,
             subs: HashSet::new(),
             web_socket: None,
-            socket_update_interval: None,
+            socket_update_timeout: None,
+            timeout_callback: callback,
             spectator: false,
         }
     }
@@ -112,11 +117,6 @@ impl Agent for GroupFldrMsgBus {
                     let fake_fldr: Vec<GroupFolderChip> = Vec::new();
                     unsafe{bincode::serialize(&fake_fldr).unchecked_unwrap()}
                 } else {
-                    let handle = IntervalService::spawn(
-                        Duration::from_secs(10),
-                        self.link.callback(|_| GroupFldrAgentSocketMsg::CheckFolderUpdated)
-                    );
-                    self.socket_update_interval = Some(handle);
                     ChipLibrary::get_instance().serialize_folder()
                 };
 
@@ -126,12 +126,11 @@ impl Agent for GroupFldrMsgBus {
                     },
                     None => {}
                 }
-
                 GroupFldrAgentOutMsg::JoinedGroup
             }
             GroupFldrAgentSocketMsg::LeftGroup => {
                 self.web_socket.take();
-                self.socket_update_interval.take();
+                self.socket_update_timeout.take();
                 self.clear_group_folders();
                 self.spectator = false;
                 GroupFldrAgentOutMsg::LeftGroup
@@ -143,11 +142,12 @@ impl Agent for GroupFldrMsgBus {
                 unsafe{alert(&why)};
                 self.web_socket.take();
                 self.spectator = false;
-                self.socket_update_interval.take();
+                self.socket_update_timeout.take();
                 self.clear_group_folders();
                 GroupFldrAgentOutMsg::LeftGroup
             }
             GroupFldrAgentSocketMsg::CheckFolderUpdated => {
+                self.socket_update_timeout.take();
                 self.check_folder_upated();
                 return;
             },
@@ -172,6 +172,12 @@ impl Agent for GroupFldrMsgBus {
                 for sub in self.subs.iter() {
                     self.link.respond(*sub, GroupFldrAgentOutMsg::LeftGroup);
                 }
+            }
+            GroupFldrAgentReq::UpdateFolder => {
+                if self.web_socket.is_none() {
+                    return;
+                }
+                self.check_folder_upated();
             }
         }
     }
@@ -236,7 +242,7 @@ impl GroupFldrMsgBus {
 
     fn leave_group(&mut self) {
         self.web_socket.take();
-        self.socket_update_interval.take();
+        self.socket_update_timeout.take();
     }
 
     fn check_folder_upated(&mut self) {
@@ -244,11 +250,23 @@ impl GroupFldrMsgBus {
         if !library.folder_changed() {
             return;
         }
+
+        if self.socket_update_timeout.is_some() {
+            return;
+        }
+
         let folder = library.serialize_folder();
         match &mut self.web_socket {
             Some(socket) => socket.send_binary(Ok(folder)),
             None => {}
         }
+
+        let timeout = TimeoutService::spawn(
+            Duration::from_secs(1),
+            self.timeout_callback.clone(),
+        );
+        self.socket_update_timeout = Some(timeout);
+
     }
 
     fn clear_group_folders(&self) {

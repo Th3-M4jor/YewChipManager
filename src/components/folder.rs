@@ -65,9 +65,11 @@ impl std::ops::Try for FolderMsg {
             _ => Ok(self)
         }
     }
+
     fn from_error(_: Self::Error) -> Self {
         FolderMsg::DoNothing
     }
+
     fn from_ok(v: Self::Ok) -> Self {
         v
     }
@@ -91,6 +93,7 @@ pub(crate) struct FolderComponent {
     clear_folder_callback: Callback<MouseEvent>,
 }
 
+/// a chip was double clicked, return it to pack
 fn return_pack_callback(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
@@ -99,6 +102,7 @@ fn return_pack_callback(e: MouseEvent) -> FolderMsg {
     FolderMsg::ReturnToPack(index)
 }
 
+/// function for fipping a chip between used/unused
 fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
@@ -107,6 +111,7 @@ fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
     FolderMsg::ChangeUsed(index)
 }
 
+/// function for setting the chip in the description box
 fn handle_mouseover_event(e: MouseEvent) -> FolderMsg {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
@@ -164,16 +169,15 @@ impl Component for FolderComponent {
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
+        let updated = match msg {
             FolderMsg::ChangeSort(sort_by) => {
                 if self.sort_by != sort_by {
                     self.sort_by = sort_by;
-                    return true;
+                    true
                 } else {
-                    return false
+                    false
                 }
             },
-
             FolderMsg::ClearFolder => {
                 let count = ChipLibrary::get_instance().clear_folder();
                 let msg = count.to_string() + " chips have been returned to your pack";
@@ -181,7 +185,6 @@ impl Component for FolderComponent {
                 self.set_desc_bus.send(ChipDescMsg::ClearDesc);
                 true
             },
-
             FolderMsg::JackOut => {
                 let count = ChipLibrary::get_instance().jack_out();
                 let msg = count.to_string() + " chips have been marked as unused";
@@ -197,36 +200,12 @@ impl Component for FolderComponent {
                     }
                 }
             },
-
-            FolderMsg::ReturnToPack(idx) => {
-                let chip_library = ChipLibrary::get_instance();
-                let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
-                let name = unsafe{folder.get(idx).unchecked_unwrap().name.as_str()};
-                let msg = String::from("A copy of ") + name + " has been returned to your pack";
-                
-                self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
-                drop(folder);
-                if let Err(why) = chip_library.return_fldr_chip_to_pack(idx) {
-                   unsafe{alert(why)};
-                }
-                self.set_desc_bus.send(ChipDescMsg::ClearDesc);
-                true
-            },
+            FolderMsg::ReturnToPack(idx) => self.return_chip_to_pack(idx),
             FolderMsg::ChangeUsed(idx) => {
                 ChipLibrary::get_instance().flip_used_folder(idx);
                 true
             },
-            FolderMsg::SetHighlightedChip(idx) => {
-                let chip_library = ChipLibrary::get_instance();
-                let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
-                let name = match folder.get(idx) {
-                    Some(chip) => chip.name.clone(),
-                    None => return false,
-                };
-                //let name = folder[idx].name.clone();
-                self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
-                false
-            }
+            FolderMsg::SetHighlightedChip(idx) => self.set_highlighted_chip(idx),
             FolderMsg::DoNothing => false,
             FolderMsg::JoinFolerGroup => {
                 self.event_bus.send(GlobalMsgReq::JoinGroup);
@@ -237,7 +216,11 @@ impl Component for FolderComponent {
                 GroupFldrMsgBus::dispatcher().send(GroupFldrAgentReq::LeaveGroup);
                 false
             }
+        };
+        if updated {
+            GroupFldrMsgBus::dispatcher().send(GroupFldrAgentReq::UpdateFolder);
         }
+        updated
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
@@ -393,6 +376,35 @@ impl FolderComponent {
             </div>
         }
     }
+
+    fn set_highlighted_chip(&mut self, idx: usize) -> bool {
+        let chip_library = ChipLibrary::get_instance();
+        let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
+        match folder.get(idx) {
+            Some(chip) => {
+                let name = chip.name.clone();
+                self.set_desc_bus.send(ChipDescMsg::SetDesc(name));
+            },
+            None => {},
+        }
+        false
+    }
+
+    fn return_chip_to_pack(&mut self, idx: usize) -> bool {
+        let chip_library = ChipLibrary::get_instance();
+        let folder = unsafe{chip_library.folder.try_borrow().unchecked_unwrap()};
+        let name = unsafe{folder.get(idx).unchecked_unwrap().name.as_str()};
+        let msg = String::from("A copy of ") + name + " has been returned to your pack";
+        self.event_bus.send(GlobalMsgReq::SetHeaderMsg(msg));
+        drop(folder);
+        if let Err(why) = chip_library.return_fldr_chip_to_pack(idx) {
+            unsafe{alert(why)};
+        }
+        self.set_desc_bus.send(ChipDescMsg::ClearDesc);
+        GroupFldrMsgBus::dispatcher().send(GroupFldrAgentReq::UpdateFolder);
+        true
+    }
+
 }
 
 

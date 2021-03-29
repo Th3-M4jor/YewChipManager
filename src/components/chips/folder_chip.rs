@@ -27,8 +27,8 @@ impl PartialEq for FolderChipProps {
 pub(crate) struct FolderChipComponent {
     props: FolderChipProps,
     link: ComponentLink<Self>,
-    id_1: String,
-    id_2: String,
+    id_1: String, //id for returning chip to pack
+    id_2: String, //id for marking chip as used/unused
 }
 
 impl Component for FolderChipComponent {
@@ -61,7 +61,6 @@ impl Component for FolderChipComponent {
             self.id_2 = id_2;
         }
 
-        
         if self.props != props {
             self.props = props;
             return true;
