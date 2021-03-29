@@ -2,6 +2,9 @@
 @use 'layout';
 @use 'buttons';
 @use 'flexbox';
+@use 'menu';
+@use 'animations';
+@use 'modal';
 
 div.Folder {
   border-radius: 8px;

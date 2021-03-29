@@ -4,6 +4,9 @@
 @include mixins.chipClass("Mega", #90f8f8);
 @include mixins.chipClass("Giga", #f8c8d8);
 @include mixins.chipClass("SupportChip", #86d3a7);
+@include mixins.chipClass("unknownChip", purple);
+@include mixins.chipClass("UsedChip", grey);
+@include mixins.chipClass("chipDescText", black);
 
 
 .chipHover:hover {
@@ -15,12 +18,56 @@
     background-image: url("img/chip-background.png");
 }
 
+.chipDescBackgroundSupprt {
+    @extend %chipDescBox;
+    background-image: url("img/chip-background-support.png");
+}
+
+.chipDescBackgroundMega {
+    @extend %chipDescBox;
+    background-image: url("img/chip-background-mega.png");
+}
+
+.chipDescBackgroundGiga {
+    @extend %chipDescBox;
+    background-image: url("img/chip-background-giga.png");
+}
+
+.chipDescBackgroundDark {
+    @extend %chipDescBox;
+    background-color: purple;
+}
+
 .chipDescDiv {
     max-height: 70vh;
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+
+.chipDescPadding {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.chipDescSm {
+    font-size: 12px;
+    text-align: left;
+    border-top: 1px solid black;
+}
+
+.chipDescMd {
+    font-size: 14px;
+    text-align: left;
+    border-top: 1px solid black;
+}
+
+.chipDescLg {
+    font-size: 16px;
+    text-align: left;
+    border-top: 1px solid black;
 }
 
 .chipDescDiv::-webkit-scrollbar {

@@ -1,4 +1,13 @@
-import {saveAs} from "file-saver";
+function saveAs(blob, name) {
+
+    let a = document.createElement('a');
+    a.download = name;
+    a.rel = 'noopener';
+    a.href = URL.createObjectURL(blob);
+    setTimeout(() => {URL.revokeObjectURL(a.href)}, 4E4); // 40s
+    setTimeout(() => {a.click()});
+
+}
 
 export function save_json(data) {
     let blob = new Blob([data], {type: "application/json;charset=utf-8"});

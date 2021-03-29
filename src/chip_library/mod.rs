@@ -77,7 +77,7 @@ impl ChipLibrary {
     }
 
     pub(crate) fn set_close_event_handler() {
-        let handler: Closure<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>> = Closure::wrap(Box::new(|e: BeforeUnloadEvent| {
+        let handler: Closure<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>> = Closure::wrap(Box::new(|_: BeforeUnloadEvent| {
             ChipLibrary::get_instance().save_data().map_err(|s| wasm_bindgen::JsValue::from_str(s))?;
             Ok(wasm_bindgen::JsValue::from_str("Progress might be lost if you leave without saving an export."))
         }) as Box<dyn Fn(BeforeUnloadEvent) -> Result<JsValue, JsValue>>);
