@@ -11,6 +11,8 @@ use unchecked_unwrap::UncheckedUnwrap;
 pub(crate) enum ChipDescComponentMsg {
     SetDesc(String),
     ShowUnknown(String),
+    StopScroll,
+    StartScroll,
     ClearDesc,
     DoNothing,
 }
@@ -18,8 +20,10 @@ pub(crate) enum ChipDescComponentMsg {
 pub(crate) struct ChipDescComponent {
     chip_anim_ct: usize,
     curr_chip: Option<Rc<BattleChip>>,
-    _scroll_interval: IntervalTask,
-    _link: ComponentLink<Self>,
+    scroll_interval: Option<IntervalTask>,
+    mouse_enter_event: Callback<MouseEvent>,
+    mouse_leave_event: Callback<MouseEvent>,
+    link: ComponentLink<Self>,
     _producer: Box<dyn Bridge<ChipDescMsgBus>>,
 }
 
@@ -42,13 +46,16 @@ impl Component for ChipDescComponent {
             }
         });
         let _producer = ChipDescMsgBus::bridge(callback);
-        let _scroll_interval = IntervalService::spawn(Duration::from_millis(75), link.callback(scroll_interval));//unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
-
+        let scroll_interval = IntervalService::spawn(Duration::from_millis(75), link.callback(scroll_interval));//unsafe{set_interval(75, scroll_interval).unchecked_unwrap()};
+        let mouse_enter_event = link.callback(|_: MouseEvent| ChipDescComponentMsg::StopScroll);
+        let mouse_leave_event = link.callback(|_: MouseEvent| ChipDescComponentMsg::StartScroll);
         Self {
             chip_anim_ct: 0,
             curr_chip: None,
-            _scroll_interval,
-            _link: link,
+            scroll_interval: Some(scroll_interval),
+            mouse_enter_event,
+            mouse_leave_event,
+            link,
             _producer,
         }
     }
@@ -66,6 +73,15 @@ impl Component for ChipDescComponent {
             ChipDescComponentMsg::ClearDesc => {
                 self.curr_chip.take();
                 true
+            }
+            ChipDescComponentMsg::StartScroll => {
+                let interval = IntervalService::spawn(Duration::from_millis(75), self.link.callback(scroll_interval));
+                self.scroll_interval = Some(interval);
+                false
+            },
+            ChipDescComponentMsg::StopScroll => {
+                self.scroll_interval.take();
+                false
             }
             ChipDescComponentMsg::DoNothing => false,
         }
@@ -129,9 +145,10 @@ impl ChipDescComponent {
 
         let outer_chip_class = classes!("chipDescText", "chipDescPadding", chip_anim_class);
         let inner_chip_class = classes!(font_style, "chipDescDiv");
-
+        let enter_clone = self.mouse_enter_event.clone();
+        let leave_clone = self.mouse_leave_event.clone();
         html!{
-            <div class=background>
+            <div class=background onmouseover=enter_clone onmouseout=leave_clone>
                 <div class=outer_chip_class style="padding: 3px; font-size: 14px;">
                     {chip.damage_span()}
                     {chip.range_span()}

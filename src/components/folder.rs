@@ -407,7 +407,6 @@ impl FolderComponent {
 
 }
 
-
 #[function_component(FolderTopRow)]
 pub(crate) fn folder_top_row() -> Html {
     html! {
