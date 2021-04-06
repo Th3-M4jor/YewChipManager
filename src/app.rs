@@ -737,14 +737,17 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-
-        //let set_msg_callback = self.link.callback(|msg: String| TopLevelMsg::SetMsg(msg));
         
         html!{
             <>
             <div class="outermostDiv">
                 <div class="topStatusBar">
-                    <span style="padding-left: 5px">{self.active_tab.to_display_text()}</span><span style="float: right; color: red">{&self.message_txt}</span>
+                    <span style="padding-left: 5px">
+                        {self.active_tab.to_display_text()}
+                    </span>
+                    <span style="float: right; color: red">
+                        {&self.message_txt}
+                    </span>
                 </div>
                 <div style="background-color: #4abdb5; padding: 10px;">
                     {self.gen_nav_tabs()}
@@ -762,6 +765,5 @@ impl Component for App {
             </>
         }
 
-        //let library: RwLockReadGuard<ChipLibrary> = get_instance().get().unwrap().read().unwrap();
     }
 }
