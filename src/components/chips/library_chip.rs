@@ -73,7 +73,7 @@ impl Component for LibraryChip {
         
         //let chip = ChipLibrary::get_chip_unchecked(&self.props.name);
 
-        let chip_css = self.props.chip.kind.to_css_class();
+        let chip_css = self.props.chip.class.to_css_class();
 
         let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);
         

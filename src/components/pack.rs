@@ -324,7 +324,7 @@ impl PackComponent {
         match self.sort_by {
             ChipSortOptions::Name => {
                 pack_list.sort_unstable_by(|a, b| {
-                    a.chip.kind.cmp(&b.chip.kind).then_with(||a.chip.name.cmp(&b.chip.name))
+                    a.chip.class.cmp(&b.chip.class).then_with(||a.chip.name.cmp(&b.chip.name))
                 });
             }
             ChipSortOptions::Element => {

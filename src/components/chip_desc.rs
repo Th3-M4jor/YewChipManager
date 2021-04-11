@@ -128,7 +128,7 @@ impl ChipDescComponent {
     }
 
     fn with_chip(&self, chip: &BattleChip) -> Html {
-        let background = String::from("right-panel nopadding ") + chip.kind.to_background_css_class();
+        let background = String::from("right-panel nopadding ") + chip.class.to_background_css_class();
         let chip_anim_class = if self.chip_anim_ct & 1 == 0 {
             "chipWindowOne"
         } else {
@@ -150,10 +150,7 @@ impl ChipDescComponent {
         html!{
             <div class=background onmouseover=enter_clone onmouseout=leave_clone>
                 <div class=outer_chip_class style="padding: 3px; font-size: 14px;">
-                    {chip.damage_span()}
-                    {chip.range_span()}
-                    {chip.hits_span()}
-                    <br/>
+                    {chip.gen_desc_top_row()}
                     <div class=inner_chip_class id="ScrollTextDiv">
                         {&chip.description}
                     </div>

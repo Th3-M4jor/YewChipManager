@@ -55,7 +55,7 @@ impl Component for PackChipComponent {
         let chip_css = if self.props.owned <= self.props.used {
             "UsedChip"
         } else {
-            self.props.chip.kind.to_css_class()
+            self.props.chip.class.to_css_class()
         };
 
         let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);

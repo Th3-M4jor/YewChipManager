@@ -51,7 +51,7 @@ impl Component for GroupFolderChipComponent {
         let chip_css = if self.props.used {
             "UsedChip"
         } else {
-            self.props.chip.kind.to_css_class()
+            self.props.chip.class.to_css_class()
         };
 
         let outer_class = classes!("chip-row", "noselect", "chipHover", chip_css);

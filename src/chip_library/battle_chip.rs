@@ -1,4 +1,4 @@
-use crate::chip_library::{elements::Elements, skills::Skills, chip_type::ChipType, ranges::Ranges};
+use crate::chip_library::{elements::Elements, skills::Skills, chip_type::{ChipClass, ChipType}, ranges::Ranges};
 use serde::Deserialize;
 use unchecked_unwrap::UncheckedUnwrap;
 use std::cell::UnsafeCell;
@@ -12,6 +12,7 @@ pub(crate) struct BattleChip {
     pub element: Vec<Elements>,
     pub skills: Vec<Skills>,
     pub damage: String,
+    pub class: ChipClass,
     #[serde(rename(deserialize = "Type"))]
     pub kind: ChipType,
     pub range: Ranges,
@@ -31,6 +32,7 @@ impl Clone for BattleChip {
             element: self.element.clone(),
             skills: self.skills.clone(),
             damage: self.damage.clone(),
+            class: self.class.clone(),
             kind: self.kind.clone(),
             range: self.range.clone(),
             hits: self.hits.clone(),
@@ -123,7 +125,8 @@ impl BattleChip {
             element: vec![Elements::Null],
             skills: vec![Skills::None],
             damage: "--".to_owned(),
-            kind: ChipType::Dark,
+            class: ChipClass::Dark,
+            kind: ChipType::Burst,
             range: Ranges::Itself,
             hits: "--".to_string(),
             description: "Unknown Chip".to_owned(),
@@ -132,6 +135,7 @@ impl BattleChip {
         }
     }
 
+    /*
     pub(crate) fn damage_span(&self) -> Html {
         if self.damage == "--" {
             html!{}
@@ -141,31 +145,48 @@ impl BattleChip {
             }
         }
     }
+    */
 
-    #[inline]
-    pub(crate) fn range_span(&self) -> Html {
-        html!{
-            <span>{&self.range.as_str()}</span>
+    pub(crate) fn gen_desc_top_row(&self) -> Html {
+        match self.hits_span() {
+            Some(hits) => {
+                html!{
+                    <div class="chip-row">
+                        <div class="chip-col-3" style="border-right: 1px solid black">{self.kind.to_shortened_name()}</div>
+                        <div class="chip-col-3">{&self.range.as_str()}</div>
+                        {hits}
+                    </div>
+                }
+            }
+            None => {
+                html!{
+                    <div class="chip-row">
+                        <div class="chip-col-3" style="border-right: 1px solid black">{self.kind.to_shortened_name()}</div>
+                        <div class="chip-col-3">{&self.range.as_str()}</div>
+                    </div>
+                }
+            }
         }
     }
 
-    pub(crate) fn hits_span(&self) -> Html {
+    fn hits_span(&self) -> Option<Html> {
         //else it's a range so we'll set it to a value that isn't 1 or 0, which are special cases
         let count = self.hits.parse::<i32>().unwrap_or(-1);
 
-        if count == 0 {
-            html!{}
+        let html = if count == 0 {
+            return None;
         } else if count == 1 {
             html!{
-                <span style="float: right">{"1 hit"}</span>
+                <div class="chip-col-3" style="border-left: 1px solid black">{"1"}</div>
             }
         } else {
-            let mut text = String::from(&self.hits);
-            text.push_str(" hits");
+            let text = String::from(&self.hits);
+            //text.push_str(" hits");
             html!{
-                <span style="float: right">{text}</span>
+                <div class="chip-col-3" style="border-left: 1px solid black">{text}</div>
             }
-        }
+        };
+        Some(html)
     }
 
 }

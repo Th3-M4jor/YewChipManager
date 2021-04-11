@@ -253,7 +253,7 @@ impl ChipLibrary {
         }
 
         // is it greater than the limit for that type of chip?
-        if count >= pack_chip.chip.kind.max_in_folder() {
+        if count >= pack_chip.chip.class.max_in_folder() {
             return Err("You cannot add any more copies of that chip to your folder");
         }
 
@@ -611,7 +611,7 @@ impl ChipLibrary {
         };
         let mut pack_vec = pack.values().collect::<Vec<&PackChip>>();
         pack_vec.sort_unstable_by(|a,b| {
-            a.chip.kind.cmp(&b.chip.kind).then_with(||a.chip.name.cmp(&b.chip.name))
+            a.chip.class.cmp(&b.chip.class).then_with(||a.chip.name.cmp(&b.chip.name))
         });
 
         let pack_str_vec = pack_vec.iter().map(|chip| {

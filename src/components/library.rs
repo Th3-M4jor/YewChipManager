@@ -233,7 +233,7 @@ impl LibraryComponent {
         match self.sort_by {
             ChipSortOptions::Name => {
                 chip_lib.sort_unstable_by(|a, b| {
-                    a.kind.cmp(&b.kind).then_with(||a.name.cmp(&b.name))
+                    a.class.cmp(&b.class).then_with(||a.name.cmp(&b.name))
                 });
             }
             ChipSortOptions::Element => {
