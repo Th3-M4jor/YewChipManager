@@ -196,7 +196,7 @@ impl GroupFldrMsgBus {
     fn join_group(&mut self, group_name: String, player_name: String, spectator: bool) -> Result<(), String> {
         let encoded_group = utf8_percent_encode(&group_name, FRAGMENT).to_string();
         let encoded_player = utf8_percent_encode(&player_name, FRAGMENT).to_string();
-        let url = String::from("wss://spartan364.hopto.org/join/") + &encoded_group + "/" + &encoded_player;
+        let url = String::from("wss://spartan364.hopto.org/manager/api/join/") + &encoded_group + "/" + &encoded_player;
         //let mut socket = WebSocketService::new();
         let message_callback = self.link.callback(|msg: Binary| {
             let data = msg.ok()?;

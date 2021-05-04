@@ -1,6 +1,6 @@
 import { run, save_before_exit } from '../Cargo.toml'
 
-const URL = "https://spartan364.hopto.org/chips.json";
+const URL = "https://spartan364.hopto.org/manager/chips.json";
 
 async function start() {
     
