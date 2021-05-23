@@ -26,32 +26,6 @@ pub(crate) enum GroupFolderComponentMsg {
     SetHighlightedChip(String),
 }
 
-impl From<std::option::NoneError> for GroupFolderComponentMsg {
-    fn from(_: std::option::NoneError) -> Self {
-        GroupFolderComponentMsg::DoNothing
-    }
-}
-
-impl std::ops::Try for GroupFolderComponentMsg {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            GroupFolderComponentMsg::DoNothing => Err(GroupFolderComponentMsg::DoNothing),
-            _ => Ok(self)
-        }
-    }
-    fn from_error(_: Self::Error) -> Self {
-        GroupFolderComponentMsg::DoNothing
-    }
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 pub(crate) struct GroupFolderComponent {
     props: GroupFolderProps,
     _link: ComponentLink<Self>,
@@ -183,8 +157,15 @@ impl GroupFolderComponent {
 }
 
 fn handle_mouseover_event(e: MouseEvent) -> GroupFolderComponentMsg {
-    let target = e.current_target()?;
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id: String = div.id();
-    GroupFolderComponentMsg::SetHighlightedChip(id)
+    
+    let id: Option<String> = e.current_target().as_ref().and_then(
+        |target| target.dyn_ref::<web_sys::HtmlElement>()
+    ).and_then(
+        |div| Some(div.id())
+    );
+    
+    match id {
+        Some(id) => GroupFolderComponentMsg::SetHighlightedChip(id),
+        None => GroupFolderComponentMsg::DoNothing,
+    }
 }

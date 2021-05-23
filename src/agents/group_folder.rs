@@ -32,32 +32,6 @@ pub(crate) enum GroupFldrAgentSocketMsg {
     DoNothing,
 }
 
-impl From<std::option::NoneError> for GroupFldrAgentSocketMsg {
-    fn from(_: std::option::NoneError) -> Self {
-        GroupFldrAgentSocketMsg::DoNothing
-    }
-}
-
-impl std::ops::Try for GroupFldrAgentSocketMsg {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            GroupFldrAgentSocketMsg::DoNothing => Err(GroupFldrAgentSocketMsg::DoNothing),
-            _ => Ok(self)
-        }
-    }
-    fn from_error(_: Self::Error) -> Self {
-        GroupFldrAgentSocketMsg::DoNothing
-    }
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub(crate) enum GroupFldrAgentOutMsg {
     JoinedGroup,
@@ -199,11 +173,14 @@ impl GroupFldrMsgBus {
         let url = String::from("wss://spartan364.hopto.org/manager/api/join/") + &encoded_group + "/" + &encoded_player;
         //let mut socket = WebSocketService::new();
         let message_callback = self.link.callback(|msg: Binary| {
-            let data = msg.ok()?;
+            let data = match msg {
+                Ok(data) => data,
+                Err(_) => return GroupFldrAgentSocketMsg::DoNothing,
+            };
             //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&data));
-            let res  = bincode::deserialize::<SocketMsg>(&data).ok()?;
+            let res  = bincode::deserialize::<SocketMsg>(&data).ok();
             match res {
-                SocketMsg::FoldersUpdated(folders) => {
+                Some(SocketMsg::FoldersUpdated(folders)) => {
                     //let folders = serde_json::from_str::<HashMap<String, Vec<GroupFolderChip>>>(&folder_str).ok()?;
                     //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("Folders updated"));
                     folders_updated(folders);
@@ -214,12 +191,13 @@ impl GroupFldrMsgBus {
                     */
                     GroupFldrAgentSocketMsg::GroupUpdated
                 }
-                SocketMsg::Error(why) => {
+                Some(SocketMsg::Error(why)) => {
                     GroupFldrAgentSocketMsg::ServerError(why)
                 }
-                SocketMsg::Ready => {
+                Some(SocketMsg::Ready) => {
                     GroupFldrAgentSocketMsg::JoinedGroup
                 }
+                None => GroupFldrAgentSocketMsg::DoNothing
             }
             //GroupFldrAgentMsg::GroupUpdated
 

@@ -45,44 +45,18 @@ pub(crate) enum LibraryMessage {
     DoNothing,
 }
 
-impl From<std::option::NoneError> for LibraryMessage {
-    fn from(_: std::option::NoneError) -> Self {
-        LibraryMessage::DoNothing
-    }
-}
-
-impl std::ops::Try for LibraryMessage {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            LibraryMessage::DoNothing => Err(LibraryMessage::DoNothing),
-            _ => Ok(self)
-        }
-    }
-    fn from_error(_: Self::Error) -> Self {
-        LibraryMessage::DoNothing
-    }
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 fn handle_mouseover_event(e: MouseEvent) -> LibraryMessage {
-    let target = e.current_target()?;
+    
+    let res: Option<LibraryMessage> = try {
+        let target = e.current_target()?;
+        let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+        let id = div.id();
+        let name = id.get(2..)?.to_owned();
+        LibraryMessage::SetHighlightedChip(name)
+    };
 
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-
-    let id = div.id();
-
-    let name = id.get(2..)?.to_owned();
-
-    //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
-
-    LibraryMessage::SetHighlightedChip(name)
+    res.unwrap_or(LibraryMessage::DoNothing)
+    
 }
 
 pub(crate) struct LibraryComponent{

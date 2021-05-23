@@ -128,36 +128,6 @@ pub(crate) enum TopLevelMsg {
     DoNothing,
 }
 
-
-impl From<std::option::NoneError> for TopLevelMsg {
-    
-    /// implementation detail for the `Try` operator
-    fn from(_: std::option::NoneError) -> Self {
-        TopLevelMsg::DoNothing
-    }
-
-}
-
-impl std::ops::Try for TopLevelMsg {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            TopLevelMsg::DoNothing => Err(TopLevelMsg::DoNothing),
-            _ => Ok(self)
-        }
-    }
-    fn from_error(_: Self::Error) -> Self {
-        TopLevelMsg::DoNothing
-    }
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 impl From<GlobalReq> for TopLevelMsg {
 
     /// Conversion to allow messages to be sent to the top level
@@ -234,29 +204,35 @@ fn save_interval_callback(_:()) -> TopLevelMsg {
 }
 
 fn join_group_callback(_: MouseEvent) -> TopLevelMsg {
-    let window = web_sys::window()?;
-    let document = window.document()?;
+    
+    let res: Option<TopLevelMsg> = try {
+        let window = web_sys::window()?;
+        let document = window.document()?;
+        // get the web-elements and check what their values are
+        let group_name_element = document.get_element_by_id("group_name")?;
+        let player_name_element = document.get_element_by_id("player_name")?;
+        let spectator_checkbox_element = document.get_element_by_id("spectator_checkbox")?;
 
-    // get the web-elements and check what their values are
-    let group_name_element = document.get_element_by_id("group_name")?;
-    let player_name_element = document.get_element_by_id("player_name")?;
-    let spectator_checkbox_element = document.get_element_by_id("spectator_checkbox")?;
+        let group_name_input = group_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
+        let player_name_input = player_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
+        let spectator_input = spectator_checkbox_element.dyn_ref::<web_sys::HtmlInputElement>()?;
 
-    let group_name_input = group_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
-    let player_name_input = player_name_element.dyn_ref::<web_sys::HtmlInputElement>()?;
-    let spectator_input = spectator_checkbox_element.dyn_ref::<web_sys::HtmlInputElement>()?;
-
-    let group_name : String = group_name_input.value();
-    let player_name : String = player_name_input.value();
-    let spectator : bool = spectator_input.checked();
+        let group_name : String = group_name_input.value();
+        let player_name : String = player_name_input.value();
+        let spectator : bool = spectator_input.checked();
 
         TopLevelMsg::JoinGroupData{player_name, group_name, spectator}
+    };
+    
+    
+    res.unwrap_or(TopLevelMsg::DoNothing)
+    
 }
 
 fn load_file_callback(e: ChangeData) -> TopLevelMsg {
     if let ChangeData::Files(files) = e {
-        let file = files.item(0)?;
-        TopLevelMsg::FileSelected(file)
+        let file: Option<TopLevelMsg> = files.item(0).map(|f| TopLevelMsg::FileSelected(f));
+        file.unwrap_or(TopLevelMsg::DoNothing)
     } else {
         TopLevelMsg::DoNothing
     }

@@ -65,32 +65,6 @@ pub(crate) enum PackMsg {
     DoNothing,
 }
 
-impl From<std::option::NoneError> for PackMsg {
-    fn from(_: std::option::NoneError) -> Self {
-        PackMsg::DoNothing
-    }
-}
-
-impl std::ops::Try for PackMsg {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            PackMsg::DoNothing => Err(PackMsg::DoNothing),
-            _ => Ok(self)
-        }
-    }
-    fn from_error(_: Self::Error) -> Self {
-        PackMsg::DoNothing
-    }
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 pub(crate) struct PackComponent {
     props: PackProps,
     sort_by: ChipSortOptions,
@@ -112,47 +86,53 @@ pub(crate) struct PackComponent {
 
 fn move_to_folder_callback(e: MouseEvent) -> PackMsg {
     
-    let target = e.current_target()?;
+    let res: Option<PackMsg> = try {
+        let target = e.current_target()?;
+        let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+        let id = div.id();
+        let val = id.get(2..)?.to_owned();
+        PackMsg::MoveToFolder(val)
+    };
 
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+    res.unwrap_or(PackMsg::DoNothing)
 
-    let id = div.id();
-    let val = id.get(2..)?.to_owned();
-    PackMsg::MoveToFolder(val)
 }
 
 fn handle_mouseover_event(e: MouseEvent) -> PackMsg {
-    let target = e.current_target()?;
+    
+    let res: Option<PackMsg> = try {
+        let target = e.current_target()?;
+        let div = target.dyn_ref::<web_sys::HtmlElement>()?;
+        let id = div.id();
+        let name = id.get(2..)?.to_owned();
+        PackMsg::SetHighlightedChip(name)
+    };
+    
+    res.unwrap_or(PackMsg::DoNothing)
 
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-
-    let id = div.id();
-
-    let name = id.get(2..)?.to_owned();
-
-    //let chip = ChipLibrary::get_instance().library.get(name)?.clone();
-
-    PackMsg::SetHighlightedChip(name)
 }
 
 fn open_ctx_menu(e: MouseEvent) -> PackMsg {
     //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("right click detected"));
     e.prevent_default();
-    let window = web_sys::window()?;
-    let document = window.document()?;
-    let target = document.query_selector(".chipHover:hover").ok().flatten()?;
-    let id = target.id();
-    let name = id.get(2..)?.to_owned();
-    let x = e.client_x();
-    let y = e.client_y();
 
-    let x_str = x.to_string() + "px";
-    let y_str = y.to_string() + "px";
 
-    //let msg = format!("{}; {}; {}", name, x_str, y_str);
-    //web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&msg));
+    let res: Option<PackMsg> = try {
+        let window = web_sys::window()?;
+        let document = window.document()?;
+        let target = document.query_selector(".chipHover:hover").ok().flatten()?;
+        let id = target.id();
+        let name = id.get(2..)?.to_owned();
+        let x = e.client_x();
+        let y = e.client_y();
 
-    PackMsg::ShowContextMenu{name, x: x_str, y: y_str}
+        let x_str = x.to_string() + "px";
+        let y_str = y.to_string() + "px";
+
+        PackMsg::ShowContextMenu{name, x: x_str, y: y_str}
+    };
+
+    res.unwrap_or(PackMsg::DoNothing)
 
 }
 

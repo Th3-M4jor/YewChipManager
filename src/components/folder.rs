@@ -48,34 +48,6 @@ pub(crate) enum FolderMsg {
     DoNothing,
 }
 
-impl From<std::option::NoneError> for FolderMsg {
-    fn from(_: std::option::NoneError) -> Self {
-        FolderMsg::DoNothing
-    }
-}
-
-impl std::ops::Try for FolderMsg {
-    type Ok = Self;
-    type Error = Self;
-
-    fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        
-        match self {
-            FolderMsg::DoNothing => Err(FolderMsg::DoNothing),
-            _ => Ok(self)
-        }
-    }
-
-    fn from_error(_: Self::Error) -> Self {
-        FolderMsg::DoNothing
-    }
-
-    fn from_ok(v: Self::Ok) -> Self {
-        v
-    }
-    
-}
-
 pub(crate) struct FolderComponent {
     props: FolderProps,
     _link: ComponentLink<Self>,
@@ -93,31 +65,44 @@ pub(crate) struct FolderComponent {
     clear_folder_callback: Callback<MouseEvent>,
 }
 
-/// a chip was double clicked, return it to pack
-fn return_pack_callback(e: MouseEvent) -> FolderMsg {
+fn mouse_event_to_index(e: MouseEvent) -> Option<usize> {
     let target = e.current_target()?;
     let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id: String = div.id();
-    let index = id.get(3..)?.parse::<usize>().ok()?;
-    FolderMsg::ReturnToPack(index)
+    let id = div.id();
+    id.get(3..)?.parse::<usize>().ok()
+}
+
+/// a chip was double clicked, return it to pack
+fn return_pack_callback(e: MouseEvent) -> FolderMsg {
+    let index = mouse_event_to_index(e);
+
+    match index {
+        Some(idx) => FolderMsg::ReturnToPack(idx),
+        None => FolderMsg::DoNothing,
+    }
 }
 
 /// function for fipping a chip between used/unused
 fn change_used_callback_fn(e: MouseEvent) -> FolderMsg {
-    let target = e.current_target()?;
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id: String = div.id();
-    let index = id.get(3..)?.parse::<usize>().ok()?;
-    FolderMsg::ChangeUsed(index)
+    
+    let index = mouse_event_to_index(e);
+
+    match index {
+        Some(idx) => FolderMsg::ChangeUsed(idx),
+        None => FolderMsg::DoNothing,
+    }
 }
 
 /// function for setting the chip in the description box
 fn handle_mouseover_event(e: MouseEvent) -> FolderMsg {
-    let target = e.current_target()?;
-    let div = target.dyn_ref::<web_sys::HtmlElement>()?;
-    let id: String = div.id();
-    let index = id.get(3..)?.parse::<usize>().ok()?;
-    FolderMsg::SetHighlightedChip(index)
+    
+    let index = mouse_event_to_index(e);
+
+    match index {
+        Some(idx) => FolderMsg::SetHighlightedChip(idx),
+        None => FolderMsg::DoNothing,
+    }
+    
 }
 
 impl Component for FolderComponent {
@@ -136,8 +121,7 @@ impl Component for FolderComponent {
         });
         let chip_limit_change = link.callback(|e: ChangeData| {
             if let ChangeData::Value(text) = e {
-                let val = text.parse::<usize>().ok()?;
-                FolderMsg::ChangeChipLimit(val)
+                text.parse::<usize>().map_or(FolderMsg::DoNothing, |val| FolderMsg::ChangeChipLimit(val))
             } else {
                 FolderMsg::DoNothing
             }
