@@ -1,3 +1,5 @@
+@use "sass:math";
+
 .main-container {
     display: flex;
     align-items: stretch;
@@ -11,7 +13,7 @@
 //width is divided by 12 to determine size
 @mixin col($name, $width) {
     .#{$name}{
-        $size: ($width / 24) * 100%;
+        $size: (math.div($width , 24)) * 100%;
         flex: 0 0 $size;
         max-width: $size;
     }

@@ -1,3 +1,5 @@
+@use "sass:math";
+
 %chipImg {
     height: 100%;
     padding-left: 2px;
@@ -38,6 +40,6 @@
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;
     background-repeat: no-repeat;
-    background-size: (3/12) * 90vw 85vh;
+    background-size: (math.div(3,12)) * 90vw 85vh;
     max-height: 85vh;
 }
