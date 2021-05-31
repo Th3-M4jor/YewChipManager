@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use yew_services::{
+use yew::services::{
     reader::{ReaderService, ReaderTask, FileData},
     timeout::{TimeoutService, TimeoutTask},
     interval::{IntervalService, IntervalTask},

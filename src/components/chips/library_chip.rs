@@ -80,7 +80,7 @@ impl Component for LibraryChip {
         html! {
             <div class=outer_class 
                 ondblclick=self.link.callback(|_| LibraryChipMsg::DoubleClick) 
-                id=&self.id_str
+                id=self.id_str.clone()
                 onmouseover=self.props.on_mouse_enter.clone()>
                 <div class="chip-col-4 nopadding" style="white-space: nowrap">
                     {&self.props.chip.name}

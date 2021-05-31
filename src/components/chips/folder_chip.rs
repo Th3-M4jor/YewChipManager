@@ -85,7 +85,7 @@ impl Component for FolderChipComponent {
             <div
                 class=outer_class
                 ondblclick=self.props.return_to_pack_callback.clone()
-                id=&self.id_1
+                id=self.id_1.clone()
                 onmouseover=self.props.on_mouse_enter.clone()
             >
                 <div class="chip-col-1 nopadding">
@@ -110,7 +110,7 @@ impl Component for FolderChipComponent {
                         class="centerInputBox"
                         checked=self.props.used
                         onclick=self.props.swap_used.clone()
-                        id=&self.id_2
+                        id=self.id_2.clone()
                     />
                 </div>
             </div>

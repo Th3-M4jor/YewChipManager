@@ -59,7 +59,7 @@ impl Component for GroupFolderChipComponent {
         html!{
             <div
                 class=outer_class
-                id={&self.props.chip.name}
+                id={self.props.chip.name.clone()}
                 onmouseover=self.props.on_mouse_enter.clone()
             >
                 <div class="chip-col-1 nopadding">

@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use yew::agent::{Dispatcher, Dispatched};
-use yew_services::ConsoleService;
+use yew::services::ConsoleService;
 use web_sys::MouseEvent;
 use wasm_bindgen::JsCast;
 use std::rc::Rc;

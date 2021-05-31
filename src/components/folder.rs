@@ -243,7 +243,7 @@ impl Component for FolderComponent {
                 <input 
                     type="number" class="chip-search-input"
                     min=min_val max="45"
-                    value=&chip_limit_val 
+                    value=chip_limit_val 
                     onchange=self.chip_limit_change.clone()
                     style="height: calc(1.5em + .75rem + 2px); font-size: 1rem"
                 />
